@@ -1,31 +1,26 @@
+import StatCard from "../components/StatCard";
+
 function Progress() {
   return (
     <div>
-      <h1>Progress</h1>
-
-      <div className="card-grid">
-
-        <div className="card">
-          <h3>Starting Weight</h3>
-          <p>114kg</p>
+      <div className="page-header">
+        <div>
+          <h1>Progress</h1>
+          <p>Evidence beats motivation.</p>
         </div>
-
-        <div className="card">
-          <h3>Current Weight</h3>
-          <p>105kg</p>
-        </div>
-
-        <div className="card">
-          <h3>Total Lost</h3>
-          <p>9kg</p>
-        </div>
-
       </div>
 
-      <div className="panel">
+      <div className="stats-grid">
+        <StatCard label="Starting Weight" value="114kg" note="Original baseline" />
+        <StatCard label="Current Weight" value="105kg" note="Latest check-in" />
+        <StatCard label="Total Lost" value="9kg" note="Solid shift" />
+        <StatCard label="Consistency" value="85%" note="This week" />
+      </div>
+
+      <section className="panel">
         <h2>Weight Trend</h2>
-        <p>Chart goes here later</p>
-      </div>
+        <div className="placeholder-chart">Chart coming next</div>
+      </section>
     </div>
   );
 }
