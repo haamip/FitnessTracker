@@ -1,3 +1,21 @@
+/*
+|--------------------------------------------------------------------------
+| Dashboard.jsx
+|--------------------------------------------------------------------------
+| Main fitness dashboard.
+|
+| Responsibilities:
+| - Loads check-in data from localStorage
+| - Loads cardio data from localStorage
+| - Calculates weight loss progress
+| - Calculates weekly averages
+| - Displays dashboard summary cards
+|
+| Data Sources:
+| trackfit_checkins
+| trackfit_cardio
+|--------------------------------------------------------------------------
+*/
 import { useEffect, useMemo, useState } from "react";
 
 const START_WEIGHT = 114;
@@ -147,3 +165,4 @@ function Dashboard() {
 }
 
 export default Dashboard;
+

@@ -1,4 +1,21 @@
-﻿import { useEffect, useState } from "react";
+/*
+|--------------------------------------------------------------------------
+| Progress.jsx
+|--------------------------------------------------------------------------
+| Progress tracking page.
+|
+| Future Features:
+| - Weight graph
+| - Cardio graph
+| - Workout graph
+| - Progress photos
+| - Goal tracking
+|
+| Purpose:
+| Visualise long-term progress trends.
+|--------------------------------------------------------------------------
+*/
+import { useEffect, useState } from "react";
 import {
   LineChart,
   Line,
@@ -77,3 +94,4 @@ function Progress() {
 }
 
 export default Progress;
+

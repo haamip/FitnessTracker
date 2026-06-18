@@ -1,3 +1,22 @@
+/*
+|--------------------------------------------------------------------------
+| DailyCheckIn.jsx
+|--------------------------------------------------------------------------
+| Daily user tracking page.
+|
+| Responsibilities:
+| - Record weight
+| - Record calories
+| - Record protein intake
+| - Record water intake
+| - Record sleep
+| - Record mood
+| - Record training status
+|
+| Saves data to:
+| trackfit_checkins
+|--------------------------------------------------------------------------
+*/
 import { useEffect, useState } from "react";
 
 const defaultForm = {
@@ -125,3 +144,4 @@ function DailyCheckIn() {
 }
 
 export default DailyCheckIn;
+

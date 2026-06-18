@@ -1,3 +1,21 @@
+/*
+|--------------------------------------------------------------------------
+| CardioLog.jsx
+|--------------------------------------------------------------------------
+| Cardio activity tracking page.
+|
+| Responsibilities:
+| - Log cardio sessions
+| - Track duration
+| - Track distance
+| - Track calories burned
+| - Display cardio history
+| - Display cardio graph
+|
+| Saves data to:
+| trackfit_cardio
+|--------------------------------------------------------------------------
+*/
 import { useEffect, useMemo, useState } from "react";
 
 const defaultForm = {
@@ -139,3 +157,4 @@ function CardioLog() {
 }
 
 export default CardioLog;
+

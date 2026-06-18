@@ -1,3 +1,23 @@
+/*
+|--------------------------------------------------------------------------
+| App.jsx
+|--------------------------------------------------------------------------
+| Main application router.
+|
+| Responsibilities:
+| - Loads sidebar navigation
+| - Controls page routing
+| - Connects URLs to page components
+| - Provides overall application layout
+|
+| Routes:
+| /             Dashboard
+| /checkin      Daily Check-In
+| /cardio       Cardio Log
+| /progress     Progress Tracking
+| /workouts     Workout Library
+|--------------------------------------------------------------------------
+*/
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
@@ -31,3 +51,4 @@ function App() {
 }
 
 export default App;
+

@@ -1,4 +1,20 @@
-﻿import { useEffect, useState } from "react";
+/*
+|--------------------------------------------------------------------------
+| Workouts.jsx
+|--------------------------------------------------------------------------
+| Workout selection page.
+|
+| Future Features:
+| - Workout templates
+| - Workout categories
+| - Training plans
+| - Workout history
+|
+| Purpose:
+| Launch workout sessions.
+|--------------------------------------------------------------------------
+*/
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 const SAMPLE_TEXT = `Day 1 - Push
@@ -163,3 +179,4 @@ function Workouts() {
 }
 
 export default Workouts;
+

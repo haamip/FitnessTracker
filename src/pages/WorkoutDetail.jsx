@@ -1,4 +1,21 @@
-﻿import { useEffect, useState } from "react";
+/*
+|--------------------------------------------------------------------------
+| WorkoutDetail.jsx
+|--------------------------------------------------------------------------
+| Individual workout page.
+|
+| Future Features:
+| - Exercise logging
+| - Sets tracking
+| - Reps tracking
+| - Weight tracking
+| - Workout completion
+|
+| Purpose:
+| Record completed gym sessions.
+|--------------------------------------------------------------------------
+*/
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 function WorkoutDetail() {
@@ -142,3 +159,4 @@ function WorkoutDetail() {
 }
 
 export default WorkoutDetail;
+
