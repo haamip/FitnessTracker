@@ -1,27 +1,78 @@
-import StatCard from "../components/StatCard";
+﻿import { useEffect, useState } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
 
 function Progress() {
+  const [checkins, setCheckins] = useState([]);
+
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem("trackfit_checkins") || "[]");
+    setCheckins(saved);
+  }, []);
+
+  const chartData = [...checkins]
+    .filter((item) => item.weight)
+    .reverse()
+    .map((item) => ({
+      date: new Date(item.date).toLocaleDateString(),
+      weight: Number(item.weight),
+    }));
+
+  const startWeight = chartData[0]?.weight || 105;
+  const currentWeight = chartData[chartData.length - 1]?.weight || startWeight;
+  const totalLost = (startWeight - currentWeight).toFixed(1);
+
   return (
-    <div>
+    <>
       <div className="page-header">
         <div>
           <h1>Progress</h1>
-          <p>Evidence beats motivation.</p>
+          <p>Watch the trend, not the daily noise.</p>
         </div>
       </div>
 
       <div className="stats-grid">
-        <StatCard label="Starting Weight" value="114kg" note="Original baseline" />
-        <StatCard label="Current Weight" value="105kg" note="Latest check-in" />
-        <StatCard label="Total Lost" value="9kg" note="Solid shift" />
-        <StatCard label="Consistency" value="85%" note="This week" />
+        <div className="stat-card">
+          <p>Starting Weight</p>
+          <h2>{startWeight}kg</h2>
+        </div>
+        <div className="stat-card">
+          <p>Current Weight</p>
+          <h2>{currentWeight}kg</h2>
+        </div>
+        <div className="stat-card">
+          <p>Total Lost</p>
+          <h2>{totalLost}kg</h2>
+        </div>
       </div>
 
       <section className="panel">
         <h2>Weight Trend</h2>
-        <div className="placeholder-chart">Chart coming next</div>
+
+        {chartData.length < 2 ? (
+          <p className="muted">Add at least two check-ins to show your graph.</p>
+        ) : (
+          <div className="chart-box">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis domain={["dataMin - 1", "dataMax + 1"]} />
+                <Tooltip />
+                <Line type="monotone" dataKey="weight" strokeWidth={3} dot />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </section>
-    </div>
+    </>
   );
 }
 
