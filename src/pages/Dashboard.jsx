@@ -30,7 +30,7 @@ function Dashboard() {
     JSON.parse(localStorage.getItem("trackfit_cardio") || "[]")
   );
 
-  const today = useMemo(() => today, []);
+  const today = useMemo(() => Date.now(), []);
 
   const stats = useMemo(() => {
     const latest = checkins[0] || {};
@@ -167,6 +167,7 @@ function Dashboard() {
 }
 
 export default Dashboard;
+
 
 
 
