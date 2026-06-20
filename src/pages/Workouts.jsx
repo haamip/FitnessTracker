@@ -14,7 +14,7 @@
 | Launch workout sessions.
 |--------------------------------------------------------------------------
 */
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 const SAMPLE_TEXT = `Day 1 - Push
@@ -82,13 +82,10 @@ function parseWorkout(text) {
 }
 
 function Workouts() {
-  const [workouts, setWorkouts] = useState([]);
+  const [workouts, setWorkouts] = useState(() =>
+    JSON.parse(localStorage.getItem("trackfit_workouts") || "[]")
+  );
   const [rawText, setRawText] = useState("");
-
-  useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("trackfit_workouts") || "[]");
-    setWorkouts(saved);
-  }, []);
 
   function saveWorkouts(next) {
     setWorkouts(next);
@@ -179,4 +176,6 @@ function Workouts() {
 }
 
 export default Workouts;
+
+
 

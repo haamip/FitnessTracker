@@ -16,7 +16,7 @@
 | trackfit_cardio
 |--------------------------------------------------------------------------
 */
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 const defaultForm = {
   type: "Walk",
@@ -28,11 +28,9 @@ const defaultForm = {
 
 function CardioLog() {
   const [form, setForm] = useState(defaultForm);
-  const [sessions, setSessions] = useState([]);
-
-  useEffect(() => {
-    setSessions(JSON.parse(localStorage.getItem("trackfit_cardio") || "[]"));
-  }, []);
+  const [sessions, setSessions] = useState(() =>
+    JSON.parse(localStorage.getItem("trackfit_cardio") || "[]")
+  );
 
   const chartData = useMemo(() => {
     return [...sessions]
@@ -157,4 +155,6 @@ function CardioLog() {
 }
 
 export default CardioLog;
+
+
 

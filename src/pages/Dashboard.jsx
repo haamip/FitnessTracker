@@ -16,19 +16,21 @@
 | trackfit_cardio
 |--------------------------------------------------------------------------
 */
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 const START_WEIGHT = 114;
 const GOAL_WEIGHT = 95;
 
 function Dashboard() {
-  const [checkins, setCheckins] = useState([]);
-  const [cardio, setCardio] = useState([]);
+  const [checkins] = useState(() =>
+    JSON.parse(localStorage.getItem("trackfit_checkins") || "[]")
+  );
 
-  useEffect(() => {
-    setCheckins(JSON.parse(localStorage.getItem("trackfit_checkins") || "[]"));
-    setCardio(JSON.parse(localStorage.getItem("trackfit_cardio") || "[]"));
-  }, []);
+  const [cardio] = useState(() =>
+    JSON.parse(localStorage.getItem("trackfit_cardio") || "[]")
+  );
+
+  const today = useMemo(() => today, []);
 
   const stats = useMemo(() => {
     const latest = checkins[0] || {};
@@ -45,7 +47,7 @@ function Dashboard() {
     };
 
     const thisWeekCardio = cardio.filter((s) => {
-      const daysAgo = (Date.now() - new Date(s.date).getTime()) / 86400000;
+      const daysAgo = (today - new Date(s.date).getTime()) / 86400000;
       return daysAgo <= 7;
     });
 
@@ -64,7 +66,7 @@ function Dashboard() {
       cardioMinutes: thisWeekCardio.reduce((sum, s) => sum + (Number(s.duration) || 0), 0),
       cardioDistance: thisWeekCardio.reduce((sum, s) => sum + (Number(s.distance) || 0), 0),
     };
-  }, [checkins, cardio]);
+  }, [checkins, cardio, today]);
 
   return (
     <>
@@ -165,4 +167,6 @@ function Dashboard() {
 }
 
 export default Dashboard;
+
+
 

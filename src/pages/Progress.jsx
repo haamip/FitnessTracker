@@ -15,7 +15,7 @@
 | Visualise long-term progress trends.
 |--------------------------------------------------------------------------
 */
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   LineChart,
   Line,
@@ -27,12 +27,9 @@ import {
 } from "recharts";
 
 function Progress() {
-  const [checkins, setCheckins] = useState([]);
-
-  useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("trackfit_checkins") || "[]");
-    setCheckins(saved);
-  }, []);
+  const [checkins] = useState(() =>
+    JSON.parse(localStorage.getItem("trackfit_checkins") || "[]")
+  );
 
   const chartData = [...checkins]
     .filter((item) => item.weight)
@@ -94,4 +91,6 @@ function Progress() {
 }
 
 export default Progress;
+
+
 

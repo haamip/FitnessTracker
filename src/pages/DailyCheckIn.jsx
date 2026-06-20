@@ -17,7 +17,7 @@
 | trackfit_checkins
 |--------------------------------------------------------------------------
 */
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const defaultForm = {
   weight: "102.9",
@@ -32,12 +32,9 @@ const defaultForm = {
 
 function DailyCheckIn() {
   const [form, setForm] = useState(defaultForm);
-  const [saved, setSaved] = useState([]);
-
-  useEffect(() => {
-    const data = JSON.parse(localStorage.getItem("trackfit_checkins") || "[]");
-    setSaved(data);
-  }, []);
+  const [saved, setSaved] = useState(() =>
+    JSON.parse(localStorage.getItem("trackfit_checkins") || "[]")
+  );
 
   function updateField(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -144,4 +141,6 @@ function DailyCheckIn() {
 }
 
 export default DailyCheckIn;
+
+
 

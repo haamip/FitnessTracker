@@ -15,22 +15,20 @@
 | Record completed gym sessions.
 |--------------------------------------------------------------------------
 */
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 function WorkoutDetail() {
   const { id } = useParams();
-  const [workout, setWorkout] = useState(null);
-  const [session, setSession] = useState({});
+  const workouts = JSON.parse(localStorage.getItem("trackfit_workouts") || "[]");
 
-  useEffect(() => {
-    const workouts = JSON.parse(localStorage.getItem("trackfit_workouts") || "[]");
-    const found = workouts.find((item) => item.id === id);
-    setWorkout(found || null);
+  const [workout] = useState(() =>
+    workouts.find((item) => item.id === id) || null
+  );
 
-    const savedSession = JSON.parse(localStorage.getItem(`trackfit_session_${id}`) || "{}");
-    setSession(savedSession);
-  }, [id]);
+  const [session, setSession] = useState(() =>
+    JSON.parse(localStorage.getItem(`trackfit_session_${id}`) || "{}")
+  );
 
   function updateExercise(dayIndex, exerciseIndex, field, value) {
     const key = `${dayIndex}-${exerciseIndex}`;
@@ -159,4 +157,6 @@ function WorkoutDetail() {
 }
 
 export default WorkoutDetail;
+
+
 
