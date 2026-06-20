@@ -1,35 +1,17 @@
-/*
-|--------------------------------------------------------------------------
-| index.css
-|--------------------------------------------------------------------------
-| Global styling for the Fitness Tracker app.
-|
-| Current styling approach:
-| - Plain CSS
-| - CSS variables for colours and spacing
-| - Responsive mobile layout
-| - Card based UI inspired by the reference screenshots
-|
-| Not currently using:
-| - Tailwind CSS
-| - shadcn/ui
-|
-| Future option:
-| Tailwind + shadcn/ui can be added later once the app structure is stable.
-|--------------------------------------------------------------------------
-*/
+/* TrackFit — mobile-first CSS */
+
 :root {
-  --bg: #f7f6f3;
+  --bg: #f5f3ef;
   --card: #ffffff;
-  --text: #242424;
-  --muted: #7b807d;
-  --line: #eceae6;
+  --text: #1f1f1f;
+  --muted: #7a7a7a;
+  --line: #e8e2d8;
   --amber: #c77d1d;
-  --amber-dark: #a76412;
-  --green: #20a86b;
-  --blue: #5b6fa6;
-  --shadow: 0 18px 45px rgba(0, 0, 0, 0.08);
-  --radius: 28px;
+  --amber-dark: #9f6114;
+  --blue: #445c9c;
+  --green: #18a66a;
+  --shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  --radius: 22px;
 }
 
 * {
@@ -45,146 +27,121 @@ body {
 
 .app-shell {
   min-height: 100vh;
-  display: flex;
 }
 
 .main-content {
-  flex: 1;
-  padding: 42px;
-  padding-bottom: 120px;
-  max-width: 1180px;
+  width: 100%;
+  max-width: 760px;
   margin: 0 auto;
+  padding: 18px 14px 110px;
 }
 
 .page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 28px;
+  margin-bottom: 18px;
 }
 
 .page-header h1 {
-  font-size: 42px;
-  line-height: 1;
   margin: 0;
-  letter-spacing: -1px;
+  font-size: 32px;
+  line-height: 1;
+  letter-spacing: -0.8px;
 }
 
 .page-header p {
-  margin: 12px 0 0;
+  margin: 8px 0 0;
   color: var(--muted);
-  font-size: 18px;
+  font-size: 15px;
 }
 
 .sidebar {
-  width: 255px;
-  min-height: 100vh;
-  padding: 26px 18px;
-  background: transparent;
+  position: fixed;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  z-index: 50;
+  padding: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
 }
 
 .brand {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin-bottom: 34px;
-}
-
-.logo {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: var(--amber);
-  color: white;
-  display: grid;
-  place-items: center;
-  font-weight: 900;
-}
-
-.brand h2 {
-  margin: 0;
-  font-size: 22px;
-}
-
-.brand p {
-  margin: 2px 0 0;
-  color: var(--muted);
-  font-size: 13px;
+  display: none;
 }
 
 .nav {
-  display: grid;
-  gap: 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
 }
 
 .nav a {
+  flex: 1;
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 12px;
-  padding: 15px 16px;
-  border-radius: 22px;
+  gap: 3px;
+  flex-direction: column;
+  padding: 10px 4px;
+  border-radius: 999px;
   color: var(--muted);
   text-decoration: none;
-  font-weight: 800;
+  font-size: 11px;
+  font-weight: 850;
 }
 
 .nav a.active {
-  background: white;
-  color: var(--blue);
-  box-shadow: var(--shadow);
+  background: var(--amber);
+  color: white;
 }
 
 .panel,
 .stat-card {
   background: var(--card);
+  border: 1px solid rgba(0, 0, 0, 0.035);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  border: 1px solid rgba(0,0,0,0.03);
 }
 
 .panel {
-  padding: 28px;
-  margin-bottom: 24px;
+  padding: 18px;
+  margin-bottom: 16px;
 }
 
 .panel h2 {
-  margin: 0 0 22px;
-  font-size: 30px;
-  letter-spacing: -0.5px;
+  margin: 0 0 16px;
+  font-size: 24px;
+  letter-spacing: -0.4px;
 }
 
-.stats-grid {
+.stats-grid,
+.form-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 18px;
-  margin-bottom: 24px;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .stat-card {
-  padding: 24px;
+  padding: 18px;
 }
 
 .stat-card span {
   display: block;
   color: var(--muted);
-  font-size: 15px;
-  font-weight: 700;
-  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 6px;
 }
 
 .stat-card strong {
-  font-size: 32px;
-  letter-spacing: -0.7px;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  font-size: 28px;
+  letter-spacing: -0.5px;
 }
 
 label {
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 850;
 }
 
@@ -192,13 +149,13 @@ input,
 select,
 textarea {
   width: 100%;
-  margin-top: 9px;
-  padding: 18px 20px;
-  border: 1px solid #ddd9d2;
-  border-radius: 22px;
+  margin-top: 7px;
+  padding: 15px 16px;
+  border: 1px solid #ddd6cc;
+  border-radius: 18px;
   background: white;
   color: var(--text);
-  font-size: 18px;
+  font-size: 16px;
   outline: none;
 }
 
@@ -221,7 +178,7 @@ textarea:focus {
 .checkbox-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .checkbox-row input {
@@ -231,15 +188,16 @@ textarea:focus {
 
 .primary-btn,
 button {
+  width: 100%;
   border: 0;
-  border-radius: 24px;
-  padding: 18px 24px;
+  border-radius: 18px;
+  padding: 16px 18px;
   background: var(--amber);
   color: white;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 900;
   cursor: pointer;
-  box-shadow: 0 14px 25px rgba(199, 125, 29, 0.22);
+  box-shadow: 0 12px 22px rgba(199, 125, 29, 0.22);
 }
 
 .primary-btn:hover,
@@ -254,28 +212,23 @@ button:hover {
 .checkin-list,
 .card-list {
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
 .checkin-card,
 .log-card {
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
-  gap: 14px;
-  align-items: center;
-  padding: 18px 20px;
-  border-radius: 22px;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 18px;
   background: #fbfaf8;
   border: 1px solid var(--line);
 }
 
-.log-card {
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-}
-
 .checkin-card strong,
 .log-card strong {
-  font-size: 18px;
+  font-size: 17px;
 }
 
 .log-card p {
@@ -286,12 +239,14 @@ button:hover {
 .cardio-chart {
   display: flex;
   align-items: end;
-  gap: 14px;
-  min-height: 230px;
-  padding-top: 20px;
+  gap: 8px;
+  min-height: 190px;
+  overflow-x: auto;
+  padding: 14px 2px 4px;
 }
 
 .bar-wrap {
+  min-width: 44px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -302,78 +257,132 @@ button:hover {
 .bar {
   width: 100%;
   min-height: 10px;
-  border-radius: 18px 18px 6px 6px;
+  border-radius: 14px 14px 5px 5px;
   background: linear-gradient(180deg, #d8942f, #c77d1d);
   display: flex;
   justify-content: center;
   align-items: flex-start;
   padding-top: 8px;
   color: white;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 900;
 }
 
 .bar-wrap small {
   color: var(--muted);
+  font-size: 11px;
   font-weight: 800;
 }
 
-@media (max-width: 850px) {
-  .app-shell {
-    display: block;
-  }
-
+/* Bigger phones / tablets */
+@media (min-width: 600px) {
   .main-content {
-    padding: 32px 18px 120px;
-  }
-
-  .sidebar {
-    position: fixed;
-    left: 18px;
-    right: 18px;
-    bottom: 18px;
-    z-index: 20;
-    width: auto;
-    min-height: 0;
-    padding: 8px;
-    border-radius: 999px;
-    background: rgba(255,255,255,0.9);
-    box-shadow: var(--shadow);
-    backdrop-filter: blur(14px);
-  }
-
-  .brand {
-    display: none;
-  }
-
-  .nav {
-    display: flex;
-    justify-content: space-between;
-    gap: 4px;
-  }
-
-  .nav a {
-    flex: 1;
-    justify-content: center;
-    flex-direction: column;
-    gap: 4px;
-    padding: 12px 8px;
-    font-size: 12px;
-    border-radius: 999px;
-  }
-
-  .page-header h1 {
-    font-size: 38px;
+    padding: 28px 22px 120px;
   }
 
   .stats-grid,
   .form-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .checkin-card,
   .log-card {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
+/* Desktop */
+@media (min-width: 900px) {
+  .app-shell {
+    display: flex;
+  }
+
+  .main-content {
+    max-width: 1180px;
+    padding: 42px;
+  }
+
+  .sidebar {
+    position: static;
+    width: 255px;
+    min-height: 100vh;
+    padding: 26px 18px;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .brand {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 34px;
+  }
+
+  .logo {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--amber);
+    color: white;
+    display: grid;
+    place-items: center;
+    font-weight: 900;
+  }
+
+  .brand h2 {
+    margin: 0;
+    font-size: 22px;
+  }
+
+  .brand p {
+    margin: 2px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .nav {
+    display: grid;
+    gap: 10px;
+  }
+
+  .nav a {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 15px 16px;
+    font-size: 15px;
+    border-radius: 22px;
+  }
+
+  .nav a.active {
+    background: white;
+    color: var(--blue);
+  }
+
+  .page-header h1 {
+    font-size: 42px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .checkin-card {
+    grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
+  }
+
+  .log-card {
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+  }
+
+  button,
+  .primary-btn {
+    width: auto;
+  }
+}
