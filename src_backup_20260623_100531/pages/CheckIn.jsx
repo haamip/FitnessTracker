@@ -1,4 +1,4 @@
-﻿function CheckIn() {
+function CheckIn() {
   return (
     <div>
       <div className="page-header">

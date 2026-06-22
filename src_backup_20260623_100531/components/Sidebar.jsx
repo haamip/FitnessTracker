@@ -1,4 +1,4 @@
-﻿import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { LayoutDashboard, ClipboardList, CheckSquare, TrendingUp, Dumbbell, HeartPulse } from "lucide-react";
 
 function Sidebar() {
@@ -25,4 +25,3 @@ function Sidebar() {
 }
 
 export default Sidebar;
-

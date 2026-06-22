@@ -1,4 +1,4 @@
-﻿function PlanSetup() {
+function PlanSetup() {
   return (
     <div>
       <div className="page-header">

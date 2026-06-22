@@ -1,4 +1,4 @@
-﻿function StatCard({ label, value, note }) {
+function StatCard({ label, value, note }) {
   return (
     <div className="stat-card">
       <p>{label}</p>
