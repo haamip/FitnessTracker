@@ -1,4 +1,4 @@
-import { Dumbbell, ChevronRight, Flame, Timer } from "lucide-react";
+﻿import { Dumbbell, ChevronRight, Flame, Timer } from "lucide-react";
 import "./TrackFitScreens.css";
 
 const workouts = [
@@ -38,3 +38,4 @@ export default function Workouts() {
     </div>
   );
 }
+

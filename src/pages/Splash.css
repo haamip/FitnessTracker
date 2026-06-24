@@ -1,4 +1,4 @@
-.splash-screen {
+﻿.splash-screen {
   min-height: calc(100vh - 150px);
   display: flex;
   flex-direction: column;
@@ -29,3 +29,4 @@
   font-weight: 800;
   color: #6b7280;
 }
+

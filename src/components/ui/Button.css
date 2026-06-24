@@ -1,4 +1,4 @@
-.tf-button {
+﻿.tf-button {
   width: 100%;
   border: none;
   border-radius: 18px;
@@ -13,3 +13,4 @@
 .tf-button:active {
   transform: scale(0.98);
 }
+

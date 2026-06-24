@@ -1,4 +1,4 @@
-import BottomNav from "./BottomNav";
+﻿import BottomNav from "./BottomNav";
 import logo from "../../assets/brand/trackfit-logo.png";
 import "./MobileShell.css";
 
@@ -19,3 +19,4 @@ export default function MobileShell({ children }) {
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+﻿import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   Dumbbell,
@@ -38,3 +38,4 @@ export default function BottomNav() {
     </nav>
   );
 }
+

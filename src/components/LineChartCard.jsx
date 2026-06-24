@@ -36,3 +36,4 @@ export default function LineChartCard({ title, data, dataKey, unit = "" }) {
   );
 }
 
+

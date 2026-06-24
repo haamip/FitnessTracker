@@ -1,4 +1,4 @@
-import { Dumbbell, Droplets, Flame, Moon, TrendingDown, Plus } from "lucide-react";
+﻿import { Dumbbell, Droplets, Flame, Moon, TrendingDown, Plus } from "lucide-react";
 import Card from "../components/ui/Card";
 import "./TrackFitScreens.css";
 
@@ -35,3 +35,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

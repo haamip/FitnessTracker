@@ -1,4 +1,4 @@
-import { Droplets, Moon, Smile, Utensils } from "lucide-react";
+﻿import { Droplets, Moon, Smile, Utensils } from "lucide-react";
 import Card from "../components/ui/Card";
 import "./TrackFitScreens.css";
 
@@ -33,3 +33,4 @@ export default function DailyCheckIn() {
     </div>
   );
 }
+

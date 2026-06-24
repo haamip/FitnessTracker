@@ -1,11 +1,11 @@
-import { Bike, Footprints, HeartPulse, Plus, Timer } from "lucide-react";
+ï»¿import { Bike, Footprints, HeartPulse, Plus, Timer } from "lucide-react";
 import Card from "../components/ui/Card";
 import "./TrackFitScreens.css";
 
 const cardio = [
-  ["Walk", "30 min · 3.2km", Footprints],
-  ["Bike", "22 min · 8.4km", Bike],
-  ["Zone 2", "40 min · steady", HeartPulse],
+  ["Walk", "30 min Â· 3.2km", Footprints],
+  ["Bike", "22 min Â· 8.4km", Bike],
+  ["Zone 2", "40 min Â· steady", HeartPulse],
 ];
 
 export default function CardioLog() {
@@ -43,3 +43,4 @@ export default function CardioLog() {
     </div>
   );
 }
+

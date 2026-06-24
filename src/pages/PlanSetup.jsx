@@ -1,4 +1,4 @@
-import { BadgeCheck, Flame, Scale } from "lucide-react";
+﻿import { BadgeCheck, Flame, Scale } from "lucide-react";
 import "./TrackFitScreens.css";
 
 export default function PlanSetup() {
@@ -36,3 +36,4 @@ export default function PlanSetup() {
     </div>
   );
 }
+

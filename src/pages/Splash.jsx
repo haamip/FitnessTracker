@@ -1,4 +1,4 @@
-import logo from "../assets/brand/trackfit-logo.png";
+﻿import logo from "../assets/brand/trackfit-logo.png";
 import "./Splash.css";
 
 export default function Splash() {
@@ -10,3 +10,4 @@ export default function Splash() {
     </section>
   );
 }
+

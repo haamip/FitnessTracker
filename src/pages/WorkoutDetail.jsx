@@ -1,4 +1,4 @@
-import { Check, Dumbbell, Timer } from "lucide-react";
+ï»¿import { Check, Dumbbell, Timer } from "lucide-react";
 import Card from "../components/ui/Card";
 import "./TrackFitScreens.css";
 
@@ -20,7 +20,7 @@ export default function WorkoutDetail() {
       <Card>
         <p className="eyebrow">Current set</p>
         <h2 className="page-title">Bench Press</h2>
-        <p className="page-subtitle">80kg · 8 reps · Set 3 of 4</p>
+        <p className="page-subtitle">80kg Â· 8 reps Â· Set 3 of 4</p>
         <button className="primary-button" style={{ marginTop: 18 }}>
           Complete Set
         </button>
@@ -48,3 +48,4 @@ export default function WorkoutDetail() {
     </div>
   );
 }
+

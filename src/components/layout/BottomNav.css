@@ -1,4 +1,4 @@
-.bottom-nav {
+﻿.bottom-nav {
   position: fixed;
   left: 50%;
   bottom: 14px;
@@ -43,3 +43,4 @@
 .bottom-nav a:active {
   transform: scale(0.96);
 }
+

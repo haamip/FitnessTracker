@@ -1,4 +1,4 @@
-import { Activity, Scale, TrendingUp, Trophy } from "lucide-react";
+﻿import { Activity, Scale, TrendingUp, Trophy } from "lucide-react";
 import Card from "../components/ui/Card";
 import "./TrackFitScreens.css";
 
@@ -32,3 +32,4 @@ export default function Progress() {
     </div>
   );
 }
+
