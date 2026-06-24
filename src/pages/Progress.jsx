@@ -1,97 +1,34 @@
-﻿/*
-|--------------------------------------------------------------------------
-| Progress.jsx
-|--------------------------------------------------------------------------
-| Progress tracking page.
-|
-| Future Features:
-| - Weight graph
-| - Cardio graph
-| - Workout graph
-| - Progress photos
-| - Goal tracking
-|
-| Purpose:
-| Visualise long-term progress trends.
-|--------------------------------------------------------------------------
-*/
-import { useState } from "react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts";
+import { Activity, Scale, TrendingUp, Trophy } from "lucide-react";
+import Card from "../components/ui/Card";
+import "./TrackFitScreens.css";
 
-function Progress() {
-  const [checkins] = useState(() =>
-    JSON.parse(localStorage.getItem("trackfit_checkins") || "[]")
-  );
-
-  const chartData = [...checkins]
-    .filter((item) => item.weight)
-    .reverse()
-    .map((item) => ({
-      date: new Date(item.date).toLocaleDateString(),
-      weight: Number(item.weight),
-    }));
-
-  const startWeight = chartData[0]?.weight || 105;
-  const currentWeight = chartData[chartData.length - 1]?.weight || startWeight;
-  const totalLost = (startWeight - currentWeight).toFixed(1);
-
+export default function Progress() {
   return (
-    <>
-      <div className="page-header">
-        <div>
-          <h1>Progress</h1>
-          <p>Watch the trend, not the daily noise.</p>
-        </div>
-      </div>
-
-      <div className="stats-grid">
-        <div className="stat-card">
-          <p>Starting Weight</p>
-          <h2>{startWeight}kg</h2>
-        </div>
-        <div className="stat-card">
-          <p>Current Weight</p>
-          <h2>{currentWeight}kg</h2>
-        </div>
-        <div className="stat-card">
-          <p>Total Lost</p>
-          <h2>{totalLost}kg</h2>
-        </div>
-      </div>
-
-      <section className="panel">
-        <h2>Weight Trend</h2>
-
-        {chartData.length < 2 ? (
-          <p className="muted">Add at least two check-ins to show your graph.</p>
-        ) : (
-          <div className="chart-box">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis domain={["dataMin - 1", "dataMax + 1"]} />
-                <Tooltip />
-                <Line type="monotone" dataKey="weight" strokeWidth={3} dot />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
+    <div className="screen">
+      <section className="screen-hero">
+        <p className="eyebrow">Analytics</p>
+        <h1>Progress</h1>
+        <p>Simple trends. No clutter.</p>
       </section>
-    </>
+
+      <div className="metric-grid">
+        <Card className="metric-card"><Scale /><strong>104.2</strong><span>Current kg</span></Card>
+        <Card className="metric-card"><TrendingUp /><strong>-0.6</strong><span>This week</span></Card>
+        <Card className="metric-card"><Activity /><strong>4</strong><span>Sessions</span></Card>
+        <Card className="metric-card"><Trophy /><strong>3</strong><span>PBs</span></Card>
+      </div>
+
+      <Card>
+        <p className="eyebrow">Weight</p>
+        <h2 className="page-title">Trend line</h2>
+        <div className="fake-chart"></div>
+      </Card>
+
+      <Card>
+        <p className="eyebrow">Strength</p>
+        <h2 className="page-title">Volume trend</h2>
+        <div className="fake-chart"></div>
+      </Card>
+    </div>
   );
 }
-
-export default Progress;
-
-
-
-

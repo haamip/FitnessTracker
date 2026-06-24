@@ -1,163 +1,50 @@
-ï»¿/*
-|--------------------------------------------------------------------------
-| WorkoutDetail.jsx
-|--------------------------------------------------------------------------
-| Individual workout page.
-|
-| Future Features:
-| - Exercise logging
-| - Sets tracking
-| - Reps tracking
-| - Weight tracking
-| - Workout completion
-|
-| Purpose:
-| Record completed gym sessions.
-|--------------------------------------------------------------------------
-*/
-import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Check, Dumbbell, Timer } from "lucide-react";
+import Card from "../components/ui/Card";
+import "./TrackFitScreens.css";
 
-function WorkoutDetail() {
-  const { id } = useParams();
-  const workouts = JSON.parse(localStorage.getItem("trackfit_workouts") || "[]");
+const exercises = [
+  ["Bench Press", "80kg x 8", "Set 3 / 4"],
+  ["Lat Pulldown", "65kg x 10", "Set 2 / 4"],
+  ["Shoulder Press", "28kg x 8", "Set 2 / 3"],
+];
 
-  const [workout] = useState(() =>
-    workouts.find((item) => item.id === id) || null
-  );
-
-  const [session, setSession] = useState(() =>
-    JSON.parse(localStorage.getItem(`trackfit_session_${id}`) || "{}")
-  );
-
-  function updateExercise(dayIndex, exerciseIndex, field, value) {
-    const key = `${dayIndex}-${exerciseIndex}`;
-
-    const next = {
-      ...session,
-      [key]: {
-        completed: false,
-        weight: "",
-        repsDone: "",
-        notes: "",
-        ...(session[key] || {}),
-        [field]: value,
-      },
-    };
-
-    setSession(next);
-    localStorage.setItem(`trackfit_session_${id}`, JSON.stringify(next));
-  }
-
-  function toggleDone(dayIndex, exerciseIndex) {
-    const key = `${dayIndex}-${exerciseIndex}`;
-    const current = session[key] || {};
-
-    updateExercise(dayIndex, exerciseIndex, "completed", !current.completed);
-  }
-
-  if (!workout) {
-    return (
-      <section className="panel">
-        <h2>Workout not found</h2>
-        <Link to="/workouts">Back to workouts</Link>
-      </section>
-    );
-  }
-
+export default function WorkoutDetail() {
   return (
-    <>
-      <div className="page-header">
-        <div>
-          <h1>{workout.name}</h1>
-          <p>Log your weights, reps and notes as you train.</p>
-        </div>
+    <div className="screen">
+      <section className="screen-hero">
+        <p className="eyebrow">Active workout</p>
+        <h1>Upper Body</h1>
+        <p>Beat last week. Keep form clean.</p>
+      </section>
 
-        <Link className="small-link" to="/workouts">
-          Back
-        </Link>
+      <Card>
+        <p className="eyebrow">Current set</p>
+        <h2 className="page-title">Bench Press</h2>
+        <p className="page-subtitle">80kg · 8 reps · Set 3 of 4</p>
+        <button className="primary-button" style={{ marginTop: 18 }}>
+          Complete Set
+        </button>
+      </Card>
+
+      <div className="action-row">
+        <button className="action-card"><Timer /><strong>01:24</strong><span>Rest timer</span></button>
+        <button className="action-card"><Dumbbell /><strong>8,240kg</strong><span>Total volume</span></button>
       </div>
 
-      <div className="workout-days">
-        {workout.days.map((day, dayIndex) => (
-          <section className="panel" key={dayIndex}>
-            <h2>{day.title}</h2>
-
-            <div className="exercise-list">
-              {day.exercises.map((exercise, exerciseIndex) => {
-                const key = `${dayIndex}-${exerciseIndex}`;
-                const current = session[key] || {};
-
-                return (
-                  <div className="exercise-card exercise-log-card" key={key}>
-                    <label className="exercise-check">
-                      <input
-                        type="checkbox"
-                        checked={!!current.completed}
-                        onChange={() => toggleDone(dayIndex, exerciseIndex)}
-                      />
-                      <div>
-                        <h3>{exercise.name}</h3>
-                        <p>
-                          Target:{" "}
-                          {exercise.sets && <strong>{exercise.sets} sets</strong>}
-                          {exercise.sets && exercise.reps && " x "}
-                          {exercise.reps && <strong>{exercise.reps} reps</strong>}
-                        </p>
-                        {exercise.notes && <p className="muted">{exercise.notes}</p>}
-                      </div>
-                    </label>
-
-                    <div className="log-grid">
-                      <label>
-                        Weight used
-                        <input
-                          type="number"
-                          value={current.weight || ""}
-                          onChange={(e) =>
-                            updateExercise(dayIndex, exerciseIndex, "weight", e.target.value)
-                          }
-                          placeholder="kg"
-                        />
-                      </label>
-
-                      <label>
-                        Reps achieved
-                        <input
-                          type="text"
-                          value={current.repsDone || ""}
-                          onChange={(e) =>
-                            updateExercise(dayIndex, exerciseIndex, "repsDone", e.target.value)
-                          }
-                          placeholder="8,8,7,6"
-                        />
-                      </label>
-
-                      <label className="log-notes">
-                        Notes
-                        <input
-                          type="text"
-                          value={current.notes || ""}
-                          onChange={(e) =>
-                            updateExercise(dayIndex, exerciseIndex, "notes", e.target.value)
-                          }
-                          placeholder="Felt strong, sore shoulder, etc"
-                        />
-                      </label>
-                    </div>
-                  </div>
-                );
-              })}
+      <div className="list-stack">
+        {exercises.map(([name, weight, set]) => (
+          <div className="list-card" key={name}>
+            <div className="list-card-main">
+              <div className="icon-bubble"><Check /></div>
+              <div>
+                <h3>{name}</h3>
+                <p>{weight}</p>
+              </div>
             </div>
-          </section>
+            <span className="pill">{set}</span>
+          </div>
         ))}
       </div>
-    </>
+    </div>
   );
 }
-
-export default WorkoutDetail;
-
-
-
-
