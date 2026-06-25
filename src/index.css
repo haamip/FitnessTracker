@@ -632,3 +632,18 @@ button[title="add"] {
 .primary-button-spaced {
   margin-top: 18px;
 }
+/* AI Coach screen */
+.coach-card {
+  text-align: left;
+}
+
+.coach-icon {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 14px;
+  border-radius: 20px;
+  background: var(--gold-soft);
+  color: var(--gold);
+}
