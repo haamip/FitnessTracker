@@ -237,3 +237,81 @@ button[title="add"] {
 }
 
 
+
+/* Phase 2 polish */
+.hero-premium {
+  background:
+    radial-gradient(circle at top right, rgba(185, 131, 24, 0.18), transparent 38%),
+    linear-gradient(135deg, #171717, #2a2419);
+  color: #fff;
+}
+
+.hero-premium p,
+.hero-premium .eyebrow {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.goal-panel {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.goal-panel div {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.goal-panel span {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.goal-panel strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 22px;
+}
+
+.progress-line {
+  width: 100%;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.progress-line span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--gold), #f5c96b);
+}
+
+.primary-button-spaced {
+  margin-top: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: 0 6px 18px rgba(24, 24, 24, 0.04);
+}
+
+.chart-card__header h3 {
+  margin: 4px 0 14px;
+  font-size: 18px;
+}
+
+.chart-card__body {
+  width: 100%;
+}
