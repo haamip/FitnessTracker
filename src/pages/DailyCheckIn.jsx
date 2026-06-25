@@ -1,20 +1,20 @@
-﻿import { Droplets, Moon, Smile, Utensils } from "lucide-react";
+import { Droplets, Moon, Smile, Utensils } from "lucide-react";
 import Card from "../components/ui/Card";
 import "./TrackFitScreens.css";
 
 export default function DailyCheckIn() {
   return (
     <div className="screen">
-      <section className="screen-hero">
+      <section className="screen-hero hero-premium">
         <p className="eyebrow">Daily reset</p>
         <h1>Check In</h1>
         <p>Keep it honest. Keep it simple.</p>
       </section>
 
       <Card>
-        <p className="eyebrow">Protein</p>
+        <p className="eyebrow">Protein target</p>
         <h2 className="page-title">148 / 185g</h2>
-        <div className="progress-line" style={{ marginTop: 16 }}><span style={{ width: "80%" }}></span></div>
+        <div className="progress-line progress-line-dark"><span style={{ width: "80%" }}></span></div>
       </Card>
 
       <div className="metric-grid">
@@ -25,12 +25,10 @@ export default function DailyCheckIn() {
       </div>
 
       <div className="form-card">
-        <div className="form-grid">
-          <label>Today&apos;s note<textarea rows="4" placeholder="How did training and food go?"></textarea></label>
-          <button className="primary-button">Save Check In</button>
-        </div>
+        <label>Today&apos;s note</label>
+        <textarea rows="4" placeholder="How did training and food go?"></textarea>
+        <button className="primary-button primary-button-spaced">Save Check In</button>
       </div>
     </div>
   );
 }
-
