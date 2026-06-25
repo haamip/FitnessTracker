@@ -403,3 +403,232 @@ button[title="add"] {
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
+/* TrackFit V3 commercial polish */
+.tf-card,
+.chart-card,
+.form-card,
+.exercise-card,
+.achievement-card,
+.list-card {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(235, 232, 223, 0.95);
+  border-radius: 22px;
+  padding: 16px;
+  box-shadow: 0 12px 34px rgba(24, 24, 24, 0.07);
+}
+
+.tf-button {
+  border: 0;
+  border-radius: 999px;
+  min-height: 44px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--gold);
+  color: #fff;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.tf-button--ghost {
+  background: #fff;
+  color: var(--text);
+  border: 1px solid var(--line);
+}
+
+.hero-premium {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  background:
+    radial-gradient(circle at top right, rgba(185, 131, 24, 0.26), transparent 40%),
+    linear-gradient(135deg, #111, #2a2419);
+  color: #fff;
+}
+
+.hero-premium p,
+.hero-premium .eyebrow {
+  color: rgba(255,255,255,0.72);
+}
+
+.hero-right {
+  flex: 0 0 auto;
+}
+
+.progress-ring {
+  width: 88px;
+  height: 88px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(var(--gold) var(--progress), rgba(255,255,255,0.16) 0);
+}
+
+.progress-ring > div {
+  width: 66px;
+  height: 66px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #171717;
+  text-align: center;
+}
+
+.progress-ring strong {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.progress-ring span {
+  font-size: 10px;
+  font-weight: 900;
+  color: rgba(255,255,255,0.62);
+}
+
+.goal-panel-floating {
+  margin-top: -4px;
+}
+
+.today-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.section-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.section-header h2 {
+  margin: 4px 0 0;
+  font-size: 18px;
+}
+
+.stat-pill,
+.pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--gold-soft);
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.workout-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.list-card-end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+
+.achievement-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.achievement-card {
+  display: flex;
+  gap: 12px;
+}
+
+.achievement-card > span {
+  font-size: 24px;
+}
+
+.achievement-card strong {
+  display: block;
+  font-size: 14px;
+}
+
+.achievement-card p {
+  margin: 4px 0 0;
+  font-size: 12px;
+}
+
+.exercise-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.exercise-card h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.exercise-card p {
+  margin: 6px 0 0;
+  font-size: 13px;
+}
+
+.set-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.set-pill {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--text);
+  border-radius: 14px;
+  padding: 12px 10px;
+  font-size: 13px;
+}
+
+.set-pill.done {
+  background: var(--gold-soft);
+  color: var(--gold);
+  border-color: rgba(185, 131, 24, 0.24);
+}
+
+.finish-button {
+  width: 100%;
+  margin-top: 4px;
+  background: #171717;
+}
+
+.current-exercise-card {
+  background:
+    radial-gradient(circle at top right, rgba(185, 131, 24, 0.16), transparent 38%),
+    #fff;
+}
+
+.progress-line-dark {
+  margin-top: 16px;
+  background: rgba(23, 23, 23, 0.08);
+}
+
+.form-card label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.primary-button-spaced {
+  margin-top: 18px;
+}

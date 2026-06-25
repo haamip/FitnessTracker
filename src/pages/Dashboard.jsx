@@ -1,8 +1,11 @@
 import { Dumbbell, Droplets, Flame, Moon, TrendingDown } from "lucide-react";
 import Card from "../components/ui/Card";
+import Button from "../components/ui/Button";
 import MetricCard from "../components/ui/MetricCard";
 import PageHero from "../components/ui/PageHero";
-import ProgressBar from "../components/ui/ProgressBar";
+import ProgressRing from "../components/ui/ProgressRing";
+import SectionHeader from "../components/ui/SectionHeader";
+import AchievementCard from "../components/ui/AchievementCard";
 import LineChartCard from "../components/LineChartCard";
 import "./TrackFitScreens.css";
 
@@ -17,31 +20,30 @@ const weightData = [
 export default function Dashboard() {
   return (
     <div className="screen">
-      <PageHero eyebrow="Good evening" title="Haami" premium>
+      <PageHero
+        eyebrow="Good evening"
+        title="Haami"
+        premium
+        right={<ProgressRing value={62} label="Goal" />}
+      >
         Keep turning up. That is where the magic is.
       </PageHero>
 
-      <div className="goal-panel">
-        <div>
-          <span>Current</span>
-          <strong>104.2kg</strong>
-        </div>
-        <div>
-          <span>Goal</span>
-          <strong>95kg</strong>
-        </div>
+      <div className="goal-panel goal-panel-floating">
+        <div><span>Current</span><strong>104.2kg</strong></div>
+        <div><span>Goal</span><strong>95kg</strong></div>
       </div>
 
-      <ProgressBar value={62} />
-
-      <Card>
-        <p className="eyebrow">Today</p>
-        <h2 className="page-title">Upper Strength</h2>
-        <p className="page-subtitle">6 exercises · around 55 mins</p>
-        <button className="primary-button primary-button-spaced">
-          <Dumbbell size={18} /> Start Workout
-        </button>
+      <Card className="today-card">
+        <div>
+          <p className="eyebrow">Today</p>
+          <h2 className="page-title">Upper Strength</h2>
+          <p className="page-subtitle">6 exercises · around 55 mins</p>
+        </div>
+        <Button><Dumbbell size={18} /> Start</Button>
       </Card>
+
+      <SectionHeader eyebrow="Daily targets" title="Today so far" />
 
       <div className="metric-grid">
         <MetricCard icon={Flame} value="2,184" label="Calories" />
@@ -51,6 +53,13 @@ export default function Dashboard() {
       </div>
 
       <LineChartCard title="Weight Trend" data={weightData} dataKey="weight" unit="kg" />
+
+      <SectionHeader eyebrow="Wins" title="Achievements" />
+
+      <div className="achievement-grid">
+        <AchievementCard emoji="🔥" title="12 day streak" detail="Still showing up." />
+        <AchievementCard emoji="💪" title="4 sessions" detail="This week locked in." />
+      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { Activity, Scale, TrendingUp, Trophy } from "lucide-react";
 import MetricCard from "../components/ui/MetricCard";
 import PageHero from "../components/ui/PageHero";
+import SectionHeader from "../components/ui/SectionHeader";
 import LineChartCard from "../components/LineChartCard";
 import "./TrackFitScreens.css";
 
@@ -23,7 +24,7 @@ const volumeData = [
 export default function Progress() {
   return (
     <div className="screen">
-      <PageHero eyebrow="Analytics" title="Progress">
+      <PageHero eyebrow="Analytics" title="Progress" premium>
         Simple trends. No clutter.
       </PageHero>
 
@@ -34,7 +35,10 @@ export default function Progress() {
         <MetricCard icon={Trophy} value="3" label="PBs" />
       </div>
 
+      <SectionHeader eyebrow="Bodyweight" title="Weight trend" />
       <LineChartCard title="Weight Trend" data={weightData} dataKey="weight" unit="kg" />
+
+      <SectionHeader eyebrow="Strength" title="Training volume" />
       <LineChartCard title="Volume Trend" data={volumeData} dataKey="volume" unit="kg" />
     </div>
   );

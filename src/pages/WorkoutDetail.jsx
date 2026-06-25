@@ -1,5 +1,8 @@
-import { Check, Dumbbell, Timer, Trophy } from "lucide-react";
+import { Check, Dumbbell, Timer } from "lucide-react";
 import Card from "../components/ui/Card";
+import Button from "../components/ui/Button";
+import PageHero from "../components/ui/PageHero";
+import ExerciseCard from "../components/ui/ExerciseCard";
 import "./TrackFitScreens.css";
 
 const exercises = [
@@ -10,46 +13,26 @@ const exercises = [
 
 export default function WorkoutDetail() {
   return (
-    <div className="screen">
-      <section className="screen-hero hero-premium">
-        <p className="eyebrow">Active workout</p>
-        <h1>Upper Strength</h1>
-        <p>Beat last week. Keep form clean.</p>
-      </section>
+    <div className="screen workout-mode">
+      <PageHero eyebrow="Active workout" title="Upper Strength" premium>
+        Beat last week. Keep form clean.
+      </PageHero>
 
       <div className="action-row">
         <button className="action-card"><Timer /><strong>01:24</strong><span>Rest timer</span></button>
         <button className="action-card"><Dumbbell /><strong>8,240kg</strong><span>Volume</span></button>
       </div>
 
-      <Card>
+      <Card className="current-exercise-card">
         <p className="eyebrow">Current exercise</p>
         <h2 className="page-title">Bench Press</h2>
         <p className="page-subtitle">70kg · 8 reps · 4 working sets</p>
-        <button className="primary-button primary-button-spaced">
-          <Check size={18} /> Complete Set
-        </button>
+        <Button className="primary-button-spaced"><Check size={18} /> Complete Set</Button>
       </Card>
 
       <div className="list-stack">
         {exercises.map((exercise) => (
-          <section className="exercise-card" key={exercise.name}>
-            <div className="exercise-card-head">
-              <div>
-                <h3>{exercise.name}</h3>
-                <p>{exercise.target}</p>
-              </div>
-              <Trophy size={18} />
-            </div>
-
-            <div className="set-grid">
-              {exercise.sets.map((set, index) => (
-                <button className={index === 0 ? "set-pill done" : "set-pill"} key={set}>
-                  {index === 0 ? "✓" : ""} {set}
-                </button>
-              ))}
-            </div>
-          </section>
+          <ExerciseCard key={exercise.name} {...exercise} />
         ))}
       </div>
 

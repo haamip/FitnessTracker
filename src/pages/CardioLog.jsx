@@ -1,5 +1,7 @@
 import { Bike, Footprints, HeartPulse, Plus, Timer } from "lucide-react";
-import Card from "../components/ui/Card";
+import Button from "../components/ui/Button";
+import MetricCard from "../components/ui/MetricCard";
+import PageHero from "../components/ui/PageHero";
 import LineChartCard from "../components/LineChartCard";
 import "./TrackFitScreens.css";
 
@@ -20,17 +22,15 @@ const cardioData = [
 export default function CardioLog() {
   return (
     <div className="screen">
-      <section className="screen-hero hero-premium">
-        <p className="eyebrow">Conditioning</p>
-        <h1>Cardio</h1>
-        <p>Log the work. Watch the engine grow.</p>
-      </section>
+      <PageHero eyebrow="Conditioning" title="Cardio" premium>
+        Log the work. Watch the engine grow.
+      </PageHero>
 
-      <button className="primary-button"><Plus size={18} /> Add Cardio</button>
+      <Button><Plus size={18} /> Add Cardio</Button>
 
       <div className="metric-grid">
-        <Card className="metric-card"><Timer /><strong>112</strong><span>Minutes</span></Card>
-        <Card className="metric-card"><HeartPulse /><strong>4</strong><span>Sessions</span></Card>
+        <MetricCard icon={Timer} value="112" label="Minutes" />
+        <MetricCard icon={HeartPulse} value="4" label="Sessions" />
       </div>
 
       <LineChartCard title="Cardio Minutes" data={cardioData} dataKey="minutes" unit=" min" />
@@ -40,10 +40,7 @@ export default function CardioLog() {
           <div className="list-card" key={name}>
             <div className="list-card-main">
               <div className="icon-bubble"><Icon /></div>
-              <div>
-                <h3>{name}</h3>
-                <p>{detail}</p>
-              </div>
+              <div><h3>{name}</h3><p>{detail}</p></div>
             </div>
             <span className="pill">Done</span>
           </div>

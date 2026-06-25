@@ -1,5 +1,8 @@
-import { Link } from "react-router-dom";
-import { ChevronRight, Dumbbell, Flame, Timer } from "lucide-react";
+import { Dumbbell, Timer } from "lucide-react";
+import Button from "../components/ui/Button";
+import PageHero from "../components/ui/PageHero";
+import SectionHeader from "../components/ui/SectionHeader";
+import WorkoutCard from "../components/ui/WorkoutCard";
 import "./TrackFitScreens.css";
 
 const workouts = [
@@ -11,32 +14,27 @@ const workouts = [
 export default function Workouts() {
   return (
     <div className="screen">
-      <section className="screen-hero hero-premium">
-        <p className="eyebrow">Training</p>
-        <h1>Workouts</h1>
-        <p>Pick a session and get moving.</p>
-      </section>
+      <PageHero eyebrow="Training" title="Workouts" premium>
+        Pick a session and get moving.
+      </PageHero>
 
       <div className="action-row">
         <button className="action-card"><Dumbbell /><strong>Start</strong><span>Quick lift</span></button>
         <button className="action-card"><Timer /><strong>Timer</strong><span>Rest clock</span></button>
       </div>
 
+      <SectionHeader eyebrow="Plan" title="Your sessions" action={<Button variant="ghost">Edit</Button>} />
+
       <div className="list-stack">
         {workouts.map((workout) => (
-          <Link className="list-card workout-link" to={`/workouts/${workout.id}`} key={workout.id}>
-            <div className="list-card-main">
-              <div className="icon-bubble"><Flame /></div>
-              <div>
-                <h3>{workout.name}</h3>
-                <p>{workout.detail} · {workout.time}</p>
-              </div>
-            </div>
-            <div className="list-card-end">
-              <span className="pill">{workout.tag}</span>
-              <ChevronRight size={18} />
-            </div>
-          </Link>
+          <WorkoutCard
+            key={workout.id}
+            to={`/workouts/${workout.id}`}
+            name={workout.name}
+            detail={workout.detail}
+            tag={workout.tag}
+            time={workout.time}
+          />
         ))}
       </div>
     </div>
