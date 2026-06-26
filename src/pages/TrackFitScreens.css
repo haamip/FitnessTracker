@@ -539,3 +539,26 @@
     padding: 0 12px;
   }
 }
+
+/* V4 stat card readability fix */
+.v4-stat-card {
+  min-height: 146px;
+}
+
+.v4-stat-card strong,
+.v4-stat-card span,
+.v4-stat-card small {
+  position: relative;
+  z-index: 2;
+}
+
+.v4-stat-card span {
+  color: #171717;
+  font-size: 14px;
+}
+
+.v4-stat-card small {
+  color: #5f5f5f;
+  font-size: 13px;
+  line-height: 1.25;
+}
