@@ -891,3 +891,306 @@
     font-size: 11px;
   }
 }
+
+/* TrackFit V4 Workout Detail */
+.workout-detail-v4 {
+  gap: 18px;
+}
+
+.v4-detail-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 24px;
+  border-radius: 34px;
+  color: #fff;
+  background:
+    radial-gradient(circle at top right, rgba(185, 131, 24, 0.38), transparent 36%),
+    linear-gradient(135deg, #101010, #2b2417);
+  box-shadow: 0 22px 55px rgba(24, 24, 24, 0.22);
+}
+
+.v4-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 18px;
+  color: rgba(255,255,255,0.82);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.v4-detail-hero h1 {
+  margin: 0;
+  color: #fff;
+  font-size: 36px;
+  line-height: 0.96;
+  letter-spacing: -1.4px;
+  font-weight: 950;
+}
+
+.v4-detail-hero p,
+.v4-detail-hero .eyebrow {
+  color: rgba(255,255,255,0.78);
+}
+
+.v4-detail-hero p {
+  max-width: 260px;
+  margin: 10px 0 0;
+  font-weight: 750;
+}
+
+.v4-detail-progress {
+  margin-top: 22px;
+}
+
+.v4-detail-progress div {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.v4-detail-progress strong {
+  color: #fff;
+  font-size: 30px;
+  font-weight: 950;
+}
+
+.v4-detail-progress span {
+  color: rgba(255,255,255,0.72);
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.v4-detail-progress i {
+  display: block;
+  overflow: hidden;
+  height: 11px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.14);
+}
+
+.v4-detail-progress b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--gold), #f5c96b);
+}
+
+.v4-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.v4-detail-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.11);
+  color: rgba(255,255,255,0.82);
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.v4-current-exercise,
+.v4-rest-card,
+.v4-exercise-row,
+.v4-notes-card {
+  background: #fff;
+  border: 1px solid rgba(235, 232, 223, 0.92);
+  box-shadow: 0 14px 38px rgba(24,24,24,0.07);
+}
+
+.v4-current-exercise {
+  padding: 18px;
+  border-radius: 30px;
+}
+
+.v4-current-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.v4-current-head h2,
+.v4-rest-card h2,
+.v4-notes-card h2 {
+  margin: 0;
+  color: #171717;
+  font-size: 22px;
+  font-weight: 950;
+  letter-spacing: -0.5px;
+}
+
+.v4-current-head span,
+.v4-rest-card span,
+.v4-notes-card span {
+  display: block;
+  margin-top: 5px;
+  color: #5f5f5f;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.v4-current-icon {
+  width: 54px;
+  height: 54px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  background: #171717;
+  color: #fff;
+}
+
+.v4-set-grid-detail {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.v4-set-tile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #fff;
+  color: #171717;
+  text-align: left;
+}
+
+.v4-set-tile > span {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(23,23,23,0.2);
+  border-radius: 50%;
+}
+
+.v4-set-tile svg {
+  color: var(--gold);
+}
+
+.v4-set-tile strong {
+  display: block;
+  color: #171717;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.v4-set-tile small {
+  margin-left: auto;
+  color: #5f5f5f;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.v4-set-tile.done {
+  background: var(--gold-soft);
+  border-color: rgba(185, 131, 24, 0.24);
+}
+
+.v4-complete-btn {
+  width: 100%;
+  margin-top: 14px;
+}
+
+.v4-rest-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 30px;
+}
+
+.v4-rest-card h2 {
+  font-size: 34px;
+}
+
+.v4-timer-btn {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--gold);
+  color: #fff;
+}
+
+.v4-exercise-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.v4-exercise-row {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px;
+  border-radius: 24px;
+}
+
+.v4-exercise-row.active {
+  border-color: rgba(185, 131, 24, 0.32);
+  background:
+    radial-gradient(circle at top right, rgba(185, 131, 24, 0.12), transparent 35%),
+    #fff;
+}
+
+.v4-exercise-number {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #171717;
+  color: #fff;
+  font-weight: 950;
+}
+
+.v4-exercise-row strong {
+  display: block;
+  color: #171717;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.v4-exercise-row p {
+  margin: 4px 0 0;
+  color: #5f5f5f;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.v4-exercise-row > span {
+  margin-left: auto;
+  color: #8a5f08;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.v4-notes-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 18px;
+  border-radius: 28px;
+}
+
+.v4-notes-card svg {
+  color: var(--gold);
+  flex: 0 0 auto;
+}
