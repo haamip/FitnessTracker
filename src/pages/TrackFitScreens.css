@@ -1977,3 +1977,110 @@ a {
     max-width: 460px;
   }
 }
+
+/* TrackFit V4 Gamification */
+.v4-game-card {
+  padding: 18px;
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at top right, rgba(185, 131, 24, 0.13), transparent 36%),
+    #fff;
+  border: 1px solid rgba(235, 232, 223, 0.92);
+  box-shadow: 0 14px 38px rgba(24,24,24,0.07);
+}
+
+.v4-game-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.v4-game-head h2 {
+  margin: 0;
+  color: #171717;
+  font-size: 24px;
+  font-weight: 950;
+}
+
+.v4-game-head span {
+  display: block;
+  margin-top: 4px;
+  color: #5f5f5f;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.v4-game-icon {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  background: #171717;
+  color: var(--gold);
+}
+
+.v4-game-progress {
+  overflow: hidden;
+  height: 11px;
+  margin-top: 16px;
+  border-radius: 999px;
+  background: rgba(23,23,23,0.08);
+}
+
+.v4-game-progress i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--gold), #f5c96b);
+}
+
+.v4-game-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.v4-game-stats div {
+  padding: 13px;
+  border-radius: 20px;
+  background: #f8f4ea;
+}
+
+.v4-game-stats svg {
+  color: var(--gold);
+}
+
+.v4-game-stats strong {
+  display: block;
+  margin-top: 8px;
+  color: #171717;
+  font-size: 20px;
+  font-weight: 950;
+}
+
+.v4-game-stats span {
+  display: block;
+  color: #5f5f5f;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.v4-game-unlock {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 18px;
+  background: #171717;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.v4-game-unlock svg {
+  color: var(--gold);
+}

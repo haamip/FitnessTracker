@@ -16,6 +16,7 @@ import {
 
 import Button from "../components/ui/Button";
 import LineChartCard from "../components/LineChartCard";
+import GamificationPanel from "../components/ui/GamificationPanel";
 import "./TrackFitScreens.css";
 
 const weightData = [
@@ -79,6 +80,8 @@ export default function Dashboard() {
         </div>
       </section>
 
+      <GamificationPanel />
+
       <section className="v4-today-card">
         <div className="v4-icon-bubble">
           <Dumbbell size={22} />
@@ -87,7 +90,7 @@ export default function Dashboard() {
         <div className="v4-today-card__main">
           <p className="eyebrow">Today&apos;s workout</p>
           <h2>Upper Strength</h2>
-          <p>6 exercises · around 55 mins</p>
+          <p>6 exercises Ã‚Â· around 55 mins</p>
         </div>
 
         <Button className="v4-start-btn">

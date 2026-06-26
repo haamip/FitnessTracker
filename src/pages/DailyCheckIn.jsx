@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import Button from "../components/ui/Button";
+import { completeDailyCheckIn } from "../features/gamification/gamification";
 import "./TrackFitScreens.css";
 
 const checkItems = [
@@ -88,7 +89,7 @@ export default function DailyCheckIn() {
       <section className="v4-training-toggle">
         <div>
           <p className="eyebrow">Training today?</p>
-          <h2>Yes — upper strength</h2>
+          <h2>Yes ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â upper strength</h2>
           <span>Workout planned for this shift window.</span>
         </div>
 
@@ -135,7 +136,7 @@ export default function DailyCheckIn() {
         </div>
       </section>
 
-      <Button className="v4-save-checkin">
+      <Button className="v4-save-checkin" onClick={() => { completeDailyCheckIn(); window.location.reload(); }}>
         <Save size={18} />
         Save check-in
       </Button>
