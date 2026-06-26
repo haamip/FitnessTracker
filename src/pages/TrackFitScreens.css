@@ -1880,3 +1880,100 @@
   min-height: 52px;
   font-size: 15px;
 }
+
+/* TrackFit V4 quick polish pass */
+.screen {
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  padding-bottom: 96px;
+}
+
+.dashboard-v4,
+.workouts-v4,
+.workout-detail-v4,
+.progress-v4,
+.cardio-v4,
+.checkin-v4 {
+  animation: v4-screen-in 260ms ease both;
+}
+
+@keyframes v4-screen-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.v4-today-card,
+.v4-stat-card,
+.v4-coach-card,
+.v4-achievement-card,
+.v4-workout-card,
+.v4-quick-card,
+.v4-current-exercise,
+.v4-rest-card,
+.v4-exercise-row,
+.v4-notes-card,
+.v4-progress-summary article,
+.v4-pr-card,
+.v4-measure-row,
+.v4-ai-insight,
+.v4-cardio-stats article,
+.v4-cardio-action,
+.v4-cardio-row,
+.v4-zone-card,
+.v4-checkin-score,
+.v4-training-toggle,
+.v4-check-card,
+.v4-recovery-row {
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.v4-today-card:active,
+.v4-stat-card:active,
+.v4-workout-card:active,
+.v4-quick-card:active,
+.v4-exercise-row:active,
+.v4-cardio-row:active,
+.v4-check-card:active,
+.v4-recovery-row:active {
+  transform: scale(0.985);
+}
+
+.v4-hero,
+.v4-workout-hero,
+.v4-detail-hero,
+.v4-progress-hero,
+.v4-cardio-hero,
+.v4-checkin-hero {
+  isolation: isolate;
+}
+
+.v4-section-heading {
+  padding: 0 2px;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 950;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (min-width: 700px) {
+  .screen {
+    max-width: 460px;
+  }
+}
