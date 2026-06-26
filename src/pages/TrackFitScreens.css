@@ -1194,3 +1194,464 @@
   color: var(--gold);
   flex: 0 0 auto;
 }
+
+/* TrackFit V4 Progress */
+.progress-v4 {
+  gap: 18px;
+}
+
+.v4-progress-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px;
+  border-radius: 34px;
+  color: #fff;
+  background:
+    radial-gradient(circle at top right, rgba(185, 131, 24, 0.4), transparent 36%),
+    radial-gradient(circle at bottom left, rgba(32, 180, 120, 0.2), transparent 34%),
+    linear-gradient(135deg, #101010, #2b2417);
+  box-shadow: 0 22px 55px rgba(24, 24, 24, 0.22);
+}
+
+.v4-progress-hero h1 {
+  margin: 0;
+  color: #fff;
+  font-size: 44px;
+  line-height: 0.95;
+  letter-spacing: -1.5px;
+  font-weight: 950;
+}
+
+.v4-progress-hero p,
+.v4-progress-hero .eyebrow {
+  color: rgba(255,255,255,0.8);
+}
+
+.v4-progress-hero p {
+  max-width: 230px;
+  margin: 10px 0 0;
+  font-weight: 750;
+}
+
+.v4-progress-ring {
+  width: 92px;
+  height: 92px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: conic-gradient(var(--gold) var(--progress), rgba(255,255,255,0.14) 0);
+}
+
+.v4-progress-ring > div {
+  width: 68px;
+  height: 68px;
+  display: grid;
+  place-items: center;
+  border-radius: inherit;
+  background: #151515;
+  text-align: center;
+}
+
+.v4-progress-ring strong {
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.v4-progress-ring span {
+  display: block;
+  margin-top: -16px;
+  color: rgba(255,255,255,0.66);
+  font-size: 10px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.v4-progress-summary,
+.v4-pr-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.v4-progress-summary {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.v4-pr-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.v4-progress-summary article,
+.v4-pr-card,
+.v4-measure-row,
+.v4-ai-insight {
+  background: #fff;
+  border: 1px solid rgba(235, 232, 223, 0.92);
+  box-shadow: 0 14px 38px rgba(24,24,24,0.07);
+}
+
+.v4-progress-summary article,
+.v4-pr-card {
+  min-height: 118px;
+  padding: 14px;
+  border-radius: 26px;
+}
+
+.v4-progress-summary svg,
+.v4-pr-card svg,
+.v4-ai-insight svg {
+  color: var(--gold);
+}
+
+.v4-progress-summary strong,
+.v4-pr-card strong {
+  display: block;
+  margin-top: 15px;
+  color: #171717;
+  font-size: 20px;
+  font-weight: 950;
+  letter-spacing: -0.5px;
+}
+
+.v4-progress-summary span,
+.v4-pr-card span {
+  display: block;
+  margin-top: 4px;
+  color: #5f5f5f;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.v4-measure-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.v4-measure-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 15px;
+  border-radius: 24px;
+}
+
+.v4-measure-row strong {
+  display: block;
+  color: #171717;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.v4-measure-row span {
+  display: block;
+  margin-top: 3px;
+  color: #5f5f5f;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.v4-measure-row small {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--gold-soft);
+  color: #8a5f08;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.v4-ai-insight {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at top right, rgba(185, 131, 24, 0.11), transparent 36%),
+    #fff;
+}
+
+.v4-ai-insight h2 {
+  margin: 0;
+  color: #171717;
+  font-size: 20px;
+  font-weight: 950;
+}
+
+.v4-ai-insight p {
+  margin: 6px 0 0;
+  color: #5f5f5f;
+  font-size: 13px;
+  line-height: 1.35;
+  font-weight: 800;
+}
+
+@media (max-width: 380px) {
+  .v4-progress-summary,
+  .v4-pr-grid {
+    gap: 9px;
+  }
+
+  .v4-progress-summary article,
+  .v4-pr-card {
+    padding: 12px;
+  }
+
+  .v4-progress-hero {
+    padding: 20px;
+  }
+
+  .v4-progress-hero h1 {
+    font-size: 38px;
+  }
+
+  .v4-progress-ring {
+    width: 78px;
+    height: 78px;
+  }
+
+  .v4-progress-ring > div {
+    width: 58px;
+    height: 58px;
+  }
+}
+
+/* TrackFit V4 Cardio */
+.cardio-v4 {
+  gap: 18px;
+}
+
+.v4-cardio-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px;
+  border-radius: 34px;
+  color: #fff;
+  background:
+    radial-gradient(circle at top right, rgba(32, 180, 120, 0.34), transparent 36%),
+    radial-gradient(circle at bottom left, rgba(185, 131, 24, 0.22), transparent 34%),
+    linear-gradient(135deg, #101010, #14251c);
+  box-shadow: 0 22px 55px rgba(24, 24, 24, 0.22);
+}
+
+.v4-cardio-hero h1 {
+  margin: 0;
+  color: #fff;
+  font-size: 44px;
+  line-height: 0.95;
+  letter-spacing: -1.5px;
+  font-weight: 950;
+}
+
+.v4-cardio-hero p,
+.v4-cardio-hero .eyebrow {
+  color: rgba(255,255,255,0.8);
+}
+
+.v4-cardio-hero p {
+  max-width: 230px;
+  margin: 10px 0 0;
+  font-weight: 750;
+}
+
+.v4-cardio-icon {
+  width: 72px;
+  height: 72px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 26px;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.14);
+}
+
+.v4-cardio-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.v4-cardio-stats article,
+.v4-cardio-action,
+.v4-cardio-row,
+.v4-zone-card {
+  background: #fff;
+  border: 1px solid rgba(235, 232, 223, 0.92);
+  box-shadow: 0 14px 38px rgba(24,24,24,0.07);
+}
+
+.v4-cardio-stats article {
+  min-height: 118px;
+  padding: 14px;
+  border-radius: 26px;
+}
+
+.v4-cardio-stats svg,
+.v4-cardio-action svg,
+.v4-cardio-row svg,
+.v4-zone-card svg {
+  color: var(--gold);
+}
+
+.v4-cardio-stats strong {
+  display: block;
+  margin-top: 15px;
+  color: #171717;
+  font-size: 20px;
+  font-weight: 950;
+  letter-spacing: -0.5px;
+}
+
+.v4-cardio-stats span {
+  display: block;
+  margin-top: 4px;
+  color: #5f5f5f;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.v4-cardio-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 30px;
+}
+
+.v4-cardio-action h2,
+.v4-zone-card h2 {
+  margin: 0;
+  color: #171717;
+  font-size: 20px;
+  font-weight: 950;
+  letter-spacing: -0.4px;
+}
+
+.v4-cardio-action p,
+.v4-zone-card p {
+  margin: 5px 0 0;
+  color: #5f5f5f;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.v4-cardio-add {
+  min-height: 42px;
+  padding: 0 14px;
+}
+
+.v4-cardio-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.v4-cardio-row {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px;
+  border-radius: 24px;
+}
+
+.v4-cardio-row-icon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: var(--gold-soft);
+}
+
+.v4-cardio-row strong {
+  display: block;
+  color: #171717;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.v4-cardio-row p {
+  margin: 4px 0 0;
+  color: #5f5f5f;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.v4-cardio-row > span {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--gold-soft);
+  color: #8a5f08;
+  font-size: 11px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.v4-zone-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 18px;
+  padding: 18px;
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at top right, rgba(32, 180, 120, 0.11), transparent 36%),
+    #fff;
+}
+
+.v4-zone-bars {
+  height: 82px;
+  min-width: 82px;
+  display: flex;
+  align-items: end;
+  justify-content: end;
+  gap: 7px;
+}
+
+.v4-zone-bars i {
+  display: block;
+  width: 13px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--gold), #f5c96b);
+}
+
+@media (max-width: 380px) {
+  .v4-cardio-hero {
+    padding: 20px;
+  }
+
+  .v4-cardio-hero h1 {
+    font-size: 38px;
+  }
+
+  .v4-cardio-stats {
+    gap: 9px;
+  }
+
+  .v4-cardio-stats article {
+    padding: 12px;
+  }
+
+  .v4-cardio-row {
+    align-items: flex-start;
+  }
+
+  .v4-cardio-row > span {
+    margin-top: 4px;
+  }
+}
