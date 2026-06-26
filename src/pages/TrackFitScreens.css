@@ -1655,3 +1655,228 @@
     margin-top: 4px;
   }
 }
+
+/* TrackFit V4 Daily Check-In */
+.checkin-v4 {
+  gap: 18px;
+}
+
+.v4-checkin-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px;
+  border-radius: 34px;
+  color: #fff;
+  background:
+    radial-gradient(circle at top right, rgba(185, 131, 24, 0.38), transparent 36%),
+    radial-gradient(circle at bottom left, rgba(100, 140, 255, 0.2), transparent 34%),
+    linear-gradient(135deg, #101010, #2b2417);
+  box-shadow: 0 22px 55px rgba(24, 24, 24, 0.22);
+}
+
+.v4-checkin-hero h1 {
+  margin: 0;
+  color: #fff;
+  font-size: 44px;
+  line-height: 0.95;
+  letter-spacing: -1.5px;
+  font-weight: 950;
+}
+
+.v4-checkin-hero p,
+.v4-checkin-hero .eyebrow {
+  color: rgba(255,255,255,0.8);
+}
+
+.v4-checkin-hero p {
+  max-width: 230px;
+  margin: 10px 0 0;
+  font-weight: 750;
+}
+
+.v4-checkin-date {
+  width: 72px;
+  height: 82px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 26px;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.14);
+}
+
+.v4-checkin-date span {
+  color: rgba(255,255,255,0.7);
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.v4-checkin-date strong {
+  color: #fff;
+  font-size: 30px;
+  font-weight: 950;
+}
+
+.v4-checkin-score,
+.v4-training-toggle,
+.v4-check-card,
+.v4-recovery-row {
+  background: #fff;
+  border: 1px solid rgba(235, 232, 223, 0.92);
+  box-shadow: 0 14px 38px rgba(24,24,24,0.07);
+}
+
+.v4-checkin-score {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px;
+  border-radius: 30px;
+}
+
+.v4-checkin-score h2 {
+  margin: 0;
+  color: #171717;
+  font-size: 34px;
+  font-weight: 950;
+}
+
+.v4-checkin-score span,
+.v4-training-toggle span {
+  display: block;
+  margin-top: 5px;
+  color: #5f5f5f;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.v4-checkin-ring {
+  width: 76px;
+  height: 76px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: conic-gradient(var(--gold) var(--progress), rgba(23,23,23,0.08) 0);
+}
+
+.v4-checkin-ring > div {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: inherit;
+  background: #171717;
+  color: #fff;
+}
+
+.v4-check-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.v4-check-card {
+  min-height: 138px;
+  padding: 16px;
+  border-radius: 26px;
+}
+
+.v4-check-card svg {
+  color: var(--gold);
+}
+
+.v4-check-card strong {
+  display: block;
+  margin-top: 17px;
+  color: #171717;
+  font-size: 24px;
+  font-weight: 950;
+}
+
+.v4-check-card span {
+  display: block;
+  margin-top: 3px;
+  color: #171717;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.v4-check-card small {
+  display: block;
+  margin-top: 6px;
+  color: #5f5f5f;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.v4-training-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 30px;
+}
+
+.v4-training-toggle h2 {
+  margin: 0;
+  color: #171717;
+  font-size: 20px;
+  font-weight: 950;
+  letter-spacing: -0.4px;
+}
+
+.v4-training-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 13px;
+  border-radius: 999px;
+  background: var(--gold-soft);
+  color: #8a5f08;
+  font-size: 12px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.v4-recovery-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.v4-recovery-row {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px;
+  border-radius: 24px;
+}
+
+.v4-recovery-row strong {
+  display: block;
+  color: #171717;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.v4-recovery-row span {
+  display: block;
+  margin-top: 3px;
+  color: #5f5f5f;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.v4-save-checkin {
+  width: 100%;
+  min-height: 52px;
+  font-size: 15px;
+}
