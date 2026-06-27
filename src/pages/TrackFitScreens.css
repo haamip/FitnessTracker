@@ -2084,3 +2084,516 @@ a {
 .v4-game-unlock svg {
   color: var(--gold);
 }
+/* TrackFit Gym Mode - workout redesign */
+.tf-workouts-page,
+.tf-gym-mode {
+  --tf-orange: #f59e0b;
+  --tf-ink: #090909;
+  --tf-muted: #767676;
+  --tf-border: rgba(15, 23, 42, 0.1);
+  gap: 18px;
+}
+
+.tf-page-head {
+  padding: 10px 2px 0;
+}
+
+.tf-page-head p,
+.tf-page-head span {
+  margin: 0;
+  color: var(--tf-muted);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.tf-page-head h1 {
+  margin: 4px 0;
+  color: var(--tf-ink);
+  font-size: 38px;
+  line-height: 1;
+  letter-spacing: -1.4px;
+  font-weight: 950;
+}
+
+.tf-builder-card,
+.tf-plan-card,
+.tf-add-exercise-card {
+  color: inherit;
+  text-decoration: none;
+}
+
+.tf-builder-card {
+  min-height: 122px;
+  padding: 20px;
+  border-radius: 30px;
+  background: linear-gradient(135deg, #111, #2b2417);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
+}
+
+.tf-builder-card div {
+  display: grid;
+  gap: 7px;
+}
+
+.tf-builder-card svg {
+  color: var(--tf-orange);
+}
+
+.tf-builder-card strong {
+  font-size: 22px;
+  font-weight: 950;
+}
+
+.tf-builder-card span {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.tf-workout-stack,
+.tf-exercise-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tf-plan-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--tf-border);
+  border-radius: 26px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.07);
+}
+
+.tf-plan-icon {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 auto;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: #111;
+  color: #fff;
+}
+
+.tf-plan-card h2 {
+  margin: 0;
+  color: var(--tf-ink);
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.tf-plan-card p {
+  margin: 4px 0;
+  color: #575757;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.tf-plan-card span {
+  color: var(--tf-muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.tf-plan-arrow {
+  margin-left: auto;
+}
+
+.tf-workout-topbar {
+  display: grid;
+  grid-template-columns: 44px 1fr 56px;
+  align-items: center;
+  padding: 6px 0 4px;
+}
+
+.tf-workout-topbar a {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: var(--tf-ink);
+}
+
+.tf-workout-topbar h1 {
+  margin: 0;
+  text-align: center;
+  color: var(--tf-ink);
+  font-size: 24px;
+  font-weight: 950;
+  letter-spacing: -0.5px;
+}
+
+.tf-workout-topbar time {
+  color: var(--tf-ink);
+  font-size: 18px;
+  font-weight: 850;
+  text-align: right;
+}
+
+.tf-progress-block {
+  display: grid;
+  gap: 14px;
+}
+
+.tf-progress-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e9e9e9;
+}
+
+.tf-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--tf-orange);
+  transition: width 180ms ease;
+}
+
+.tf-progress-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #262626;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.tf-exercise-card {
+  overflow: hidden;
+  border: 1px solid var(--tf-border);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+}
+
+.tf-exercise-card.open {
+  border-radius: 24px;
+}
+
+.tf-exercise-summary {
+  width: 100%;
+  min-height: 88px;
+  border: 0;
+  background: transparent;
+  display: grid;
+  grid-template-columns: 44px 52px 1fr 34px;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  text-align: left;
+  color: var(--tf-ink);
+}
+
+.tf-exercise-number {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #f3f3f3;
+  font-weight: 900;
+}
+
+.tf-exercise-art {
+  font-size: 31px;
+  filter: grayscale(1);
+}
+
+.tf-exercise-title {
+  display: grid;
+  gap: 5px;
+}
+
+.tf-exercise-title strong {
+  color: var(--tf-ink);
+  font-size: 16px;
+  line-height: 1.22;
+  font-weight: 950;
+}
+
+.tf-exercise-title small {
+  color: #606060;
+  font-size: 13px;
+  font-weight: 760;
+}
+
+.tf-open-panel {
+  padding: 2px 14px 16px;
+}
+
+.tf-target-box {
+  display: grid;
+  grid-template-columns: 1fr 80px;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--tf-border);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.tf-target-box div {
+  display: grid;
+  gap: 10px;
+}
+
+.tf-target-box div:last-child {
+  justify-items: end;
+}
+
+.tf-target-box strong,
+.tf-rest-card strong {
+  color: var(--tf-ink);
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.tf-target-box span {
+  color: #555;
+  font-size: 14px;
+  font-weight: 760;
+}
+
+.tf-sets-head {
+  display: grid;
+  grid-template-columns: 38px 1fr 74px 82px 44px;
+  gap: 8px;
+  margin-top: 22px;
+  padding: 0 6px 8px;
+  color: var(--tf-ink);
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.tf-sets-head span:nth-child(2) {
+  grid-column: span 1;
+}
+
+.tf-set-list {
+  display: grid;
+  gap: 8px;
+}
+
+.tf-set-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px 52px 1fr 74px 82px 36px;
+  gap: 8px;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.tf-set-row.done::before {
+  content: "";
+  position: absolute;
+  left: -14px;
+  top: 8px;
+  bottom: 8px;
+  width: 5px;
+  border-radius: 999px;
+  background: var(--tf-orange);
+}
+
+.tf-set-row > span {
+  text-align: center;
+  color: var(--tf-ink);
+  font-size: 18px;
+  font-weight: 850;
+}
+
+.tf-set-row label,
+.tf-set-row input,
+.tf-set-row select {
+  height: 52px;
+  border: 1px solid var(--tf-border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.tf-set-row label {
+  display: grid;
+  place-items: center;
+  color: var(--tf-ink);
+}
+
+.tf-set-row input,
+.tf-set-row select {
+  width: 100%;
+  padding: 0 10px;
+  color: var(--tf-ink);
+  text-align: center;
+  font-size: 17px;
+  font-weight: 850;
+  outline: none;
+}
+
+.tf-set-row input:focus,
+.tf-set-row select:focus,
+.tf-notes-input:focus {
+  border-color: var(--tf-orange);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.16);
+}
+
+.tf-done-btn {
+  width: 36px;
+  height: 52px;
+  border: 0;
+  background: transparent;
+  color: #aaa;
+  display: grid;
+  place-items: center;
+}
+
+.tf-set-row.done .tf-done-btn {
+  color: var(--tf-orange);
+}
+
+.tf-add-set-btn,
+.tf-add-exercise-card {
+  width: 100%;
+  min-height: 56px;
+  border: 1px solid var(--tf-border);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--tf-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.tf-add-set-btn {
+  margin-top: 14px;
+}
+
+.tf-add-exercise-card {
+  border-radius: 18px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+}
+
+.tf-rest-card {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid var(--tf-border);
+  border-radius: 16px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tf-rest-card div {
+  display: grid;
+  gap: 6px;
+}
+
+.tf-rest-card span {
+  color: var(--tf-ink);
+  font-size: 32px;
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: -1px;
+}
+
+.tf-rest-card button:not(.tf-play-btn) {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--tf-orange);
+  text-align: left;
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.tf-play-btn {
+  width: 56px;
+  height: 56px;
+  border: 0;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  display: grid;
+  place-items: center;
+}
+
+.tf-notes-input {
+  width: 100%;
+  min-height: 84px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--tf-border);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--tf-ink);
+  font-size: 14px;
+  font-weight: 750;
+  resize: vertical;
+  outline: none;
+}
+
+.tf-workout-actions {
+  position: sticky;
+  bottom: 78px;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding-top: 12px;
+  background: linear-gradient(to top, rgba(250, 250, 250, 1), rgba(250, 250, 250, 0.85), transparent);
+}
+
+.tf-workout-actions a,
+.tf-workout-actions button {
+  min-height: 58px;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.tf-workout-actions a {
+  border: 1px solid rgba(15, 23, 42, 0.28);
+  background: #fff;
+  color: var(--tf-ink);
+  display: grid;
+  place-items: center;
+  text-decoration: none;
+}
+
+.tf-workout-actions button {
+  border: 0;
+  background: #d9d9d9;
+  color: #8f8f8f;
+}
+
+.tf-workout-actions button.ready {
+  background: #111;
+  color: #fff;
+}
+
+@media (max-width: 390px) {
+  .tf-sets-head {
+    grid-template-columns: 34px 1fr 62px 72px 38px;
+    font-size: 11px;
+  }
+
+  .tf-set-row {
+    grid-template-columns: 24px 46px 1fr 62px 72px 32px;
+    gap: 6px;
+  }
+
+  .tf-set-row input,
+  .tf-set-row select {
+    font-size: 15px;
+  }
+}
