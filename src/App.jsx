@@ -6,6 +6,7 @@ import DailyCheckIn from "./pages/DailyCheckIn";
 import Progress from "./pages/Progress";
 import Workouts from "./pages/Workouts";
 import WorkoutDetail from "./pages/WorkoutDetail";
+import AIWorkoutBuilder from "./pages/AIWorkoutBuilder";
 import CardioLog from "./pages/CardioLog";
 import Splash from "./pages/Splash";
 
@@ -21,6 +22,7 @@ function App() {
           <Route path="/cardio" element={<CardioLog />} />
           <Route path="/progress" element={<Progress />} />
           <Route path="/workouts" element={<Workouts />} />
+          <Route path="/workouts/builder" element={<AIWorkoutBuilder />} />
           <Route path="/workouts/:id" element={<WorkoutDetail />} />
         </Routes>
       </MobileShell>

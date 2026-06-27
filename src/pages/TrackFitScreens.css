@@ -2597,3 +2597,320 @@ a {
     font-size: 15px;
   }
 }
+/* AI Workout Builder v1 */
+.tf-ai-builder {
+  gap: 18px;
+}
+
+.tf-builder-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.tf-builder-top a {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+}
+
+.tf-builder-top p,
+.tf-generated-head p {
+  margin: 0;
+  color: #777;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.tf-builder-top h1,
+.tf-generated-head h2 {
+  margin: 3px 0 0;
+  color: #090909;
+  font-weight: 950;
+  letter-spacing: -0.7px;
+}
+
+.tf-builder-panel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 24px;
+  background: #111;
+  color: #fff;
+}
+
+.tf-builder-panel label {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.tf-builder-panel select {
+  height: 52px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  background: #1c1c1c;
+  color: #fff;
+  padding: 0 12px;
+  font-size: 16px;
+  font-weight: 850;
+}
+
+.tf-generated-plan {
+  display: grid;
+  gap: 12px;
+}
+
+.tf-generated-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tf-generated-head svg {
+  color: #f59e0b;
+}
+
+.tf-generated-day {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+}
+
+.tf-generated-day > div {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 2px 12px;
+  align-items: center;
+}
+
+.tf-generated-day svg {
+  grid-row: span 2;
+  color: #f59e0b;
+}
+
+.tf-generated-day h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.tf-generated-day div span,
+.tf-generated-day p span {
+  color: #777;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.tf-generated-day p {
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(15, 23, 42, 0.07);
+}
+
+.tf-generated-day p strong {
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.tf-save-plan-btn {
+  position: sticky;
+  bottom: 78px;
+  min-height: 58px;
+  border: 0;
+  border-radius: 18px;
+  background: #111;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 950;
+}
+/* Exercise Picker */
+.tf-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.52);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 14px;
+}
+
+.tf-picker-sheet {
+  width: min(100%, 520px);
+  max-height: 86vh;
+  overflow: hidden;
+  border-radius: 28px;
+  background: #fff;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.3);
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+}
+
+.tf-picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 12px;
+}
+
+.tf-picker-head p {
+  margin: 0;
+  color: #777;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.tf-picker-head h2 {
+  margin: 4px 0 0;
+  color: #090909;
+  font-size: 28px;
+  font-weight: 950;
+  letter-spacing: -0.8px;
+}
+
+.tf-picker-head button {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  display: grid;
+  place-items: center;
+}
+
+.tf-picker-search {
+  margin: 0 20px 14px;
+  height: 54px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 18px;
+  background: #f6f6f6;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  color: #777;
+}
+
+.tf-picker-search input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #090909;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.tf-picker-list {
+  overflow-y: auto;
+  padding: 0 14px 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.tf-picker-item {
+  width: 100%;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 18px;
+  background: #fff;
+  padding: 13px;
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 12px;
+  align-items: center;
+  text-align: left;
+}
+
+.tf-picker-art {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: #111;
+  font-size: 24px;
+  filter: grayscale(1);
+}
+
+.tf-picker-item span:last-child {
+  display: grid;
+  gap: 5px;
+}
+
+.tf-picker-item strong {
+  color: #090909;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.tf-picker-item small {
+  color: #777;
+  font-size: 12px;
+  font-weight: 800;
+}
+/* Exercise Engine usability v2 */
+.tf-section-label {
+  margin: 4px 2px 0;
+  color: #777;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tf-filter-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 0 20px 10px;
+  scrollbar-width: none;
+}
+
+.tf-filter-row::-webkit-scrollbar {
+  display: none;
+}
+
+.tf-filter-row button {
+  flex: 0 0 auto;
+  min-height: 36px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 999px;
+  background: #f7f7f7;
+  color: #555;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: capitalize;
+}
+
+.tf-filter-row button.active {
+  border-color: #111;
+  background: #111;
+  color: #fff;
+}
+
+.tf-picker-count {
+  padding: 0 20px 10px;
+  color: #777;
+  font-size: 12px;
+  font-weight: 850;
+}

@@ -4,3 +4,7 @@ dist
 .env.local
 .DS_Store
 .vscode
+
+# External exercise source repos
+external/
+scripts/*.log

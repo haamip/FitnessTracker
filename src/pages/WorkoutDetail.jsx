@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   ChevronRight,
@@ -11,60 +11,58 @@ import {
   Plus,
   Timer,
 } from "lucide-react";
+import ExercisePicker from "../components/ExercisePicker";
 import "./TrackFitScreens.css";
 
-const defaultExercises = [
-  {
-    id: "rdl",
-    name: "Dumbbell Romanian Deadlift",
-    target: "2 sets • 10 reps",
-    image: "🏋️",
-    sets: [
-      { id: crypto.randomUUID(), weight: "35", reps: "10", type: "S", done: false },
-      { id: crypto.randomUUID(), weight: "35", reps: "10", type: "S", done: false },
-    ],
-  },
-  {
-    id: "calf",
-    name: "Dumbbell Standing Calf Raise",
-    target: "2 sets • 12 reps",
-    image: "🧍",
-    sets: [
-      { id: crypto.randomUUID(), weight: "20", reps: "12", type: "S", done: false },
-      { id: crypto.randomUUID(), weight: "20", reps: "12", type: "S", done: false },
-    ],
-  },
-  {
-    id: "press",
-    name: "Dumbbell Shoulder Press",
-    target: "2 sets • 10 reps",
-    image: "💪",
-    sets: [
-      { id: crypto.randomUUID(), weight: "25", reps: "10", type: "S", done: false },
-      { id: crypto.randomUUID(), weight: "25", reps: "10", type: "S", done: false },
-    ],
-  },
-  {
-    id: "row",
-    name: "Dumbbell Row",
-    target: "2 sets • 10 reps",
-    image: "🚣",
-    sets: [
-      { id: crypto.randomUUID(), weight: "35", reps: "10", type: "S", done: false },
-      { id: crypto.randomUUID(), weight: "35", reps: "10", type: "S", done: false },
-    ],
-  },
-  {
-    id: "squat",
-    name: "Barbell Back Squat",
-    target: "2 sets • 10 reps",
-    image: "🏋️",
-    sets: [
-      { id: crypto.randomUUID(), weight: "80", reps: "10", type: "S", done: false },
-      { id: crypto.randomUUID(), weight: "80", reps: "10", type: "S", done: false },
-    ],
-  },
-];
+function createSet(weight = "", reps = "10", type = "S") {
+  return {
+    id: crypto.randomUUID(),
+    weight,
+    reps,
+    type,
+    done: false,
+  };
+}
+
+function createDefaultExercises() {
+  return [
+    {
+      id: "rdl",
+      name: "Dumbbell Romanian Deadlift",
+      target: "2 sets • 10 reps",
+      image: "TF",
+      sets: [createSet("35", "10"), createSet("35", "10")],
+    },
+    {
+      id: "calf",
+      name: "Dumbbell Standing Calf Raise",
+      target: "2 sets • 12 reps",
+      image: "TF",
+      sets: [createSet("20", "12"), createSet("20", "12")],
+    },
+    {
+      id: "press",
+      name: "Dumbbell Shoulder Press",
+      target: "2 sets • 10 reps",
+      image: "TF",
+      sets: [createSet("25", "10"), createSet("25", "10")],
+    },
+    {
+      id: "row",
+      name: "Dumbbell Row",
+      target: "2 sets • 10 reps",
+      image: "TF",
+      sets: [createSet("35", "10"), createSet("35", "10")],
+    },
+    {
+      id: "squat",
+      name: "Barbell Back Squat",
+      target: "2 sets • 10 reps",
+      image: "TF",
+      sets: [createSet("80", "10"), createSet("80", "10")],
+    },
+  ];
+}
 
 function formatClock(totalSeconds) {
   const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
@@ -72,29 +70,66 @@ function formatClock(totalSeconds) {
   return `${minutes}:${seconds}`;
 }
 
+function readJson(key, fallback) {
+  const saved = localStorage.getItem(key);
+
+  if (!saved) {
+    return fallback;
+  }
+
+  try {
+    return JSON.parse(saved);
+  } catch {
+    return fallback;
+  }
+}
+
+function findAiDay(id) {
+  const plan = readJson("trackfit_ai_workout_plan", []);
+  return plan.find((day) => day.id === id);
+}
+
+function convertAiDayToWorkout(day) {
+  return day.exercises.map((exercise) => ({
+    id: `${exercise.id}-${crypto.randomUUID()}`,
+    libraryId: exercise.id,
+    name: exercise.name,
+    target: `${exercise.sets} sets • ${exercise.reps} reps`,
+    image: "TF",
+    primaryMuscles: exercise.primaryMuscles || [],
+    equipment: exercise.equipment || [],
+    movementPattern: exercise.movementPattern || "unknown",
+    sets: Array.from({ length: exercise.sets }, () => createSet("", exercise.reps, "S")),
+  }));
+}
+
 export default function WorkoutDetail() {
-  const { id } = useParams();
-  const storageKey = `trackfit_workout_${id || "workout-1"}`;
+  const { id = "workout-1" } = useParams();
+  const navigate = useNavigate();
+  const storageKey = `trackfit_workout_${id}`;
+  const aiDay = findAiDay(id);
 
   const [seconds, setSeconds] = useState(0);
   const [restSeconds, setRestSeconds] = useState(60);
   const [restRunning, setRestRunning] = useState(false);
-  const [openExerciseId, setOpenExerciseId] = useState("rdl");
   const [notes, setNotes] = useState("");
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   const [exercises, setExercises] = useState(() => {
-    const saved = localStorage.getItem(storageKey);
+    const savedWorkout = readJson(storageKey, null);
 
-    if (!saved) {
-      return defaultExercises;
+    if (savedWorkout) {
+      return savedWorkout;
     }
 
-    try {
-      return JSON.parse(saved);
-    } catch {
-      return defaultExercises;
+    if (aiDay) {
+      return convertAiDayToWorkout(aiDay);
     }
+
+    return createDefaultExercises();
   });
+
+  const [openExerciseId, setOpenExerciseId] = useState(() => exercises[0]?.id || "");
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -134,9 +169,25 @@ export default function WorkoutDetail() {
       0,
     );
 
+    const volume = exercises.reduce(
+      (sum, exercise) =>
+        sum +
+        exercise.sets.reduce((setSum, set) => {
+          if (!set.done) {
+            return setSum;
+          }
+
+          const weight = Number.parseFloat(set.weight) || 0;
+          const reps = Number.parseFloat(set.reps) || 0;
+          return setSum + weight * reps;
+        }, 0),
+      0,
+    );
+
     return {
       totalSets,
       doneSets,
+      volume,
       percent: totalSets === 0 ? 0 : Math.round((doneSets / totalSets) * 100),
     };
   }, [exercises]);
@@ -167,46 +218,69 @@ export default function WorkoutDetail() {
 
         const previousSet = exercise.sets.at(-1) || {
           weight: "",
-          reps: "",
+          reps: "10",
           type: "S",
         };
 
         return {
           ...exercise,
-          sets: [
-            ...exercise.sets,
-            {
-              id: crypto.randomUUID(),
-              weight: previousSet.weight,
-              reps: previousSet.reps,
-              type: previousSet.type,
-              done: false,
-            },
-          ],
+          sets: [...exercise.sets, createSet(previousSet.weight, previousSet.reps, previousSet.type)],
         };
       }),
     );
   }
 
-  function addExercise() {
-    const nextNumber = exercises.length + 1;
+  /*
+    This is where the Exercise Engine plugs into the Workout Logger.
 
-    setExercises((currentExercises) => [
-      ...currentExercises,
-      {
-        id: crypto.randomUUID(),
-        name: `New Exercise ${nextNumber}`,
-        target: "2 sets • 10 reps",
-        image: "💪",
-        sets: [
-          { id: crypto.randomUUID(), weight: "", reps: "10", type: "S", done: false },
-          { id: crypto.randomUUID(), weight: "", reps: "10", type: "S", done: false },
-        ],
-      },
-    ]);
+    The picker sends one clean exercise object from exerciseLibrary.js.
+    We convert it into a loggable workout exercise with sets, reps, weight,
+    and completion status.
+
+    The AI Builder saves workouts in this same shape, so manual workouts and
+    AI workouts stay compatible from day one.
+  */
+  function addExerciseFromLibrary(libraryExercise) {
+    const setCount = libraryExercise.defaultSets || 3;
+    const reps = String(libraryExercise.defaultReps || "8-12");
+
+    const newExercise = {
+      id: `${libraryExercise.id}-${crypto.randomUUID()}`,
+      libraryId: libraryExercise.id,
+      name: libraryExercise.name,
+      target: `${setCount} sets • ${reps} reps`,
+      image: "TF",
+      primaryMuscles: libraryExercise.primaryMuscles || [],
+      equipment: libraryExercise.equipment || [],
+      movementPattern: libraryExercise.movementPattern || "unknown",
+      sets: Array.from({ length: setCount }, () => createSet("", reps, "S")),
+    };
+
+    setExercises((currentExercises) => [...currentExercises, newExercise]);
+    setOpenExerciseId(newExercise.id);
   }
 
-  const canFinish = totals.totalSets > 0 && totals.doneSets === totals.totalSets;
+  function finishWorkout() {
+    const history = readJson("trackfit_workout_history", []);
+    const finishedWorkout = {
+      id: crypto.randomUUID(),
+      workoutId: id,
+      title: aiDay?.name || "Workout 1",
+      completedAt: new Date().toISOString(),
+      durationSeconds: seconds,
+      completedSets: totals.doneSets,
+      totalSets: totals.totalSets,
+      volume: totals.volume,
+      notes,
+      exercises,
+    };
+
+    localStorage.setItem("trackfit_workout_history", JSON.stringify([finishedWorkout, ...history]));
+    navigate("/workouts");
+  }
+
+  const workoutTitle = aiDay?.name || "Workout 1";
+  const canFinish = totals.doneSets > 0;
 
   return (
     <motion.div
@@ -220,7 +294,7 @@ export default function WorkoutDetail() {
           <ArrowLeft size={24} />
         </Link>
 
-        <h1>Workout 1</h1>
+        <h1>{workoutTitle}</h1>
         <time>{formatClock(seconds)}</time>
       </header>
 
@@ -231,7 +305,7 @@ export default function WorkoutDetail() {
 
         <div className="tf-progress-meta">
           <span>{totals.percent}% COMPLETE</span>
-          <span>{totals.doneSets}/{totals.totalSets} SETS</span>
+          <span>{totals.doneSets}/{totals.totalSets} SETS • {Math.round(totals.volume)} KG</span>
         </div>
       </section>
 
@@ -364,16 +438,22 @@ export default function WorkoutDetail() {
           );
         })}
 
-        <button className="tf-add-exercise-card" onClick={addExercise} type="button">
+        <button className="tf-add-exercise-card" onClick={() => setIsPickerOpen(true)} type="button">
           <Plus size={20} />
           Add Exercise
         </button>
       </section>
 
+      <ExercisePicker
+        isOpen={isPickerOpen}
+        onClose={() => setIsPickerOpen(false)}
+        onSelectExercise={addExerciseFromLibrary}
+      />
+
       <footer className="tf-workout-actions">
         <Link to="/workouts">Cancel Workout</Link>
-        <button className={canFinish ? "ready" : ""} disabled={!canFinish} type="button">
-          Finish Workout
+        <button className={canFinish ? "ready" : ""} disabled={!canFinish} onClick={finishWorkout} type="button">
+          Save Workout
         </button>
       </footer>
     </motion.div>
