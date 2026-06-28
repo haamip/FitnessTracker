@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Check, Clock3, Search, Star, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Check, Clock3, Info, Search, Star, X } from "lucide-react";
 import { exerciseLibrary } from "../data/exerciseLibrary";
 import "../pages/TrackFitScreens.css";
 
@@ -250,9 +251,14 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
                 {(preview.equipment || []).join(", ") || "Bodyweight"} • {preview.defaultSets || 3} sets • {preview.defaultReps || "8-12"}
               </small>
             </div>
-            <button onClick={() => selectExercise(preview)} type="button">
-              <Check size={18} /> Add
-            </button>
+            <div className="tf-picker-preview-actions">
+              <Link to={`/exercises/${preview.id}`} onClick={onClose}>
+                <Info size={17} /> Details
+              </Link>
+              <button onClick={() => selectExercise(preview)} type="button">
+                <Check size={18} /> Add
+              </button>
+            </div>
           </article>
         )}
 

@@ -8,9 +8,9 @@ import {
   ChevronRight,
   Circle,
   Copy,
+  Info,
   MoreHorizontal,
   Pause,
-  NotepadText,
   Play,
   Plus,
   SkipForward,
@@ -67,6 +67,10 @@ function createSet(weight = "", reps = "10", type = "S") {
     reps,
     type,
     done: false,
+    rpe: "",
+    rir: "",
+    failure: false,
+    note: "",
   };
 }
 
@@ -146,6 +150,7 @@ function convertAiDayToWorkout(day) {
     equipment: exercise.equipment || [],
     movementPattern: exercise.movementPattern || "unknown",
     defaultRestSeconds: parseRestSeconds(exercise.rest),
+    exerciseNote: "",
     sets: Array.from({ length: exercise.sets }, () => createSet("", exercise.reps, "S")),
   }));
 }
@@ -413,11 +418,20 @@ export default function WorkoutDetail() {
       movementPattern: libraryExercise.movementPattern || "unknown",
       defaultRestSeconds: libraryExercise.defaultRestSeconds || DEFAULT_REST_SECONDS,
       instructions: libraryExercise.instructions || [],
+      exerciseNote: "",
       sets: Array.from({ length: setCount }, () => createSet("", reps, "S")),
     };
 
     setExercises((currentExercises) => [...currentExercises, newExercise]);
     setOpenExerciseId(newExercise.id);
+  }
+
+  function updateExerciseField(exerciseId, field, value) {
+    setExercises((currentExercises) =>
+      currentExercises.map((exercise) =>
+        exercise.id === exerciseId ? { ...exercise, [field]: value } : exercise,
+      ),
+    );
   }
 
   function addWarmUpSets(exercise) {
@@ -563,8 +577,10 @@ export default function WorkoutDetail() {
                     </div>
 
                     <div>
-                      <strong>NOTES</strong>
-                      <NotepadText size={22} />
+                      <strong>DETAILS</strong>
+                      <Link className="tf-detail-link" to={`/exercises/${exercise.libraryId || exercise.id}`}>
+                        <Info size={18} /> Open
+                      </Link>
                     </div>
                   </div>
 
@@ -572,6 +588,14 @@ export default function WorkoutDetail() {
                   <div className="tf-coach-cue">
                     <strong>TrackFit target</strong>
                     <span>{recommendation.reason}</span>
+                  </div>
+
+                  {/* Pro logging legend: W = warm-up, S = standard, D = drop set, F = failure set. */}
+                  <div className="tf-pro-legend">
+                    <span>W Warm-up</span>
+                    <span>S Working</span>
+                    <span>D Drop</span>
+                    <span>F Failure</span>
                   </div>
 
                   <div className="tf-sets-head intelligence">
@@ -586,59 +610,97 @@ export default function WorkoutDetail() {
 
                   <div className="tf-set-list">
                     {exercise.sets.map((set, setIndex) => (
-                      <div className={set.done ? "tf-set-row intelligence done" : "tf-set-row intelligence"} key={set.id}>
-                        <span>{set.type === "W" ? "WU" : setIndex + 1}</span>
+                      <div className="tf-set-block" key={set.id}>
+                        <div className={set.done ? "tf-set-row intelligence done" : "tf-set-row intelligence"}>
+                          <span>{set.type === "W" ? "WU" : setIndex + 1}</span>
 
-                        <small>{getPreviousSetLabel(previousExercise, setIndex)}</small>
-                        <small>{getTargetSetLabel(recommendation, setIndex)}</small>
+                          <small>{getPreviousSetLabel(previousExercise, setIndex)}</small>
+                          <small>{getTargetSetLabel(recommendation, setIndex)}</small>
 
-                        <input
-                          inputMode="decimal"
-                          onChange={(event) =>
-                            updateSet(exercise.id, set.id, "weight", event.target.value)
-                          }
-                          value={set.weight}
-                        />
+                          <input
+                            inputMode="decimal"
+                            onChange={(event) =>
+                              updateSet(exercise.id, set.id, "weight", event.target.value)
+                            }
+                            value={set.weight}
+                          />
 
-                        <input
-                          inputMode="numeric"
-                          onChange={(event) =>
-                            updateSet(exercise.id, set.id, "reps", event.target.value)
-                          }
-                          value={set.reps}
-                        />
+                          <input
+                            inputMode="numeric"
+                            onChange={(event) =>
+                              updateSet(exercise.id, set.id, "reps", event.target.value)
+                            }
+                            value={set.reps}
+                          />
 
-                        <select
-                          onChange={(event) =>
-                            updateSet(exercise.id, set.id, "type", event.target.value)
-                          }
-                          value={set.type}
-                        >
-                          <option value="S">S</option>
-                          <option value="W">W</option>
-                          <option value="D">D</option>
-                          <option value="F">F</option>
-                        </select>
+                          <select
+                            onChange={(event) =>
+                              updateSet(exercise.id, set.id, "type", event.target.value)
+                            }
+                            value={set.type}
+                          >
+                            <option value="S">S</option>
+                            <option value="W">W</option>
+                            <option value="D">D</option>
+                            <option value="F">F</option>
+                          </select>
 
-                        <button
-                          aria-label={`Mark set ${setIndex + 1} done`}
-                          className="tf-done-btn"
-                          onClick={() => updateSet(exercise.id, set.id, "done", !set.done)}
-                          type="button"
-                        >
-                          <Circle size={22} />
-                        </button>
-
-                        {exercise.sets.length > 1 && (
                           <button
-                            aria-label={`Remove set ${setIndex + 1}`}
-                            className="tf-remove-set-btn"
-                            onClick={() => removeSet(exercise.id, set.id)}
+                            aria-label={`Mark set ${setIndex + 1} done`}
+                            className="tf-done-btn"
+                            onClick={() => updateSet(exercise.id, set.id, "done", !set.done)}
                             type="button"
                           >
-                            <Trash2 size={15} />
+                            <Circle size={22} />
                           </button>
-                        )}
+
+                          {exercise.sets.length > 1 && (
+                            <button
+                              aria-label={`Remove set ${setIndex + 1}`}
+                              className="tf-remove-set-btn"
+                              onClick={() => removeSet(exercise.id, set.id)}
+                              type="button"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Optional advanced fields for lifters who track effort quality. */}
+                        <div className="tf-set-extra-row">
+                          <label>
+                            RPE
+                            <input
+                              inputMode="decimal"
+                              placeholder="8"
+                              value={set.rpe || ""}
+                              onChange={(event) => updateSet(exercise.id, set.id, "rpe", event.target.value)}
+                            />
+                          </label>
+                          <label>
+                            RIR
+                            <input
+                              inputMode="numeric"
+                              placeholder="2"
+                              value={set.rir || ""}
+                              onChange={(event) => updateSet(exercise.id, set.id, "rir", event.target.value)}
+                            />
+                          </label>
+                          <label className="tf-failure-toggle">
+                            <input
+                              checked={Boolean(set.failure)}
+                              onChange={(event) => updateSet(exercise.id, set.id, "failure", event.target.checked)}
+                              type="checkbox"
+                            />
+                            Failure
+                          </label>
+                          <input
+                            className="tf-set-note-input"
+                            placeholder="Set note"
+                            value={set.note || ""}
+                            onChange={(event) => updateSet(exercise.id, set.id, "note", event.target.value)}
+                          />
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -683,9 +745,9 @@ export default function WorkoutDetail() {
 
                   <textarea
                     className="tf-notes-input"
-                    onChange={(event) => setNotes(event.target.value)}
-                    placeholder="Session notes, pain, PRs, form cues..."
-                    value={notes}
+                    onChange={(event) => updateExerciseField(exercise.id, "exerciseNote", event.target.value)}
+                    placeholder="Exercise notes, pain, form cues, setup reminders..."
+                    value={exercise.exerciseNote || ""}
                   />
                 </div>
               )}
@@ -697,6 +759,15 @@ export default function WorkoutDetail() {
           <Plus size={20} />
           Add Exercise
         </button>
+      </section>
+
+      <section className="tf-session-note-card">
+        <strong>Session notes</strong>
+        <textarea
+          onChange={(event) => setNotes(event.target.value)}
+          placeholder="Overall workout notes, energy, aches, wins..."
+          value={notes}
+        />
       </section>
 
       <ExercisePicker
