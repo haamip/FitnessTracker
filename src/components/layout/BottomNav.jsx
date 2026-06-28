@@ -1,10 +1,11 @@
-﻿import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   Dumbbell,
   TrendingUp,
   HeartPulse,
   CheckSquare,
+  Brain,
 } from "lucide-react";
 import "./BottomNav.css";
 
@@ -24,6 +25,11 @@ export default function BottomNav() {
       <NavLink to="/progress">
         <TrendingUp size={20} />
         <span>Progress</span>
+      </NavLink>
+
+      <NavLink to="/coach">
+        <Brain size={20} />
+        <span>Coach</span>
       </NavLink>
 
       <NavLink to="/cardio">

@@ -54,6 +54,7 @@ function formatDate(value) {
 export default function Workouts() {
   const savedAiPlan = useMemo(() => readJson("trackfit_ai_workout_plan", []), []);
   const workoutHistory = useMemo(() => readJson("trackfit_workout_history", []).slice(0, 3), []);
+  const hasAiProgram = savedAiPlan.length > 0;
 
   return (
     <motion.div
@@ -68,55 +69,54 @@ export default function Workouts() {
         <span>Build, save and log your sessions.</span>
       </section>
 
+      {/* AI builder entry point. Kept separate from the program list so the Train page
+          never looks like two workout programs are stacked on top of each other. */}
       <Link className="tf-builder-card" to="/workouts/builder">
         <div>
           <Sparkles size={22} />
           <strong>AI Workout Builder</strong>
-          <span>Build a program from the exercise library</span>
+          <span>{hasAiProgram ? "Edit or rebuild your program" : "Build a program from the exercise library"}</span>
         </div>
         <ChevronRight size={22} />
       </Link>
 
-      {savedAiPlan.length > 0 && (
-        <section className="tf-workout-stack">
-          <div className="tf-section-label">Saved AI Program</div>
-
-          {savedAiPlan.map((day) => (
-            <Link className="tf-plan-card" to={`/workouts/${day.id}`} key={day.id}>
-              <div className="tf-plan-icon">
-                <Sparkles size={22} />
-              </div>
-
-              <div>
-                <h2>{day.name}</h2>
-                <p>{day.exercises.length} exercises • {day.time} mins</p>
-                <span>{day.focus} • {day.equipment}</span>
-              </div>
-
-              <ChevronRight className="tf-plan-arrow" size={22} />
-            </Link>
-          ))}
-        </section>
-      )}
-
+      {/* Show one primary program source at a time.
+          If an AI program exists it becomes the active training plan.
+          If not, the starter templates are shown as the default quick-start option. */}
       <section className="tf-workout-stack">
-        <div className="tf-section-label">Quick Start</div>
+        <div className="tf-section-label">{hasAiProgram ? "Active AI Program" : "Quick Start"}</div>
 
-        {workoutPlans.map((plan) => (
-          <Link className="tf-plan-card" to={`/workouts/${plan.id}`} key={plan.id}>
-            <div className="tf-plan-icon">
-              <Dumbbell size={22} />
-            </div>
+        {hasAiProgram
+          ? savedAiPlan.map((day) => (
+              <Link className="tf-plan-card" to={`/workouts/${day.id}`} key={day.id}>
+                <div className="tf-plan-icon">
+                  <Sparkles size={22} />
+                </div>
 
-            <div>
-              <h2>{plan.name}</h2>
-              <p>{plan.detail}</p>
-              <span>{plan.exercises} • {plan.sets}</span>
-            </div>
+                <div>
+                  <h2>{day.name}</h2>
+                  <p>{day.exercises.length} exercises • {day.time} mins</p>
+                  <span>{day.focus} • {day.equipment}</span>
+                </div>
 
-            <ChevronRight className="tf-plan-arrow" size={22} />
-          </Link>
-        ))}
+                <ChevronRight className="tf-plan-arrow" size={22} />
+              </Link>
+            ))
+          : workoutPlans.map((plan) => (
+              <Link className="tf-plan-card" to={`/workouts/${plan.id}`} key={plan.id}>
+                <div className="tf-plan-icon">
+                  <Dumbbell size={22} />
+                </div>
+
+                <div>
+                  <h2>{plan.name}</h2>
+                  <p>{plan.detail}</p>
+                  <span>{plan.exercises} • {plan.sets}</span>
+                </div>
+
+                <ChevronRight className="tf-plan-arrow" size={22} />
+              </Link>
+            ))}
 
         <Link className="tf-add-exercise-card" to="/workouts/workout-1">
           <Plus size={20} />

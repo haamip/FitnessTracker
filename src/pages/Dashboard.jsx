@@ -18,8 +18,8 @@ import {
 
 import LineChartCard from "../components/LineChartCard";
 import GamificationPanel from "../components/ui/GamificationPanel";
+import { generateDailyCoachBrief } from "../services/aiCoachEngine";
 import { getAllTimePRs } from "../services/prEngine";
-import { getRecoveryCoachNote } from "../services/recoveryEngine";
 import { readWorkoutHistory } from "../services/workoutEngine";
 import { getWeeklyTrainingSummary } from "../services/workoutSummaryEngine";
 import "./TrackFitScreens.css";
@@ -48,9 +48,8 @@ const achievements = [
 export default function Dashboard() {
   const workoutHistory = useMemo(() => readWorkoutHistory(), []);
   const weeklySummary = useMemo(() => getWeeklyTrainingSummary(workoutHistory), [workoutHistory]);
-  const recoveryNote = useMemo(() => getRecoveryCoachNote(workoutHistory), [workoutHistory]);
+  const coachBrief = useMemo(() => generateDailyCoachBrief(workoutHistory), [workoutHistory]);
   const allTimePrs = useMemo(() => getAllTimePRs(workoutHistory), [workoutHistory]);
-  const latestWorkout = workoutHistory[0];
 
   return (
     <motion.div
@@ -98,8 +97,8 @@ export default function Dashboard() {
       <section className="tf-intelligence-grid">
         <article>
           <Sparkles size={20} />
-          <strong>Coach note</strong>
-          <span>{recoveryNote}</span>
+          <strong>{coachBrief.title}</strong>
+          <span>{coachBrief.readiness.note}</span>
         </article>
         <article>
           <Dumbbell size={20} />
@@ -118,6 +117,7 @@ export default function Dashboard() {
         </article>
       </section>
 
+      {/* Daily AI Coach card: converts workout history into one recommended action. */}
       <section className="v4-today-card">
         <div className="v4-icon-bubble">
           <Dumbbell size={22} />
@@ -125,15 +125,11 @@ export default function Dashboard() {
 
         <div className="v4-today-card__main">
           <p className="eyebrow">Today&apos;s recommendation</p>
-          <h2>{latestWorkout ? "Build from your last session" : "Start Workout 1"}</h2>
-          <p>
-            {latestWorkout
-              ? `Last session: ${latestWorkout.title} • ${Math.round(latestWorkout.volume)}kg`
-              : "Log one clean session and TrackFit starts coaching the next one."}
-          </p>
+          <h2>{coachBrief.suggestedWorkout.title}</h2>
+          <p>{coachBrief.reasons[0]}</p>
         </div>
 
-        <Link className="v4-start-btn" to="/workouts">
+        <Link className="v4-start-btn" to={coachBrief.suggestedWorkout.route}>
           Start <ChevronRight size={17} />
         </Link>
       </section>
@@ -180,8 +176,8 @@ export default function Dashboard() {
       <section className="v4-coach-card">
         <div>
           <p className="eyebrow">AI Coach</p>
-          <h2>Workout Intelligence is now active.</h2>
-          <p>Every saved workout now feeds previous targets, PRs, weekly volume and recovery notes.</p>
+          <h2>AI Coach is watching the pattern.</h2>
+          <p>{coachBrief.weeklySummaryText}</p>
         </div>
         <Sparkles size={24} />
       </section>

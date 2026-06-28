@@ -10,6 +10,7 @@ import AIWorkoutBuilder from "./pages/AIWorkoutBuilder";
 import ExerciseDetail from "./pages/ExerciseDetail";
 import CardioLog from "./pages/CardioLog";
 import Splash from "./pages/Splash";
+import Coach from "./pages/Coach";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route path="/checkin" element={<DailyCheckIn />} />
           <Route path="/cardio" element={<CardioLog />} />
           <Route path="/progress" element={<Progress />} />
+          <Route path="/coach" element={<Coach />} />
           <Route path="/workouts" element={<Workouts />} />
           <Route path="/workouts/builder" element={<AIWorkoutBuilder />} />
           <Route path="/workouts/:id" element={<WorkoutDetail />} />

@@ -4060,3 +4060,258 @@ body,
     flex-direction: row;
   }
 }
+
+/* TrackFit v0.7 AI Coach */
+.tf-coach-page {
+  gap: 16px;
+  overflow-x: hidden;
+}
+
+.tf-coach-hero,
+.tf-coach-action-card,
+.tf-coach-card {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 28px;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.07);
+}
+
+.tf-coach-hero {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 1fr 92px;
+  gap: 16px;
+  align-items: center;
+  background: linear-gradient(135deg, #111, #272018);
+  color: #fff;
+}
+
+.tf-coach-hero h1 {
+  margin: 4px 0 8px;
+  font-size: 32px;
+  line-height: 1;
+  letter-spacing: -1px;
+  font-weight: 950;
+}
+
+.tf-coach-hero p:not(.eyebrow) {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.tf-coach-score {
+  width: 86px;
+  height: 86px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at center, #111 58%, transparent 59%),
+    conic-gradient(#f59e0b var(--score), rgba(255, 255, 255, 0.14) 0);
+}
+
+.tf-coach-score strong,
+.tf-coach-score span {
+  grid-area: 1 / 1;
+  text-align: center;
+}
+
+.tf-coach-score strong {
+  transform: translateY(-7px);
+  font-size: 25px;
+  font-weight: 950;
+}
+
+.tf-coach-score span {
+  transform: translateY(14px);
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 10px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.tf-coach-action-card {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  gap: 13px;
+  align-items: center;
+}
+
+.tf-icon-disc {
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: #111;
+  color: #fff;
+}
+
+.tf-coach-action-card h2,
+.tf-coach-card h2 {
+  margin: 2px 0 5px;
+  color: #090909;
+  font-size: 20px;
+  font-weight: 950;
+  letter-spacing: -0.4px;
+}
+
+.tf-coach-action-card p,
+.tf-coach-card p,
+.tf-coach-list-row span {
+  margin: 0;
+  color: #666;
+  font-size: 13px;
+  font-weight: 760;
+}
+
+.tf-coach-action-card a {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 14px;
+  background: #f59e0b;
+  color: #111;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.tf-coach-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tf-coach-metrics article {
+  min-width: 0;
+  padding: 14px;
+  border-radius: 22px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+  display: grid;
+  gap: 7px;
+}
+
+.tf-coach-metrics svg,
+.tf-coach-card svg {
+  color: #f59e0b;
+}
+
+.tf-coach-metrics strong {
+  color: #090909;
+  font-size: 22px;
+  font-weight: 950;
+}
+
+.tf-coach-metrics span {
+  color: #777;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.tf-coach-card {
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.tf-coach-card.warning {
+  background: #fff8eb;
+}
+
+.tf-section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tf-coach-list-row {
+  padding: 12px 0 0;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  display: grid;
+  gap: 4px;
+}
+
+.tf-coach-list-row strong {
+  color: #090909;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.tf-why-button {
+  width: 100%;
+  min-height: 52px;
+  border: 0;
+  border-radius: 16px;
+  background: #111;
+  color: #fff;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+  font-weight: 950;
+}
+
+.tf-why-list {
+  display: grid;
+  gap: 8px;
+}
+
+.tf-recovery-list {
+  display: grid;
+  gap: 12px;
+}
+
+.tf-recovery-list > div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 7px 10px;
+  align-items: center;
+}
+
+.tf-recovery-list span {
+  color: #090909;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: capitalize;
+}
+
+.tf-recovery-list strong {
+  color: #666;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.tf-recovery-list div div {
+  grid-column: 1 / -1;
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #eee;
+}
+
+.tf-recovery-list i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #f59e0b;
+}
+
+@media (max-width: 390px) {
+  .tf-coach-action-card {
+    grid-template-columns: 48px 1fr;
+  }
+
+  .tf-coach-action-card a {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+}

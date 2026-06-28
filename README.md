@@ -1,16 +1,71 @@
-# React + Vite
+# TrackFit
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+TrackFit is a mobile-first fitness tracking app being built as an offline-first personal training platform. The goal is not just to log workouts, but to help the user understand what to train next, how to progress, and why a recommendation was made.
 
-Currently, two official plugins are available:
+## Current milestone
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**v0.7 — AI Coach Foundation**
 
-## React Compiler
+TrackFit now includes the first version of its coaching layer:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Exercise library and searchable exercise picker
+- Workout logging with rest timers and workout history
+- Previous workout targets and progression recommendations
+- PR detection and estimated 1RM tracking
+- Exercise detail pages and exercise analytics
+- AI Workout Builder powered by the exercise library
+- AI Coach page with readiness, weekly summary, plateau watch, recovery map and explainable recommendations
 
-## Expanding the ESLint configuration
+## Tech stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- React
+- Vite
+- React Router
+- Tailwind/shadcn-style UI components
+- Recharts
+- Vitest
+- LocalStorage for offline-first data
+
+## Development commands
+
+```bash
+npm install
+npm run dev
+npm run lint
+npm run build
+npm run test:run
+```
+
+Use this full check before pushing:
+
+```bash
+npm run check
+```
+
+## Project structure
+
+```text
+src/
+  components/     Reusable UI and layout components
+  data/           Imported TrackFit exercise library
+  pages/          App screens and routes
+  services/       Workout intelligence, PRs, progression, AI coach logic
+  styles/         Shared design tokens
+scripts/          Exercise import tooling
+public/           Static assets and attribution
+```
+
+## Documentation
+
+- `ROADMAP.md` — release milestones and future direction
+- `CHANGELOG.md` — version history
+- `CONTRIBUTING.md` — workflow and coding standards
+- `DEV_RULES.md` — practical development rules for this project
+
+## Product direction
+
+TrackFit is being built around one principle:
+
+> Logging is useful. Coaching is valuable.
+
+The long-term goal is to compete with workout loggers by making training decisions easier, clearer and more personalised.
