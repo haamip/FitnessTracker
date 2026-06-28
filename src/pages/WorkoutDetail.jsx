@@ -1,22 +1,52 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowDown,
   ArrowLeft,
   ArrowUp,
+  BellRing,
   ChevronRight,
   Circle,
   Copy,
   MoreHorizontal,
+  Pause,
   NotepadText,
   Play,
   Plus,
-  Timer,
+  SkipForward,
   Trash2,
 } from "lucide-react";
 import ExercisePicker from "../components/ExercisePicker";
 import "./TrackFitScreens.css";
+
+const DEFAULT_REST_SECONDS = 90;
+
+function parseRestSeconds(value) {
+  if (typeof value === "number") {
+    return value;
+  }
+
+  if (!value) {
+    return DEFAULT_REST_SECONDS;
+  }
+
+  const restText = String(value).toLowerCase();
+  const rangeMatch = restText.match(/(\d+)\s*-\s*(\d+)/);
+
+  if (rangeMatch) {
+    return Number.parseInt(rangeMatch[2], 10);
+  }
+
+  const singleMatch = restText.match(/(\d+)/);
+
+  if (!singleMatch) {
+    return DEFAULT_REST_SECONDS;
+  }
+
+  const restValue = Number.parseInt(singleMatch[1], 10);
+  return restText.includes("min") ? restValue * 60 : restValue;
+}
 
 function createSet(weight = "", reps = "10", type = "S") {
   return {
@@ -38,6 +68,7 @@ function createDefaultExercises() {
       primaryMuscles: ["hamstrings"],
       equipment: ["dumbbell"],
       movementPattern: "hinge",
+      defaultRestSeconds: 90,
       sets: [createSet("35", "10"), createSet("35", "10")],
     },
     {
@@ -48,6 +79,7 @@ function createDefaultExercises() {
       primaryMuscles: ["calves"],
       equipment: ["dumbbell"],
       movementPattern: "calf_raise",
+      defaultRestSeconds: 60,
       sets: [createSet("20", "12"), createSet("20", "12")],
     },
     {
@@ -58,6 +90,7 @@ function createDefaultExercises() {
       primaryMuscles: ["shoulders"],
       equipment: ["dumbbell"],
       movementPattern: "vertical_push",
+      defaultRestSeconds: 90,
       sets: [createSet("25", "10"), createSet("25", "10")],
     },
     {
@@ -68,6 +101,7 @@ function createDefaultExercises() {
       primaryMuscles: ["lats"],
       equipment: ["dumbbell"],
       movementPattern: "horizontal_pull",
+      defaultRestSeconds: 90,
       sets: [createSet("35", "10"), createSet("35", "10")],
     },
     {
@@ -78,6 +112,7 @@ function createDefaultExercises() {
       primaryMuscles: ["quadriceps"],
       equipment: ["barbell"],
       movementPattern: "squat",
+      defaultRestSeconds: 120,
       sets: [createSet("80", "10"), createSet("80", "10")],
     },
   ];
@@ -118,6 +153,7 @@ function convertAiDayToWorkout(day) {
     primaryMuscles: exercise.primaryMuscles || [],
     equipment: exercise.equipment || [],
     movementPattern: exercise.movementPattern || "unknown",
+    defaultRestSeconds: parseRestSeconds(exercise.rest),
     sets: Array.from({ length: exercise.sets }, () => createSet("", exercise.reps, "S")),
   }));
 }
@@ -141,8 +177,10 @@ export default function WorkoutDetail() {
   const aiDay = findAiDay(id);
 
   const [seconds, setSeconds] = useState(0);
-  const [restSeconds, setRestSeconds] = useState(60);
+  const [restSeconds, setRestSeconds] = useState(DEFAULT_REST_SECONDS);
   const [restRunning, setRestRunning] = useState(false);
+  const [activeRestLabel, setActiveRestLabel] = useState("Rest ready");
+  const [restCompletedMessage, setRestCompletedMessage] = useState("");
   const [notes, setNotes] = useState("");
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
@@ -170,6 +208,66 @@ export default function WorkoutDetail() {
     return () => window.clearInterval(timer);
   }, []);
 
+  const notifyRestFinished = useCallback((exerciseName) => {
+    const message = `${exerciseName || "Your"} rest is finished. Time for the next set.`;
+
+    if ("vibrate" in navigator) {
+      navigator.vibrate([250, 120, 250]);
+    }
+
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("TrackFit rest finished", {
+        body: message,
+        silent: false,
+      });
+    }
+  }, []);
+
+  function requestNotificationPermission() {
+    if (!("Notification" in window) || Notification.permission !== "default") {
+      return;
+    }
+
+    Notification.requestPermission().catch(() => {
+      // If the phone/browser blocks notification permission, TrackFit still uses the in-app timer.
+    });
+  }
+
+  function getExerciseRestSeconds(exercise) {
+    return parseRestSeconds(exercise.defaultRestSeconds || exercise.rest || DEFAULT_REST_SECONDS);
+  }
+
+  function startRestTimer(exercise) {
+    const restDuration = getExerciseRestSeconds(exercise);
+
+    /*
+      Rest timer automation
+
+      The user should not have to press a separate Start Rest button while training.
+      When a set is ticked done, TrackFit automatically:
+      1. reads the exercise rest time,
+      2. starts the countdown,
+      3. asks for notification permission if needed,
+      4. vibrates/sends a notification when rest finishes.
+    */
+    setRestSeconds(restDuration);
+    setActiveRestLabel(`${exercise.name} rest`);
+    setRestCompletedMessage("");
+    setRestRunning(true);
+    requestNotificationPermission();
+  }
+
+  function skipRestTimer() {
+    setRestRunning(false);
+    setRestSeconds(0);
+    setRestCompletedMessage("Rest skipped. Ready when you are.");
+  }
+
+  function addRestTime(extraSeconds) {
+    setRestSeconds((currentSeconds) => currentSeconds + extraSeconds);
+    setRestRunning(true);
+  }
+
   useEffect(() => {
     if (!restRunning) {
       return undefined;
@@ -179,7 +277,9 @@ export default function WorkoutDetail() {
       setRestSeconds((currentSeconds) => {
         if (currentSeconds <= 1) {
           setRestRunning(false);
-          return 60;
+          setRestCompletedMessage(`${activeRestLabel} finished. Next set.`);
+          notifyRestFinished(activeRestLabel.replace(" rest", ""));
+          return 0;
         }
 
         return currentSeconds - 1;
@@ -187,7 +287,7 @@ export default function WorkoutDetail() {
     }, 1000);
 
     return () => window.clearInterval(timer);
-  }, [restRunning]);
+  }, [activeRestLabel, notifyRestFinished, restRunning]);
 
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(exercises));
@@ -224,15 +324,14 @@ export default function WorkoutDetail() {
   }, [exercises]);
 
   function updateSet(exerciseId, setId, field, value) {
-    if (field === "done" && value) {
-      setRestSeconds(60);
-      setRestRunning(true);
-    }
-
     setExercises((currentExercises) =>
       currentExercises.map((exercise) => {
         if (exercise.id !== exerciseId) {
           return exercise;
+        }
+
+        if (field === "done" && value) {
+          startRestTimer(exercise);
         }
 
         return {
@@ -345,6 +444,7 @@ export default function WorkoutDetail() {
       primaryMuscles: libraryExercise.primaryMuscles || [],
       equipment: libraryExercise.equipment || [],
       movementPattern: libraryExercise.movementPattern || "unknown",
+      defaultRestSeconds: libraryExercise.defaultRestSeconds || DEFAULT_REST_SECONDS,
       instructions: libraryExercise.instructions || [],
       sets: Array.from({ length: setCount }, () => createSet("", reps, "S")),
     };
@@ -481,7 +581,7 @@ export default function WorkoutDetail() {
                         <span>{setIndex + 1}</span>
 
                         <label aria-label={`Set ${setIndex + 1} rest timer`}>
-                          <Timer size={20} />
+                          <BellRing size={20} />
                         </label>
 
                         <input
@@ -551,23 +651,26 @@ export default function WorkoutDetail() {
                     </details>
                   )}
 
-                  <div className="tf-rest-card">
+                  <div className={restRunning ? "tf-rest-card running" : "tf-rest-card"}>
                     <div>
-                      <strong>REST TIMER</strong>
+                      <strong>AUTO REST TIMER</strong>
+                      <small>{activeRestLabel}</small>
                       <span>{formatClock(restSeconds)}</span>
-                      <button onClick={() => setRestRunning(true)} type="button">
-                        {restRunning ? "Rest timer running" : "Start Rest Timer"}
-                      </button>
+                      <em>{restCompletedMessage || "Tick a set done to start rest automatically."}</em>
                     </div>
 
-                    <button
-                      aria-label="Start rest timer"
-                      className="tf-play-btn"
-                      onClick={() => setRestRunning((current) => !current)}
-                      type="button"
-                    >
-                      <Play size={24} fill="currentColor" />
-                    </button>
+                    <div className="tf-rest-controls">
+                      <button
+                        aria-label={restRunning ? "Pause rest timer" : "Resume rest timer"}
+                        className="tf-play-btn"
+                        onClick={() => setRestRunning((current) => !current)}
+                        type="button"
+                      >
+                        {restRunning ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" />}
+                      </button>
+                      <button onClick={() => addRestTime(15)} type="button">+15s</button>
+                      <button onClick={skipRestTimer} type="button"><SkipForward size={15} /> Skip</button>
+                    </div>
                   </div>
 
                   <textarea

@@ -3496,3 +3496,45 @@ body,
     grid-template-columns: 1fr;
   }
 }
+
+/* Auto rest timer controls */
+.tf-rest-card.running {
+  border-color: rgba(245, 158, 11, 0.42);
+  box-shadow: 0 14px 34px rgba(245, 158, 11, 0.12);
+}
+
+.tf-rest-card small {
+  color: #777;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.tf-rest-card em {
+  max-width: 220px;
+  color: #777;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.tf-rest-controls {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
+.tf-rest-controls button:not(.tf-play-btn) {
+  min-height: 34px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 999px;
+  background: #fff;
+  color: #090909;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 950;
+}
