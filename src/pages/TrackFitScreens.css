@@ -3182,3 +3182,317 @@ a {
     display: none !important;
   }
 }
+
+
+/* TrackFit usability fix pack - no sideways scroll, clearer text, AI Builder v2 */
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.screen,
+.dashboard-v4,
+.checkin-v4,
+.cardio-v4,
+.workouts-v4,
+.workout-detail-v4,
+.tf-ai-builder,
+.tf-picker-sheet,
+.v4-hero,
+.v4-checkin-hero,
+.v4-checkin-score,
+.v4-training-toggle,
+.v4-ai-insight,
+.v4-mini-summary,
+.v4-today-card,
+.v4-stat-card,
+.v4-coach-card,
+.v4-achievement-card,
+.tf-generated-day,
+.tf-picker-item,
+.tf-picker-preview {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.screen *,
+.tf-picker-sheet *,
+.dashboard-v4 *,
+.checkin-v4 * {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.v4-training-toggle,
+.v4-ai-insight,
+.v4-mini-summary,
+.v4-today-card,
+.v4-achievement-card,
+.v4-recovery-row,
+.v4-cardio-row {
+  overflow: hidden;
+}
+
+.v4-training-toggle h2,
+.v4-ai-insight h2,
+.v4-ai-insight p,
+.v4-mini-summary span,
+.v4-today-card p,
+.v4-today-card h2,
+.v4-cardio-row p {
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.tf-picker-sheet {
+  width: min(100%, 520px);
+  max-width: calc(100vw - 16px);
+  border-radius: 26px 26px 0 0;
+}
+
+.tf-picker-head,
+.tf-picker-search,
+.tf-filter-row,
+.tf-picker-count,
+.tf-picker-list {
+  max-width: 100%;
+}
+
+.tf-picker-item {
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  color: #111;
+}
+
+.tf-picker-item > span:not(.tf-picker-art):not(.tf-picker-actions),
+.tf-picker-preview > div,
+.ai-day-head,
+.ai-exercise-row {
+  min-width: 0;
+}
+
+.tf-picker-item strong,
+.tf-picker-preview strong,
+.ai-exercise-row strong {
+  display: block;
+  color: #0b0b0b;
+  font-size: 16px;
+  line-height: 1.22;
+  font-weight: 950;
+  letter-spacing: -0.1px;
+}
+
+.tf-picker-item small,
+.tf-picker-preview span,
+.tf-picker-preview small,
+.ai-exercise-row span,
+.ai-exercise-row small {
+  display: block;
+  max-width: 100%;
+  color: #5f5f5f;
+  font-size: 13px;
+  line-height: 1.3;
+  font-weight: 850;
+  white-space: normal;
+}
+
+.tf-picker-actions {
+  flex-shrink: 0;
+}
+
+.ai-builder-v2 {
+  gap: 16px;
+}
+
+.ai-builder-hero {
+  align-items: flex-start;
+  padding: 16px;
+  border-radius: 26px;
+  background: linear-gradient(135deg, #111, #2b2417);
+  color: #fff;
+}
+
+.ai-builder-hero a {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.ai-builder-hero p,
+.ai-builder-hero span {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.ai-builder-hero h1 {
+  color: #fff;
+  font-size: 32px;
+  line-height: 0.98;
+}
+
+.ai-control-panel {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  background: #fff;
+  color: #111;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
+}
+
+.ai-control-panel label {
+  color: #555;
+}
+
+.ai-control-panel select {
+  background: #f7f7f7;
+  color: #111;
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+.ai-builder-brain-card {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 22px;
+  background: #111;
+  color: #fff;
+}
+
+.ai-builder-brain-card svg {
+  flex: 0 0 auto;
+  color: #f59e0b;
+}
+
+.ai-builder-brain-card strong {
+  display: block;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.ai-builder-brain-card p {
+  margin: 5px 0 0;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 13px;
+  line-height: 1.38;
+  font-weight: 800;
+}
+
+.ai-program-summary {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.ai-program-summary::-webkit-scrollbar {
+  display: none;
+}
+
+.ai-program-summary span {
+  flex: 0 0 auto;
+  padding: 8px 11px;
+  border-radius: 999px;
+  background: #f4ead8;
+  color: #8a5f08;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.ai-day-card {
+  gap: 14px;
+}
+
+.ai-day-head {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 2px 12px;
+  align-items: center;
+}
+
+.ai-day-head svg {
+  grid-row: span 2;
+}
+
+.ai-day-head h3,
+.ai-day-head span {
+  min-width: 0;
+}
+
+.ai-exercise-list {
+  display: grid;
+  gap: 9px;
+}
+
+.ai-exercise-row {
+  display: grid;
+  gap: 3px;
+  padding: 11px 0 0;
+  border-top: 1px solid rgba(15, 23, 42, 0.07);
+}
+
+.ai-builder-actions {
+  position: sticky;
+  bottom: 78px;
+  z-index: 12;
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 10px;
+  padding-top: 12px;
+  background: linear-gradient(to top, rgba(247,246,242,1), rgba(247,246,242,0.88), transparent);
+}
+
+.ai-builder-actions .tf-save-plan-btn {
+  position: static;
+  width: 100%;
+}
+
+.ai-secondary-btn {
+  min-height: 58px;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  border-radius: 18px;
+  background: #fff;
+  color: #111;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+@media (max-width: 430px) {
+  .tf-picker-backdrop {
+    padding: 8px;
+  }
+
+  .tf-picker-preview {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .tf-picker-preview button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .tf-picker-item {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .tf-picker-actions {
+    grid-column: 1 / -1;
+    display: flex !important;
+    justify-content: flex-end;
+  }
+
+  .ai-control-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-builder-actions {
+    grid-template-columns: 1fr;
+  }
+}

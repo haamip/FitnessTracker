@@ -1,64 +1,34 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Dumbbell, Save, Sparkles } from "lucide-react";
+import { ArrowLeft, Brain, Dumbbell, RefreshCcw, Save, Sparkles } from "lucide-react";
 import { exerciseLibrary } from "../data/exerciseLibrary";
 import "./TrackFitScreens.css";
 
-const templates = {
+const splitTemplates = {
   muscle: [
-    {
-      name: "Upper A",
-      slots: ["horizontal_push", "horizontal_pull", "vertical_push", "vertical_pull", "elbow_flexion", "elbow_extension"],
-    },
-    {
-      name: "Lower A",
-      slots: ["squat", "hinge", "squat", "calf_raise", "core"],
-    },
-    {
-      name: "Upper B",
-      slots: ["horizontal_push", "horizontal_pull", "vertical_push", "vertical_pull", "elbow_flexion", "elbow_extension"],
-    },
-    {
-      name: "Lower B",
-      slots: ["hinge", "squat", "calf_raise", "core", "conditioning"],
-    },
+    { name: "Upper A", slots: ["horizontal_push", "horizontal_pull", "vertical_push", "vertical_pull", "elbow_flexion", "elbow_extension"] },
+    { name: "Lower A", slots: ["squat", "hinge", "squat", "calf_raise", "core"] },
+    { name: "Upper B", slots: ["horizontal_push", "horizontal_pull", "vertical_push", "vertical_pull", "elbow_flexion", "elbow_extension"] },
+    { name: "Lower B", slots: ["hinge", "squat", "calf_raise", "core", "conditioning"] },
   ],
   strength: [
-    {
-      name: "Heavy Upper",
-      slots: ["horizontal_push", "horizontal_pull", "vertical_push", "vertical_pull"],
-    },
-    {
-      name: "Heavy Lower",
-      slots: ["squat", "hinge", "squat", "core"],
-    },
-    {
-      name: "Bench Focus",
-      slots: ["horizontal_push", "horizontal_push", "horizontal_pull", "elbow_extension"],
-    },
-    {
-      name: "Deadlift Focus",
-      slots: ["hinge", "squat", "horizontal_pull", "core"],
-    },
+    { name: "Heavy Upper", slots: ["horizontal_push", "horizontal_pull", "vertical_push", "vertical_pull"] },
+    { name: "Heavy Lower", slots: ["squat", "hinge", "squat", "core"] },
+    { name: "Bench Focus", slots: ["horizontal_push", "horizontal_push", "horizontal_pull", "elbow_extension"] },
+    { name: "Deadlift Focus", slots: ["hinge", "squat", "horizontal_pull", "core"] },
   ],
   fatloss: [
-    {
-      name: "Full Body Strength",
-      slots: ["squat", "horizontal_push", "horizontal_pull", "hinge", "conditioning"],
-    },
-    {
-      name: "Conditioning",
-      slots: ["conditioning", "squat", "horizontal_push", "core"],
-    },
-    {
-      name: "Upper Circuit",
-      slots: ["horizontal_push", "horizontal_pull", "vertical_push", "vertical_pull", "core"],
-    },
-    {
-      name: "Lower Circuit",
-      slots: ["squat", "hinge", "calf_raise", "core", "conditioning"],
-    },
+    { name: "Full Body Strength", slots: ["squat", "horizontal_push", "horizontal_pull", "hinge", "conditioning"] },
+    { name: "Conditioning Circuit", slots: ["conditioning", "squat", "horizontal_push", "core"] },
+    { name: "Upper Circuit", slots: ["horizontal_push", "horizontal_pull", "vertical_push", "vertical_pull", "core"] },
+    { name: "Lower Circuit", slots: ["squat", "hinge", "calf_raise", "core", "conditioning"] },
   ],
+};
+
+const equipmentLabels = {
+  "full gym": "Full Gym",
+  dumbbells: "Dumbbells",
+  home: "Home / Minimal Kit",
 };
 
 function goalPrescription(goal, level) {
@@ -67,6 +37,7 @@ function goalPrescription(goal, level) {
       sets: level === "beginner" ? 3 : 4,
       reps: "4-6",
       rest: "120 sec",
+      note: "Heavy work. Longer rests. Add load slowly.",
     };
   }
 
@@ -75,6 +46,7 @@ function goalPrescription(goal, level) {
       sets: level === "beginner" ? 2 : 3,
       reps: "10-15",
       rest: "45-60 sec",
+      note: "Controlled pace. Keep the heart rate up.",
     };
   }
 
@@ -82,13 +54,12 @@ function goalPrescription(goal, level) {
     sets: level === "beginner" ? 2 : 3,
     reps: "8-12",
     rest: "60-90 sec",
+    note: "Muscle building range. Chase quality reps.",
   };
 }
 
 function equipmentMatches(exercise, equipment) {
-  if (equipment === "full gym") {
-    return true;
-  }
+  if (equipment === "full gym") return true;
 
   const exerciseEquipment = (exercise.equipment || []).join(" ").toLowerCase();
 
@@ -103,19 +74,49 @@ function equipmentMatches(exercise, equipment) {
   return true;
 }
 
-function pickExercise(slot, equipment, usedExerciseIds) {
-  const exactMatches = exerciseLibrary.filter(
-    (exercise) =>
-      exercise.movementPattern === slot &&
-      equipmentMatches(exercise, equipment) &&
-      !usedExerciseIds.has(exercise.id),
-  );
+function injurySafe(exercise, injuryFocus) {
+  if (injuryFocus === "none") return true;
 
-  const backupMatches = exerciseLibrary.filter(
-    (exercise) => equipmentMatches(exercise, equipment) && !usedExerciseIds.has(exercise.id),
-  );
+  const name = exercise.name.toLowerCase();
+  const pattern = exercise.movementPattern || "";
 
-  return exactMatches[0] || backupMatches[0] || exerciseLibrary[0];
+  if (injuryFocus === "shoulder") {
+    return !name.includes("behind the neck") && pattern !== "vertical_push";
+  }
+
+  if (injuryFocus === "knee") {
+    return pattern !== "squat" || name.includes("bodyweight") || name.includes("box");
+  }
+
+  if (injuryFocus === "lower_back") {
+    return pattern !== "hinge" || name.includes("dumbbell") || name.includes("glute");
+  }
+
+  return true;
+}
+
+function scoreExercise(exercise, slot, equipment, usedExerciseIds, injuryFocus) {
+  let score = 0;
+
+  if (exercise.movementPattern === slot) score += 60;
+  if (equipmentMatches(exercise, equipment)) score += 25;
+  if (injurySafe(exercise, injuryFocus)) score += 15;
+  if (usedExerciseIds.has(exercise.id)) score -= 100;
+  if ((exercise.difficulty || "").toLowerCase() === "beginner") score += 2;
+
+  return score;
+}
+
+function pickExercise(slot, equipment, usedExerciseIds, injuryFocus) {
+  const rankedExercises = exerciseLibrary
+    .map((exercise) => ({
+      exercise,
+      score: scoreExercise(exercise, slot, equipment, usedExerciseIds, injuryFocus),
+    }))
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score || a.exercise.name.localeCompare(b.exercise.name));
+
+  return rankedExercises[0]?.exercise || exerciseLibrary[0];
 }
 
 function convertDayToWorkout(day) {
@@ -128,6 +129,7 @@ function convertDayToWorkout(day) {
     primaryMuscles: exercise.primaryMuscles || [],
     equipment: exercise.equipment || [],
     movementPattern: exercise.movementPattern || "unknown",
+    instructions: exercise.instructions || [],
     sets: Array.from({ length: exercise.sets }, () => ({
       id: crypto.randomUUID(),
       weight: "",
@@ -144,27 +146,29 @@ export default function AIWorkoutBuilder() {
   const [time, setTime] = useState("60");
   const [level, setLevel] = useState("intermediate");
   const [equipment, setEquipment] = useState("full gym");
+  const [injuryFocus, setInjuryFocus] = useState("none");
   const [saved, setSaved] = useState(false);
+  const [planVersion, setPlanVersion] = useState(1);
+
+  const prescription = useMemo(() => goalPrescription(goal, level), [goal, level]);
 
   const plan = useMemo(() => {
-    const selectedTemplates = templates[goal].slice(0, Number(days));
+    const selectedTemplates = splitTemplates[goal].slice(0, Number(days));
     const usedExerciseIds = new Set();
-    const prescription = goalPrescription(goal, level);
 
     /*
-      AI Builder brain, v1
+      AI Builder v2 brain
 
-      This is not using fake presets anymore.
-      It uses workout structure templates made of movement patterns, then fills
-      each slot from the real TrackFit exercise library.
+      This builder now works from the TrackFit exercise library instead of hardcoded exercises.
+      The flow is:
+      1. Pick a training split based on the user's goal and days per week.
+      2. Convert each workout into movement pattern slots.
+      3. Search exerciseLibrary for the best exercise for each slot.
+      4. Score choices by movement pattern, equipment, injury filter, and duplicates.
+      5. Save the generated days into the same workout logger format the app already uses.
 
-      Example:
-      - horizontal_push becomes Bench Press, Dumbbell Press, Push Up, etc.
-      - hinge becomes Deadlift, Romanian Deadlift, Good Morning, etc.
-      - vertical_pull becomes Pull Up, Lat Pulldown, etc.
-
-      Later this same selection step can consider injuries, favourites,
-      previous lifts, recovery, and available equipment.
+      This keeps one source of truth:
+      Exercise Library -> AI Builder -> Workout Logger -> History -> Future Coach.
     */
     return selectedTemplates.map((template, index) => ({
       id: `ai-${index + 1}`,
@@ -173,8 +177,10 @@ export default function AIWorkoutBuilder() {
       time,
       level,
       equipment,
+      injuryFocus,
+      planVersion,
       exercises: template.slots.map((slot) => {
-        const selectedExercise = pickExercise(slot, equipment, usedExerciseIds);
+        const selectedExercise = pickExercise(slot, equipment, usedExerciseIds, injuryFocus);
         usedExerciseIds.add(selectedExercise.id);
 
         return {
@@ -183,11 +189,12 @@ export default function AIWorkoutBuilder() {
           movementPattern: selectedExercise.movementPattern,
           primaryMuscles: selectedExercise.primaryMuscles || [],
           equipment: selectedExercise.equipment || [],
+          instructions: selectedExercise.instructions || [],
           ...prescription,
         };
       }),
     }));
-  }, [goal, days, time, level, equipment]);
+  }, [days, equipment, goal, injuryFocus, level, planVersion, prescription, time]);
 
   function savePlan() {
     localStorage.setItem("trackfit_ai_workout_plan", JSON.stringify(plan));
@@ -199,19 +206,25 @@ export default function AIWorkoutBuilder() {
     setSaved(true);
   }
 
+  function regeneratePlan() {
+    setPlanVersion((currentVersion) => currentVersion + 1);
+    setSaved(false);
+  }
+
   return (
-    <main className="screen tf-ai-builder">
-      <header className="tf-builder-top">
+    <main className="screen tf-ai-builder ai-builder-v2">
+      <header className="tf-builder-top ai-builder-hero">
         <Link to="/workouts" aria-label="Back to workouts">
           <ArrowLeft size={24} />
         </Link>
         <div>
-          <p>AI Builder</p>
+          <p>AI Builder v2</p>
           <h1>Build Workout</h1>
+          <span>Uses the real TrackFit exercise library.</span>
         </div>
       </header>
 
-      <section className="tf-builder-panel">
+      <section className="tf-builder-panel ai-control-panel">
         <label>
           Goal
           <select value={goal} onChange={(event) => setGoal(event.target.value)}>
@@ -252,9 +265,30 @@ export default function AIWorkoutBuilder() {
           <select value={equipment} onChange={(event) => setEquipment(event.target.value)}>
             <option value="full gym">Full Gym</option>
             <option value="dumbbells">Dumbbells</option>
-            <option value="home">Home</option>
+            <option value="home">Home / Minimal Kit</option>
           </select>
         </label>
+
+        <label>
+          Protect Area
+          <select value={injuryFocus} onChange={(event) => setInjuryFocus(event.target.value)}>
+            <option value="none">No injury filter</option>
+            <option value="shoulder">Shoulder friendly</option>
+            <option value="knee">Knee friendly</option>
+            <option value="lower_back">Lower-back friendly</option>
+          </select>
+        </label>
+      </section>
+
+      <section className="ai-builder-brain-card">
+        <Brain size={22} />
+        <div>
+          <strong>How this plan was built</strong>
+          <p>
+            TrackFit picks movement patterns first, then selects matching exercises from the library based on your goal,
+            kit, level and protect-area setting.
+          </p>
+        </div>
       </section>
 
       <section className="tf-generated-plan">
@@ -266,28 +300,45 @@ export default function AIWorkoutBuilder() {
           <Sparkles size={24} />
         </div>
 
+        <div className="ai-program-summary">
+          <span>{equipmentLabels[equipment]}</span>
+          <span>{prescription.sets} sets</span>
+          <span>{prescription.reps} reps</span>
+          <span>{prescription.rest}</span>
+        </div>
+
         {plan.map((day) => (
-          <article className="tf-generated-day" key={day.id}>
-            <div>
+          <article className="tf-generated-day ai-day-card" key={day.id}>
+            <div className="ai-day-head">
               <Dumbbell size={22} />
               <h3>{day.name}</h3>
               <span>{day.time} mins • {day.equipment}</span>
             </div>
 
-            {day.exercises.map((exercise) => (
-              <p key={`${day.id}-${exercise.id}`}>
-                <strong>{exercise.name}</strong>
-                <span>{exercise.sets} sets × {exercise.reps} • {exercise.rest}</span>
-              </p>
-            ))}
+            <div className="ai-exercise-list">
+              {day.exercises.map((exercise) => (
+                <div className="ai-exercise-row" key={`${day.id}-${exercise.id}`}>
+                  <strong>{exercise.name}</strong>
+                  <span>{exercise.movementPattern?.replaceAll("_", " ") || "movement"}</span>
+                  <small>{exercise.sets} sets x {exercise.reps} • {exercise.rest}</small>
+                </div>
+              ))}
+            </div>
           </article>
         ))}
       </section>
 
-      <button className="tf-save-plan-btn" onClick={savePlan} type="button">
-        <Save size={20} />
-        {saved ? "Plan Saved — go to Workouts" : "Save Program"}
-      </button>
+      <div className="ai-builder-actions">
+        <button className="ai-secondary-btn" onClick={regeneratePlan} type="button">
+          <RefreshCcw size={18} />
+          Regenerate
+        </button>
+
+        <button className="tf-save-plan-btn" onClick={savePlan} type="button">
+          <Save size={20} />
+          {saved ? "Plan Saved - go to Workouts" : "Save Program"}
+        </button>
+      </div>
     </main>
   );
 }

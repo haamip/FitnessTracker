@@ -71,7 +71,7 @@ export default function CardioLog() {
         <div>
           <p className="eyebrow">Log cardio</p>
           <h2>Add today&apos;s session</h2>
-          <p>Walk, bike, treadmill, rower â€” it all counts.</p>
+          <p>Walk, bike, treadmill, rower - it all counts.</p>
         </div>
 
         <Button className="v4-cardio-add">
@@ -99,7 +99,7 @@ export default function CardioLog() {
 
             <div>
               <strong>{session.type}</strong>
-              <p>{session.distance} Â· {session.time} Â· {session.pace}</p>
+              <p>{session.distance} · {session.time} · {session.pace}</p>
             </div>
 
             <span>{session.zone}</span>

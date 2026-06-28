@@ -90,7 +90,7 @@ export default function Dashboard() {
         <div className="v4-today-card__main">
           <p className="eyebrow">Today&apos;s workout</p>
           <h2>Upper Strength</h2>
-          <p>6 exercises Ã‚Â· around 55 mins</p>
+          <p>6 exercises · around 55 mins</p>
         </div>
 
         <Button className="v4-start-btn">

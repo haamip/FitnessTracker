@@ -89,7 +89,7 @@ export default function DailyCheckIn() {
       <section className="v4-training-toggle">
         <div>
           <p className="eyebrow">Training today?</p>
-          <h2>Yes ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â upper strength</h2>
+          <h2>Yes - upper strength</h2>
           <span>Workout planned for this shift window.</span>
         </div>
 
