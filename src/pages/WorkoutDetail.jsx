@@ -2,14 +2,18 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
+  ArrowDown,
   ArrowLeft,
+  ArrowUp,
   ChevronRight,
   Circle,
+  Copy,
   MoreHorizontal,
   NotepadText,
   Play,
   Plus,
   Timer,
+  Trash2,
 } from "lucide-react";
 import ExercisePicker from "../components/ExercisePicker";
 import "./TrackFitScreens.css";
@@ -31,6 +35,9 @@ function createDefaultExercises() {
       name: "Dumbbell Romanian Deadlift",
       target: "2 sets • 10 reps",
       image: "TF",
+      primaryMuscles: ["hamstrings"],
+      equipment: ["dumbbell"],
+      movementPattern: "hinge",
       sets: [createSet("35", "10"), createSet("35", "10")],
     },
     {
@@ -38,6 +45,9 @@ function createDefaultExercises() {
       name: "Dumbbell Standing Calf Raise",
       target: "2 sets • 12 reps",
       image: "TF",
+      primaryMuscles: ["calves"],
+      equipment: ["dumbbell"],
+      movementPattern: "calf_raise",
       sets: [createSet("20", "12"), createSet("20", "12")],
     },
     {
@@ -45,6 +55,9 @@ function createDefaultExercises() {
       name: "Dumbbell Shoulder Press",
       target: "2 sets • 10 reps",
       image: "TF",
+      primaryMuscles: ["shoulders"],
+      equipment: ["dumbbell"],
+      movementPattern: "vertical_push",
       sets: [createSet("25", "10"), createSet("25", "10")],
     },
     {
@@ -52,6 +65,9 @@ function createDefaultExercises() {
       name: "Dumbbell Row",
       target: "2 sets • 10 reps",
       image: "TF",
+      primaryMuscles: ["lats"],
+      equipment: ["dumbbell"],
+      movementPattern: "horizontal_pull",
       sets: [createSet("35", "10"), createSet("35", "10")],
     },
     {
@@ -59,6 +75,9 @@ function createDefaultExercises() {
       name: "Barbell Back Squat",
       target: "2 sets • 10 reps",
       image: "TF",
+      primaryMuscles: ["quadriceps"],
+      equipment: ["barbell"],
+      movementPattern: "squat",
       sets: [createSet("80", "10"), createSet("80", "10")],
     },
   ];
@@ -101,6 +120,18 @@ function convertAiDayToWorkout(day) {
     movementPattern: exercise.movementPattern || "unknown",
     sets: Array.from({ length: exercise.sets }, () => createSet("", exercise.reps, "S")),
   }));
+}
+
+function duplicateWorkoutExercise(exercise) {
+  return {
+    ...exercise,
+    id: `${exercise.libraryId || exercise.id}-${crypto.randomUUID()}`,
+    sets: exercise.sets.map((set) => ({
+      ...set,
+      id: crypto.randomUUID(),
+      done: false,
+    })),
+  };
 }
 
 export default function WorkoutDetail() {
@@ -193,6 +224,11 @@ export default function WorkoutDetail() {
   }, [exercises]);
 
   function updateSet(exerciseId, setId, field, value) {
+    if (field === "done" && value) {
+      setRestSeconds(60);
+      setRestRunning(true);
+    }
+
     setExercises((currentExercises) =>
       currentExercises.map((exercise) => {
         if (exercise.id !== exerciseId) {
@@ -230,6 +266,62 @@ export default function WorkoutDetail() {
     );
   }
 
+  function removeSet(exerciseId, setId) {
+    setExercises((currentExercises) =>
+      currentExercises.map((exercise) => {
+        if (exercise.id !== exerciseId || exercise.sets.length === 1) {
+          return exercise;
+        }
+
+        return {
+          ...exercise,
+          sets: exercise.sets.filter((set) => set.id !== setId),
+        };
+      }),
+    );
+  }
+
+  function moveExercise(exerciseId, direction) {
+    setExercises((currentExercises) => {
+      const currentIndex = currentExercises.findIndex((exercise) => exercise.id === exerciseId);
+      const nextIndex = currentIndex + direction;
+
+      if (currentIndex < 0 || nextIndex < 0 || nextIndex >= currentExercises.length) {
+        return currentExercises;
+      }
+
+      const reorderedExercises = [...currentExercises];
+      const [movedExercise] = reorderedExercises.splice(currentIndex, 1);
+      reorderedExercises.splice(nextIndex, 0, movedExercise);
+      return reorderedExercises;
+    });
+  }
+
+  function removeExercise(exerciseId) {
+    setExercises((currentExercises) => {
+      const nextExercises = currentExercises.filter((exercise) => exercise.id !== exerciseId);
+
+      if (openExerciseId === exerciseId) {
+        setOpenExerciseId(nextExercises[0]?.id || "");
+      }
+
+      return nextExercises;
+    });
+  }
+
+  function duplicateExercise(exercise) {
+    const duplicatedExercise = duplicateWorkoutExercise(exercise);
+
+    setExercises((currentExercises) => {
+      const currentIndex = currentExercises.findIndex((item) => item.id === exercise.id);
+      const nextExercises = [...currentExercises];
+      nextExercises.splice(currentIndex + 1, 0, duplicatedExercise);
+      return nextExercises;
+    });
+
+    setOpenExerciseId(duplicatedExercise.id);
+  }
+
   /*
     This is where the Exercise Engine plugs into the Workout Logger.
 
@@ -253,6 +345,7 @@ export default function WorkoutDetail() {
       primaryMuscles: libraryExercise.primaryMuscles || [],
       equipment: libraryExercise.equipment || [],
       movementPattern: libraryExercise.movementPattern || "unknown",
+      instructions: libraryExercise.instructions || [],
       sets: Array.from({ length: setCount }, () => createSet("", reps, "S")),
     };
 
@@ -276,6 +369,7 @@ export default function WorkoutDetail() {
     };
 
     localStorage.setItem("trackfit_workout_history", JSON.stringify([finishedWorkout, ...history]));
+    localStorage.removeItem(storageKey);
     navigate("/workouts");
   }
 
@@ -309,6 +403,16 @@ export default function WorkoutDetail() {
         </div>
       </section>
 
+      {exercises.length === 0 && (
+        <section className="tf-empty-workout">
+          <strong>Empty workout</strong>
+          <span>Add your first exercise from the library.</span>
+          <button onClick={() => setIsPickerOpen(true)} type="button">
+            <Plus size={18} /> Add Exercise
+          </button>
+        </section>
+      )}
+
       <section className="tf-exercise-stack">
         {exercises.map((exercise, exerciseIndex) => {
           const isOpen = exercise.id === openExerciseId;
@@ -321,11 +425,14 @@ export default function WorkoutDetail() {
                 type="button"
               >
                 <span className="tf-exercise-number">{exerciseIndex + 1}</span>
-                <span className="tf-exercise-art" aria-hidden="true">{exercise.image}</span>
+                <span className="tf-exercise-art" aria-hidden="true">{exercise.image || "TF"}</span>
 
                 <span className="tf-exercise-title">
                   <strong>{exercise.name}</strong>
-                  <small>{exercise.target}</small>
+                  <small>
+                    {exercise.target}
+                    {exercise.movementPattern ? ` • ${exercise.movementPattern.replaceAll("_", " ")}` : ""}
+                  </small>
                 </span>
 
                 {isOpen ? <MoreHorizontal size={24} /> : <ChevronRight size={24} />}
@@ -333,6 +440,21 @@ export default function WorkoutDetail() {
 
               {isOpen && (
                 <div className="tf-open-panel">
+                  <div className="tf-exercise-tools">
+                    <button onClick={() => moveExercise(exercise.id, -1)} type="button">
+                      <ArrowUp size={16} /> Up
+                    </button>
+                    <button onClick={() => moveExercise(exercise.id, 1)} type="button">
+                      <ArrowDown size={16} /> Down
+                    </button>
+                    <button onClick={() => duplicateExercise(exercise)} type="button">
+                      <Copy size={16} /> Duplicate
+                    </button>
+                    <button className="danger" onClick={() => removeExercise(exercise.id)} type="button">
+                      <Trash2 size={16} /> Delete
+                    </button>
+                  </div>
+
                   <div className="tf-target-box">
                     <div>
                       <strong>TARGET</strong>
@@ -398,6 +520,17 @@ export default function WorkoutDetail() {
                         >
                           <Circle size={22} />
                         </button>
+
+                        {exercise.sets.length > 1 && (
+                          <button
+                            aria-label={`Remove set ${setIndex + 1}`}
+                            className="tf-remove-set-btn"
+                            onClick={() => removeSet(exercise.id, set.id)}
+                            type="button"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -406,6 +539,17 @@ export default function WorkoutDetail() {
                     <Plus size={19} />
                     Add Set
                   </button>
+
+                  {exercise.instructions?.length > 0 && (
+                    <details className="tf-instructions-box">
+                      <summary>How to perform</summary>
+                      <ol>
+                        {exercise.instructions.slice(0, 4).map((instruction) => (
+                          <li key={instruction}>{instruction}</li>
+                        ))}
+                      </ol>
+                    </details>
+                  )}
 
                   <div className="tf-rest-card">
                     <div>

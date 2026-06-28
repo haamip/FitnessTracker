@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ChevronRight, Dumbbell, Plus, Sparkles } from "lucide-react";
+import { ChevronRight, Dumbbell, History, Plus, Sparkles } from "lucide-react";
 import "./TrackFitScreens.css";
 
 const workoutPlans = [
@@ -28,22 +28,32 @@ const workoutPlans = [
   },
 ];
 
-function getSavedAiPlan() {
-  const savedPlan = localStorage.getItem("trackfit_ai_workout_plan");
+function readJson(key, fallback) {
+  const saved = localStorage.getItem(key);
 
-  if (!savedPlan) {
-    return [];
+  if (!saved) {
+    return fallback;
   }
 
   try {
-    return JSON.parse(savedPlan);
+    return JSON.parse(saved);
   } catch {
-    return [];
+    return fallback;
   }
 }
 
+function formatDate(value) {
+  return new Intl.DateTimeFormat("en-AU", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
 export default function Workouts() {
-  const savedAiPlan = useMemo(() => getSavedAiPlan(), []);
+  const savedAiPlan = useMemo(() => readJson("trackfit_ai_workout_plan", []), []);
+  const workoutHistory = useMemo(() => readJson("trackfit_workout_history", []).slice(0, 3), []);
 
   return (
     <motion.div
@@ -113,6 +123,28 @@ export default function Workouts() {
           Start Empty Workout
         </Link>
       </section>
+
+      {workoutHistory.length > 0 && (
+        <section className="tf-workout-stack">
+          <div className="tf-section-label">Recent History</div>
+
+          {workoutHistory.map((workout) => (
+            <article className="tf-history-card" key={workout.id}>
+              <div className="tf-plan-icon">
+                <History size={21} />
+              </div>
+
+              <div>
+                <h2>{workout.title}</h2>
+                <p>{formatDate(workout.completedAt)}</p>
+                <span>
+                  {workout.completedSets}/{workout.totalSets} sets • {Math.round(workout.volume)} kg • {Math.round(workout.durationSeconds / 60)} min
+                </span>
+              </div>
+            </article>
+          ))}
+        </section>
+      )}
     </motion.div>
   );
 }

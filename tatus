@@ -1,0 +1,65 @@
+warning: in the working copy of 'src/components/ExercisePicker.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/TrackFitScreens.css', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/WorkoutDetail.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/Workouts.jsx', LF will be replaced by CRLF the next time Git touches it
+ FitnessTracker_pages_for_comments.zip              | Bin [31m9321[m -> [32m0[m bytes
+ FitnessTracker_src_lint_fix.zip                    | Bin [31m13124[m -> [32m0[m bytes
+ src/components/ExercisePicker.jsx                  | 258 [32m+++++++++++[m[31m---[m
+ src/pages/CardioLog.backup.jsx                     |  51 [31m---[m
+ src/pages/DailyCheckIn.backup.jsx                  |  36 [31m--[m
+ src/pages/Dashboard.backup.jsx                     |  65 [31m----[m
+ src/pages/Progress.backup.jsx                      |  45 [31m---[m
+ src/pages/TrackFitScreens.css                      | 268 [32m++++++++++++++[m
+ src/pages/WorkoutDetail.backup.jsx                 |  42 [31m---[m
+ src/pages/WorkoutDetail.jsx                        | 148 [32m+++++++[m[31m-[m
+ src/pages/Workouts.backup.jsx                      |  42 [31m---[m
+ src/pages/Workouts.jsx                             |  48 [32m++[m[31m-[m
+ src_backup_20260623_100531/App.jsx                 |  54 [31m---[m
+ src_backup_20260623_100531/App.test.jsx            |   7 [31m-[m
+ src_backup_20260623_100531/components/Sidebar.jsx  |  27 [31m--[m
+ src_backup_20260623_100531/components/StatCard.jsx |  11 [31m-[m
+ src_backup_20260623_100531/index.css               | 388 [31m---------------------[m
+ src_backup_20260623_100531/main.jsx                |  10 [31m-[m
+ src_backup_20260623_100531/pages/CardioLog.jsx     | 160 [31m---------[m
+ src_backup_20260623_100531/pages/CheckIn.jsx       |  38 [31m--[m
+ src_backup_20260623_100531/pages/DailyCheckIn.jsx  | 146 [31m--------[m
+ src_backup_20260623_100531/pages/Dashboard.jsx     | 174 [31m---------[m
+ src_backup_20260623_100531/pages/PlanSetup.jsx     |  36 [31m--[m
+ src_backup_20260623_100531/pages/Progress.jsx      |  96 [31m-----[m
+ src_backup_20260623_100531/pages/WorkoutDetail.jsx | 162 [31m---------[m
+ src_backup_20260623_100531/pages/Workouts.jsx      | 181 [31m----------[m
+ src_backup_20260623_100531/setupTests.js           |   1 [31m-[m
+ .../App.jsx                                        |  31 [31m--[m
+ .../App.test.jsx                                   |   8 [31m-[m
+ .../assets/brand/trackfit-logo.png                 | Bin [31m935660[m -> [32m0[m bytes
+ .../components/LineChartCard.jsx                   |  38 [31m--[m
+ .../components/Sidebar.jsx                         |  28 [31m--[m
+ .../components/StatCard.jsx                        |  11 [31m-[m
+ .../components/layout/BottomNav.css                |  45 [31m---[m
+ .../components/layout/BottomNav.jsx                |  40 [31m---[m
+ .../components/layout/MobileShell.css              |  51 [31m---[m
+ .../components/layout/MobileShell.jsx              |  21 [31m--[m
+ .../components/ui/Button.css                       |  15 [31m-[m
+ .../components/ui/Button.jsx                       |   9 [31m-[m
+ .../components/ui/Card.css                         |   6 [31m-[m
+ .../components/ui/Card.jsx                         |   5 [31m-[m
+ .../index.css                                      | 238 [31m-------------[m
+ .../main.jsx                                       |  10 [31m-[m
+ .../pages/CardioLog.jsx                            | 161 [31m---------[m
+ .../pages/CheckIn.jsx                              |  38 [31m--[m
+ .../pages/DailyCheckIn.jsx                         | 147 [31m--------[m
+ .../pages/Dashboard.css                            | 150 [31m--------[m
+ .../pages/Dashboard.jsx                            |  81 [31m-----[m
+ .../pages/PlanSetup.jsx                            |  36 [31m--[m
+ .../pages/Progress.jsx                             |  97 [31m------[m
+ .../pages/Splash.css                               |  31 [31m--[m
+ .../pages/Splash.jsx                               |  12 [31m-[m
+ .../pages/WorkoutDetail.jsx                        | 163 [31m---------[m
+ .../pages/Workouts.jsx                             | 182 [31m----------[m
+ .../setupTests.js                                  |   1 [31m-[m
+ .../styles/colours.js                              |  10 [31m-[m
+ .../styles/global.css                              |  25 [31m--[m
+ .../styles/radius.js                               |   5 [31m-[m
+ .../styles/shadows.js                              |   3 [31m-[m
+ .../styles/spacing.js                              |   7 [31m-[m
+ 60 files changed, 671 insertions(+), 3528 deletions(-)

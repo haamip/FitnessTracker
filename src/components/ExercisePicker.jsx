@@ -1,29 +1,107 @@
 import { useMemo, useState } from "react";
-import { Search, X } from "lucide-react";
+import { Check, Clock3, Search, Star, X } from "lucide-react";
 import { exerciseLibrary } from "../data/exerciseLibrary";
 import "../pages/TrackFitScreens.css";
 
-const muscleFilters = ["all", "chest", "lats", "quadriceps", "hamstrings", "shoulders", "biceps", "triceps", "abdominals"];
-const equipmentFilters = ["all", "barbell", "dumbbell", "machine", "cable", "body only"];
+const muscleFilters = [
+  "all",
+  "chest",
+  "lats",
+  "quadriceps",
+  "hamstrings",
+  "shoulders",
+  "biceps",
+  "triceps",
+  "abdominals",
+  "calves",
+];
+
+const equipmentFilters = [
+  "all",
+  "barbell",
+  "dumbbell",
+  "machine",
+  "cable",
+  "body only",
+  "kettlebells",
+];
+
+function readStoredList(key) {
+  const saved = localStorage.getItem(key);
+
+  if (!saved) {
+    return [];
+  }
+
+  try {
+    return JSON.parse(saved);
+  } catch {
+    return [];
+  }
+}
+
+function saveStoredList(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+function formatLabel(value) {
+  if (value === "all") {
+    return "All";
+  }
+
+  if (value === "body only") {
+    return "Bodyweight";
+  }
+
+  return value;
+}
+
+function ExerciseAvatar({ exercise }) {
+  const [hasImage, setHasImage] = useState(Boolean(exercise.image));
+
+  return (
+    <span className="tf-picker-art">
+      {hasImage && exercise.image ? (
+        <img
+          alt=""
+          src={exercise.image}
+          onError={() => setHasImage(false)}
+        />
+      ) : (
+        "TF"
+      )}
+    </span>
+  );
+}
 
 /*
-  Exercise Picker v2
+  Exercise Picker v3
 
-  This is the manual entry side of the Exercise Engine.
-  It reads the same exerciseLibrary.js file that the AI Builder uses.
+  This is the manual workout entry side of the Exercise Engine.
 
-  That means:
-  - Manual workout logging
-  - AI generated workouts
-  - future progress tracking
-  - future exercise substitutions
+  It now supports:
+  - library search
+  - muscle filters
+  - equipment filters
+  - favourites
+  - recent exercises
+  - a preview card before adding
 
-  all speak the same language and use the same exercise IDs.
+  The important architecture rule stays the same:
+  this picker and the AI Builder both read from exerciseLibrary.js.
+  One source of truth, no duplicate exercise lists.
 */
 export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
   const [query, setQuery] = useState("");
   const [selectedMuscle, setSelectedMuscle] = useState("all");
   const [selectedEquipment, setSelectedEquipment] = useState("all");
+  const [viewMode, setViewMode] = useState("all");
+  const [previewExercise, setPreviewExercise] = useState(null);
+  const [favouriteIds, setFavouriteIds] = useState(() => readStoredList("trackfit_favourite_exercises"));
+  const [recentIds, setRecentIds] = useState(() => readStoredList("trackfit_recent_exercises"));
+
+  const favouriteIdSet = useMemo(() => new Set(favouriteIds), [favouriteIds]);
+  const recentIdSet = useMemo(() => new Set(recentIds), [recentIds]);
 
   const filteredExercises = useMemo(() => {
     const search = query.trim().toLowerCase();
@@ -36,22 +114,63 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
         const equipment = (exercise.equipment || []).join(" ").toLowerCase();
         const tags = (exercise.tags || []).join(" ").toLowerCase();
 
-        const matchesSearch = !search || [exercise.name, muscles, equipment, tags, exercise.movementPattern]
-          .join(" ")
-          .toLowerCase()
-          .includes(search);
+        const matchesMode =
+          viewMode === "all" ||
+          (viewMode === "favourites" && favouriteIdSet.has(exercise.id)) ||
+          (viewMode === "recent" && recentIdSet.has(exercise.id));
+
+        const matchesSearch =
+          !search ||
+          [exercise.name, muscles, equipment, tags, exercise.movementPattern, exercise.category]
+            .join(" ")
+            .toLowerCase()
+            .includes(search);
 
         const matchesMuscle = selectedMuscle === "all" || muscles.includes(selectedMuscle);
         const matchesEquipment = selectedEquipment === "all" || equipment.includes(selectedEquipment);
 
-        return matchesSearch && matchesMuscle && matchesEquipment;
+        return matchesMode && matchesSearch && matchesMuscle && matchesEquipment;
+      })
+      .sort((a, b) => {
+        const aRecentIndex = recentIds.indexOf(a.id);
+        const bRecentIndex = recentIds.indexOf(b.id);
+
+        if (viewMode === "recent" && aRecentIndex !== bRecentIndex) {
+          return aRecentIndex - bRecentIndex;
+        }
+
+        return a.name.localeCompare(b.name);
       })
       .slice(0, 80);
-  }, [query, selectedMuscle, selectedEquipment]);
+  }, [favouriteIdSet, query, recentIdSet, recentIds, selectedEquipment, selectedMuscle, viewMode]);
+
+  function toggleFavourite(exerciseId) {
+    setFavouriteIds((currentIds) => {
+      const nextIds = currentIds.includes(exerciseId)
+        ? currentIds.filter((id) => id !== exerciseId)
+        : [exerciseId, ...currentIds];
+
+      saveStoredList("trackfit_favourite_exercises", nextIds);
+      return nextIds;
+    });
+  }
+
+  function selectExercise(exercise) {
+    const nextRecentIds = [exercise.id, ...recentIds.filter((id) => id !== exercise.id)].slice(0, 20);
+
+    setRecentIds(nextRecentIds);
+    saveStoredList("trackfit_recent_exercises", nextRecentIds);
+    onSelectExercise(exercise);
+    setQuery("");
+    setPreviewExercise(null);
+    onClose();
+  }
 
   if (!isOpen) {
     return null;
   }
+
+  const preview = previewExercise || filteredExercises[0];
 
   return (
     <div className="tf-picker-backdrop">
@@ -77,6 +196,22 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
           />
         </label>
 
+        <div className="tf-filter-row" aria-label="Library views">
+          <button className={viewMode === "all" ? "active" : ""} onClick={() => setViewMode("all")} type="button">
+            All
+          </button>
+          <button
+            className={viewMode === "favourites" ? "active" : ""}
+            onClick={() => setViewMode("favourites")}
+            type="button"
+          >
+            <Star size={14} /> Favourites
+          </button>
+          <button className={viewMode === "recent" ? "active" : ""} onClick={() => setViewMode("recent")} type="button">
+            <Clock3 size={14} /> Recent
+          </button>
+        </div>
+
         <div className="tf-filter-row" aria-label="Muscle filters">
           {muscleFilters.map((muscle) => (
             <button
@@ -85,7 +220,7 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
               onClick={() => setSelectedMuscle(muscle)}
               type="button"
             >
-              {muscle === "all" ? "All" : muscle}
+              {formatLabel(muscle)}
             </button>
           ))}
         </div>
@@ -98,36 +233,77 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
               onClick={() => setSelectedEquipment(equipment)}
               type="button"
             >
-              {equipment === "all" ? "All kit" : equipment}
+              {equipment === "all" ? "All kit" : formatLabel(equipment)}
             </button>
           ))}
         </div>
 
+        {preview && (
+          <article className="tf-picker-preview">
+            <ExerciseAvatar exercise={preview} />
+            <div>
+              <strong>{preview.name}</strong>
+              <span>
+                {(preview.primaryMuscles || []).join(", ") || "General"} • {preview.movementPattern || "movement"}
+              </span>
+              <small>
+                {(preview.equipment || []).join(", ") || "Bodyweight"} • {preview.defaultSets || 3} sets • {preview.defaultReps || "8-12"}
+              </small>
+            </div>
+            <button onClick={() => selectExercise(preview)} type="button">
+              <Check size={18} /> Add
+            </button>
+          </article>
+        )}
+
         <div className="tf-picker-count">{filteredExercises.length} exercises found</div>
 
         <div className="tf-picker-list">
-          {filteredExercises.map((exercise) => (
-            <button
-              className="tf-picker-item"
-              key={exercise.id}
-              onClick={() => {
-                onSelectExercise(exercise);
-                setQuery("");
-                onClose();
-              }}
-              type="button"
-            >
-              <span className="tf-picker-art">TF</span>
+          {filteredExercises.map((exercise) => {
+            const isFavourite = favouriteIdSet.has(exercise.id);
+            const isSelected = preview?.id === exercise.id;
 
-              <span>
-                <strong>{exercise.name}</strong>
-                <small>
-                  {(exercise.primaryMuscles || []).join(", ") || "General"} •{" "}
-                  {(exercise.equipment || []).join(", ") || "Bodyweight"}
-                </small>
-              </span>
-            </button>
-          ))}
+            return (
+              <article
+                className={isSelected ? "tf-picker-item selected" : "tf-picker-item"}
+                key={exercise.id}
+                onClick={() => setPreviewExercise(exercise)}
+              >
+                <ExerciseAvatar exercise={exercise} />
+
+                <span>
+                  <strong>{exercise.name}</strong>
+                  <small>
+                    {(exercise.primaryMuscles || []).join(", ") || "General"} •{" "}
+                    {(exercise.equipment || []).join(", ") || "Bodyweight"}
+                  </small>
+                </span>
+
+                <span className="tf-picker-actions">
+                  <button
+                    aria-label={isFavourite ? "Remove favourite" : "Favourite exercise"}
+                    className={isFavourite ? "active" : ""}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      toggleFavourite(exercise.id);
+                    }}
+                    type="button"
+                  >
+                    <Star size={17} fill={isFavourite ? "currentColor" : "none"} />
+                  </button>
+                  <button
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      selectExercise(exercise);
+                    }}
+                    type="button"
+                  >
+                    Add
+                  </button>
+                </span>
+              </article>
+            );
+          })}
         </div>
       </section>
     </div>

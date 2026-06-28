@@ -2914,3 +2914,271 @@ a {
   font-size: 12px;
   font-weight: 850;
 }
+
+/* Exercise Engine v2 usable-gym additions */
+.tf-picker-sheet {
+  grid-template-rows: auto auto auto auto auto 1fr;
+}
+
+.tf-filter-row button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tf-picker-preview {
+  margin: 0 20px 12px;
+  padding: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 18px;
+  background: #111;
+  color: #fff;
+  display: grid;
+  grid-template-columns: 54px 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.tf-picker-preview .tf-picker-art {
+  background: #fff;
+  color: #111;
+}
+
+.tf-picker-preview strong,
+.tf-picker-preview span,
+.tf-picker-preview small {
+  display: block;
+}
+
+.tf-picker-preview strong {
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.tf-picker-preview span,
+.tf-picker-preview small {
+  margin-top: 3px;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.tf-picker-preview button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 999px;
+  background: #f59e0b;
+  color: #111;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.tf-picker-item {
+  grid-template-columns: 48px 1fr auto;
+}
+
+.tf-picker-item.selected {
+  border-color: #111;
+  box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.08);
+}
+
+.tf-picker-art {
+  overflow: hidden;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.tf-picker-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #fff;
+}
+
+.tf-picker-actions {
+  display: inline-flex !important;
+  grid-auto-flow: column;
+  align-items: center;
+  gap: 6px !important;
+}
+
+.tf-picker-actions button {
+  min-height: 34px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 999px;
+  background: #f7f7f7;
+  color: #111;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.tf-picker-actions button.active {
+  background: #111;
+  color: #f59e0b;
+}
+
+.tf-exercise-tools {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tf-exercise-tools button {
+  min-height: 38px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 12px;
+  background: #f7f7f7;
+  color: #111;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.tf-exercise-tools button.danger {
+  color: #b42318;
+  background: #fff2f1;
+}
+
+.tf-remove-set-btn {
+  position: absolute;
+  right: -5px;
+  top: -4px;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff2f1;
+  color: #b42318;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+}
+
+.tf-instructions-box {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  background: #fff;
+  color: #111;
+}
+
+.tf-instructions-box summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.tf-instructions-box ol {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: #555;
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.tf-empty-workout {
+  padding: 18px;
+  border: 1px dashed rgba(15, 23, 42, 0.2);
+  border-radius: 22px;
+  background: #fff;
+  display: grid;
+  gap: 8px;
+  text-align: center;
+}
+
+.tf-empty-workout strong {
+  color: #111;
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.tf-empty-workout span {
+  color: #777;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.tf-empty-workout button {
+  margin-top: 8px;
+  min-height: 48px;
+  border: 0;
+  border-radius: 14px;
+  background: #111;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.tf-history-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 26px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+}
+
+.tf-history-card h2,
+.tf-history-card p {
+  margin: 0;
+}
+
+.tf-history-card h2 {
+  color: #111;
+  font-size: 17px;
+  font-weight: 950;
+}
+
+.tf-history-card p {
+  margin-top: 4px;
+  color: #555;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.tf-history-card span {
+  display: block;
+  margin-top: 5px;
+  color: #777;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+@media (max-width: 390px) {
+  .tf-exercise-tools {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tf-picker-preview {
+    grid-template-columns: 48px 1fr;
+  }
+
+  .tf-picker-preview button {
+    grid-column: 1 / -1;
+  }
+
+  .tf-picker-actions {
+    display: none !important;
+  }
+}
