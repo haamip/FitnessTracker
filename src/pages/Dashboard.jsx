@@ -1,4 +1,6 @@
+import { useMemo } from "react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import {
   Activity,
   Award,
@@ -14,9 +16,12 @@ import {
   Waves,
 } from "lucide-react";
 
-import Button from "../components/ui/Button";
 import LineChartCard from "../components/LineChartCard";
 import GamificationPanel from "../components/ui/GamificationPanel";
+import { getAllTimePRs } from "../services/prEngine";
+import { getRecoveryCoachNote } from "../services/recoveryEngine";
+import { readWorkoutHistory } from "../services/workoutEngine";
+import { getWeeklyTrainingSummary } from "../services/workoutSummaryEngine";
 import "./TrackFitScreens.css";
 
 const weightData = [
@@ -41,6 +46,12 @@ const achievements = [
 ];
 
 export default function Dashboard() {
+  const workoutHistory = useMemo(() => readWorkoutHistory(), []);
+  const weeklySummary = useMemo(() => getWeeklyTrainingSummary(workoutHistory), [workoutHistory]);
+  const recoveryNote = useMemo(() => getRecoveryCoachNote(workoutHistory), [workoutHistory]);
+  const allTimePrs = useMemo(() => getAllTimePRs(workoutHistory), [workoutHistory]);
+  const latestWorkout = workoutHistory[0];
+
   return (
     <motion.div
       className="screen dashboard-v4"
@@ -48,6 +59,7 @@ export default function Dashboard() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
     >
+      {/* Hero card: keeps the dashboard personal and goal-focused. */}
       <section className="v4-hero">
         <div className="v4-hero__top">
           <div>
@@ -82,20 +94,48 @@ export default function Dashboard() {
 
       <GamificationPanel />
 
+      {/* Workout Intelligence cards are fed from real completed workout history. */}
+      <section className="tf-intelligence-grid">
+        <article>
+          <Sparkles size={20} />
+          <strong>Coach note</strong>
+          <span>{recoveryNote}</span>
+        </article>
+        <article>
+          <Dumbbell size={20} />
+          <strong>{weeklySummary.workouts}</strong>
+          <span>workouts this week</span>
+        </article>
+        <article>
+          <Activity size={20} />
+          <strong>{Math.round(weeklySummary.totalVolume).toLocaleString()}</strong>
+          <span>kg lifted this week</span>
+        </article>
+        <article>
+          <Trophy size={20} />
+          <strong>{weeklySummary.totalPrs}</strong>
+          <span>PRs this week</span>
+        </article>
+      </section>
+
       <section className="v4-today-card">
         <div className="v4-icon-bubble">
           <Dumbbell size={22} />
         </div>
 
         <div className="v4-today-card__main">
-          <p className="eyebrow">Today&apos;s workout</p>
-          <h2>Upper Strength</h2>
-          <p>6 exercises · around 55 mins</p>
+          <p className="eyebrow">Today&apos;s recommendation</p>
+          <h2>{latestWorkout ? "Build from your last session" : "Start Workout 1"}</h2>
+          <p>
+            {latestWorkout
+              ? `Last session: ${latestWorkout.title} • ${Math.round(latestWorkout.volume)}kg`
+              : "Log one clean session and TrackFit starts coaching the next one."}
+          </p>
         </div>
 
-        <Button className="v4-start-btn">
+        <Link className="v4-start-btn" to="/workouts">
           Start <ChevronRight size={17} />
-        </Button>
+        </Link>
       </section>
 
       <div className="v4-section-heading">
@@ -119,11 +159,29 @@ export default function Dashboard() {
 
       <LineChartCard title="Weight Trend" data={weightData} dataKey="weight" unit="kg" />
 
+      {allTimePrs.length > 0 && (
+        <section className="tf-pr-strip">
+          <div className="v4-section-heading">
+            <div>
+              <p className="eyebrow">Strength intelligence</p>
+              <h2>Top estimated PRs</h2>
+            </div>
+          </div>
+
+          {allTimePrs.slice(0, 3).map((pr) => (
+            <article key={pr.exercise}>
+              <strong>{pr.exercise}</strong>
+              <span>{pr.set} • e1RM {pr.e1rm}kg</span>
+            </article>
+          ))}
+        </section>
+      )}
+
       <section className="v4-coach-card">
         <div>
           <p className="eyebrow">AI Coach</p>
-          <h2>Recovery looks decent today.</h2>
-          <p>Keep the upper session controlled and finish with easy cardio.</p>
+          <h2>Workout Intelligence is now active.</h2>
+          <p>Every saved workout now feeds previous targets, PRs, weekly volume and recovery notes.</p>
         </div>
         <Sparkles size={24} />
       </section>

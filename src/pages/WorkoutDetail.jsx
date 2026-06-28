@@ -5,7 +5,6 @@ import {
   ArrowDown,
   ArrowLeft,
   ArrowUp,
-  BellRing,
   ChevronRight,
   Circle,
   Copy,
@@ -18,6 +17,19 @@ import {
   Trash2,
 } from "lucide-react";
 import ExercisePicker from "../components/ExercisePicker";
+import { detectWorkoutPRs } from "../services/prEngine";
+import { getExerciseRecommendation, getTargetSetLabel } from "../services/progressionEngine";
+import {
+  buildCompletedWorkout,
+  calculateWorkoutTotals,
+  findPreviousExercise,
+  formatClock,
+  generateWarmUpSets,
+  getPreviousSetLabel,
+  readWorkoutHistory,
+  WORKOUT_HISTORY_KEY,
+} from "../services/workoutEngine";
+import { readJson, writeJson } from "../services/storage";
 import "./TrackFitScreens.css";
 
 const DEFAULT_REST_SECONDS = 90;
@@ -118,26 +130,6 @@ function createDefaultExercises() {
   ];
 }
 
-function formatClock(totalSeconds) {
-  const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
-  const seconds = (totalSeconds % 60).toString().padStart(2, "0");
-  return `${minutes}:${seconds}`;
-}
-
-function readJson(key, fallback) {
-  const saved = localStorage.getItem(key);
-
-  if (!saved) {
-    return fallback;
-  }
-
-  try {
-    return JSON.parse(saved);
-  } catch {
-    return fallback;
-  }
-}
-
 function findAiDay(id) {
   const plan = readJson("trackfit_ai_workout_plan", []);
   return plan.find((day) => day.id === id);
@@ -199,6 +191,9 @@ export default function WorkoutDetail() {
   });
 
   const [openExerciseId, setOpenExerciseId] = useState(() => exercises[0]?.id || "");
+
+  // Workout history feeds previous-set targets, PR checks and progression advice.
+  const workoutHistory = useMemo(() => readWorkoutHistory(), []);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -293,35 +288,7 @@ export default function WorkoutDetail() {
     localStorage.setItem(storageKey, JSON.stringify(exercises));
   }, [exercises, storageKey]);
 
-  const totals = useMemo(() => {
-    const totalSets = exercises.reduce((sum, exercise) => sum + exercise.sets.length, 0);
-    const doneSets = exercises.reduce(
-      (sum, exercise) => sum + exercise.sets.filter((set) => set.done).length,
-      0,
-    );
-
-    const volume = exercises.reduce(
-      (sum, exercise) =>
-        sum +
-        exercise.sets.reduce((setSum, set) => {
-          if (!set.done) {
-            return setSum;
-          }
-
-          const weight = Number.parseFloat(set.weight) || 0;
-          const reps = Number.parseFloat(set.reps) || 0;
-          return setSum + weight * reps;
-        }, 0),
-      0,
-    );
-
-    return {
-      totalSets,
-      doneSets,
-      volume,
-      percent: totalSets === 0 ? 0 : Math.round((doneSets / totalSets) * 100),
-    };
-  }, [exercises]);
+  const totals = useMemo(() => calculateWorkoutTotals(exercises), [exercises]);
 
   function updateSet(exerciseId, setId, field, value) {
     setExercises((currentExercises) =>
@@ -453,22 +420,35 @@ export default function WorkoutDetail() {
     setOpenExerciseId(newExercise.id);
   }
 
+  function addWarmUpSets(exercise) {
+    const warmUpSets = generateWarmUpSets(exercise, createSet);
+
+    if (warmUpSets.length === 0) {
+      setRestCompletedMessage("Add a working weight first, then TrackFit can generate warm-ups.");
+      return;
+    }
+
+    setExercises((currentExercises) =>
+      currentExercises.map((item) =>
+        item.id === exercise.id ? { ...item, sets: [...warmUpSets, ...item.sets] } : item,
+      ),
+    );
+  }
+
   function finishWorkout() {
-    const history = readJson("trackfit_workout_history", []);
-    const finishedWorkout = {
-      id: crypto.randomUUID(),
-      workoutId: id,
+    const history = readWorkoutHistory();
+    const prs = detectWorkoutPRs(history, exercises);
+    const finishedWorkout = buildCompletedWorkout({
+      id,
       title: aiDay?.name || "Workout 1",
-      completedAt: new Date().toISOString(),
-      durationSeconds: seconds,
-      completedSets: totals.doneSets,
-      totalSets: totals.totalSets,
-      volume: totals.volume,
+      seconds,
       notes,
       exercises,
-    };
+      totals,
+      prs,
+    });
 
-    localStorage.setItem("trackfit_workout_history", JSON.stringify([finishedWorkout, ...history]));
+    writeJson(WORKOUT_HISTORY_KEY, [finishedWorkout, ...history]);
     localStorage.removeItem(storageKey);
     navigate("/workouts");
   }
@@ -501,6 +481,22 @@ export default function WorkoutDetail() {
           <span>{totals.percent}% COMPLETE</span>
           <span>{totals.doneSets}/{totals.totalSets} SETS • {Math.round(totals.volume)} KG</span>
         </div>
+
+        {/* Live workout intelligence: simple stats that update as sets are checked off. */}
+        <div className="tf-live-stats">
+          <div>
+            <strong>{formatClock(seconds)}</strong>
+            <span>Duration</span>
+          </div>
+          <div>
+            <strong>{Math.round(totals.volume)}</strong>
+            <span>Volume kg</span>
+          </div>
+          <div>
+            <strong>{totals.totalSets - totals.doneSets}</strong>
+            <span>Sets left</span>
+          </div>
+        </div>
       </section>
 
       {exercises.length === 0 && (
@@ -516,6 +512,8 @@ export default function WorkoutDetail() {
       <section className="tf-exercise-stack">
         {exercises.map((exercise, exerciseIndex) => {
           const isOpen = exercise.id === openExerciseId;
+          const recommendation = getExerciseRecommendation(exercise, workoutHistory);
+          const previousExercise = recommendation.previousExercise || findPreviousExercise(workoutHistory, exercise);
 
           return (
             <article className={isOpen ? "tf-exercise-card open" : "tf-exercise-card"} key={exercise.id}>
@@ -547,6 +545,9 @@ export default function WorkoutDetail() {
                     <button onClick={() => moveExercise(exercise.id, 1)} type="button">
                       <ArrowDown size={16} /> Down
                     </button>
+                    <button onClick={() => addWarmUpSets(exercise)} type="button">
+                      <Plus size={16} /> Warm-up
+                    </button>
                     <button onClick={() => duplicateExercise(exercise)} type="button">
                       <Copy size={16} /> Duplicate
                     </button>
@@ -567,22 +568,29 @@ export default function WorkoutDetail() {
                     </div>
                   </div>
 
-                  <div className="tf-sets-head">
+                  {/* Previous session + progression reason for this exercise. */}
+                  <div className="tf-coach-cue">
+                    <strong>TrackFit target</strong>
+                    <span>{recommendation.reason}</span>
+                  </div>
+
+                  <div className="tf-sets-head intelligence">
                     <span>Set</span>
-                    <span>Weight (kg)</span>
+                    <span>Last</span>
+                    <span>Target</span>
+                    <span>Weight</span>
                     <span>Reps</span>
-                    <span>Set Type</span>
+                    <span>Type</span>
                     <span>Done</span>
                   </div>
 
                   <div className="tf-set-list">
                     {exercise.sets.map((set, setIndex) => (
-                      <div className={set.done ? "tf-set-row done" : "tf-set-row"} key={set.id}>
-                        <span>{setIndex + 1}</span>
+                      <div className={set.done ? "tf-set-row intelligence done" : "tf-set-row intelligence"} key={set.id}>
+                        <span>{set.type === "W" ? "WU" : setIndex + 1}</span>
 
-                        <label aria-label={`Set ${setIndex + 1} rest timer`}>
-                          <BellRing size={20} />
-                        </label>
+                        <small>{getPreviousSetLabel(previousExercise, setIndex)}</small>
+                        <small>{getTargetSetLabel(recommendation, setIndex)}</small>
 
                         <input
                           inputMode="decimal"

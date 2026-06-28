@@ -1,8 +1,11 @@
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import {
-  Activity,  Brain,
+  Activity,
+  Brain,
   Dumbbell,
-  Flame,  Medal,
+  Flame,
+  Medal,
   Scale,
   Target,
   TrendingDown,
@@ -10,6 +13,9 @@ import {
 } from "lucide-react";
 
 import LineChartCard from "../components/LineChartCard";
+import { getAllTimePRs } from "../services/prEngine";
+import { readWorkoutHistory } from "../services/workoutEngine";
+import { getWeeklyTrainingSummary } from "../services/workoutSummaryEngine";
 import "./TrackFitScreens.css";
 
 const weightData = [
@@ -20,12 +26,6 @@ const weightData = [
   { date: "Week 5", weight: 104.2 },
 ];
 
-const prData = [
-  { lift: "Bench", value: "100kg", icon: Trophy },
-  { lift: "Squat", value: "80kg", icon: Medal },
-  { lift: "Deadlift", value: "100kg", icon: Dumbbell },
-];
-
 const measurements = [
   { label: "Waist", value: "102cm", change: "-3cm" },
   { label: "Chest", value: "116cm", change: "+1cm" },
@@ -33,7 +33,18 @@ const measurements = [
   { label: "Legs", value: "62cm", change: "steady" },
 ];
 
+const fallbackPrs = [
+  { exercise: "Bench Press", e1rm: 100, set: "100kg" },
+  { exercise: "Squat", e1rm: 80, set: "80kg" },
+  { exercise: "Deadlift", e1rm: 100, set: "100kg" },
+];
+
 export default function Progress() {
+  const workoutHistory = useMemo(() => readWorkoutHistory(), []);
+  const weeklySummary = useMemo(() => getWeeklyTrainingSummary(workoutHistory), [workoutHistory]);
+  const prData = useMemo(() => getAllTimePRs(workoutHistory), [workoutHistory]);
+  const displayedPrs = prData.length > 0 ? prData : fallbackPrs;
+
   return (
     <motion.div
       className="screen progress-v4"
@@ -56,6 +67,7 @@ export default function Progress() {
         </div>
       </section>
 
+      {/* These cards now include live workout intelligence from saved sessions. */}
       <section className="v4-progress-summary">
         <article>
           <TrendingDown size={21} />
@@ -65,14 +77,14 @@ export default function Progress() {
 
         <article>
           <Flame size={21} />
-          <strong>12</strong>
-          <span>Day streak</span>
+          <strong>{weeklySummary.workouts}</strong>
+          <span>Workouts / wk</span>
         </article>
 
         <article>
           <Activity size={21} />
-          <strong>4/wk</strong>
-          <span>Average</span>
+          <strong>{Math.round(weeklySummary.totalVolume / 1000)}k</strong>
+          <span>Kg lifted</span>
         </article>
       </section>
 
@@ -87,13 +99,18 @@ export default function Progress() {
       </div>
 
       <section className="v4-pr-grid">
-        {prData.map((item) => (
-          <article className="v4-pr-card" key={item.lift}>
-            <item.icon size={22} />
-            <strong>{item.value}</strong>
-            <span>{item.lift}</span>
-          </article>
-        ))}
+        {displayedPrs.slice(0, 3).map((item, index) => {
+          const Icon = index === 0 ? Trophy : index === 1 ? Medal : Dumbbell;
+
+          return (
+            <article className="v4-pr-card" key={item.exercise}>
+              <Icon size={22} />
+              <strong>{item.e1rm}kg</strong>
+              <span>{item.exercise}</span>
+              <small>{item.set}</small>
+            </article>
+          );
+        })}
       </section>
 
       <div className="v4-section-heading">
@@ -122,10 +139,11 @@ export default function Progress() {
 
         <div>
           <p className="eyebrow">AI insight</p>
-          <h2>You are trending well.</h2>
+          <h2>{weeklySummary.totalPrs > 0 ? "Strength is moving." : "Build the data trail."}</h2>
           <p>
-            Keep averaging 4 workouts per week and staying close to your protein target.
-            At this rate, 95kg is realistic.
+            {weeklySummary.totalPrs > 0
+              ? `${weeklySummary.totalPrs} PR signals this week. Keep logging clean sets so the coach can progress you properly.`
+              : "Log a few completed workouts and TrackFit will start showing true PRs, volume and next-session targets."}
           </p>
         </div>
       </section>

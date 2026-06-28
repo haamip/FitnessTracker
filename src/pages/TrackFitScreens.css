@@ -3538,3 +3538,166 @@ body,
   font-size: 12px;
   font-weight: 950;
 }
+
+/* Workout Intelligence v0.5 */
+.tf-live-stats,
+.tf-intelligence-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tf-live-stats div,
+.tf-intelligence-grid article,
+.tf-pr-strip article,
+.tf-coach-cue {
+  min-width: 0;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.05);
+}
+
+.tf-live-stats div {
+  padding: 12px;
+  text-align: center;
+}
+
+.tf-live-stats strong,
+.tf-intelligence-grid strong,
+.tf-pr-strip strong,
+.tf-coach-cue strong {
+  display: block;
+  color: #090909;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.tf-live-stats span,
+.tf-intelligence-grid span,
+.tf-pr-strip span,
+.tf-coach-cue span {
+  display: block;
+  margin-top: 4px;
+  color: #777;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.tf-intelligence-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.tf-intelligence-grid article {
+  padding: 14px;
+  display: grid;
+  gap: 7px;
+}
+
+.tf-intelligence-grid svg,
+.tf-pr-strip svg {
+  color: #f59e0b;
+}
+
+.tf-pr-strip {
+  display: grid;
+  gap: 10px;
+}
+
+.tf-pr-strip article {
+  padding: 13px 14px;
+}
+
+.tf-coach-cue {
+  margin-top: 12px;
+  padding: 13px 14px;
+  background: #111;
+}
+
+.tf-coach-cue strong {
+  color: #fff;
+}
+
+.tf-coach-cue span {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.tf-sets-head.intelligence {
+  grid-template-columns: 34px minmax(54px, 0.9fr) minmax(58px, 0.9fr) minmax(62px, 1fr) 58px 64px 36px;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.tf-set-row.intelligence {
+  grid-template-columns: 28px minmax(54px, 0.9fr) minmax(58px, 0.9fr) minmax(62px, 1fr) 58px 64px 36px 32px;
+  gap: 6px;
+}
+
+.tf-set-row.intelligence small {
+  min-height: 42px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  background: #f7f6f2;
+  color: #555;
+  display: grid;
+  place-items: center;
+  padding: 0 6px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.tf-set-row.intelligence input,
+.tf-set-row.intelligence select,
+.tf-set-row.intelligence .tf-done-btn,
+.tf-set-row.intelligence .tf-remove-set-btn {
+  height: 42px;
+}
+
+.tf-set-row.intelligence input,
+.tf-set-row.intelligence select {
+  font-size: 14px;
+  padding: 0 7px;
+}
+
+@media (max-width: 430px) {
+  .tf-live-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .tf-live-stats div {
+    padding: 10px 6px;
+  }
+
+  .tf-live-stats strong {
+    font-size: 13px;
+  }
+
+  .tf-live-stats span {
+    font-size: 10px;
+  }
+
+  .tf-sets-head.intelligence {
+    grid-template-columns: 28px 52px 56px 58px 50px 50px 30px;
+    gap: 4px;
+    font-size: 9px;
+  }
+
+  .tf-set-row.intelligence {
+    grid-template-columns: 24px 52px 56px 58px 50px 50px 30px 28px;
+    gap: 4px;
+  }
+
+  .tf-set-row.intelligence small {
+    font-size: 9px;
+    padding: 0 3px;
+  }
+
+  .tf-set-row.intelligence input,
+  .tf-set-row.intelligence select {
+    font-size: 12px;
+    padding: 0 4px;
+  }
+}

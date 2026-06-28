@@ -1,123 +1,13 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Brain, Dumbbell, RefreshCcw, Save, Sparkles } from "lucide-react";
-import { exerciseLibrary } from "../data/exerciseLibrary";
+import {
+  equipmentLabels,
+  generateWorkoutPlan,
+  goalPrescription,
+} from "../services/aiWorkoutEngine";
+import { writeJson } from "../services/storage";
 import "./TrackFitScreens.css";
-
-const splitTemplates = {
-  muscle: [
-    { name: "Upper A", slots: ["horizontal_push", "horizontal_pull", "vertical_push", "vertical_pull", "elbow_flexion", "elbow_extension"] },
-    { name: "Lower A", slots: ["squat", "hinge", "squat", "calf_raise", "core"] },
-    { name: "Upper B", slots: ["horizontal_push", "horizontal_pull", "vertical_push", "vertical_pull", "elbow_flexion", "elbow_extension"] },
-    { name: "Lower B", slots: ["hinge", "squat", "calf_raise", "core", "conditioning"] },
-  ],
-  strength: [
-    { name: "Heavy Upper", slots: ["horizontal_push", "horizontal_pull", "vertical_push", "vertical_pull"] },
-    { name: "Heavy Lower", slots: ["squat", "hinge", "squat", "core"] },
-    { name: "Bench Focus", slots: ["horizontal_push", "horizontal_push", "horizontal_pull", "elbow_extension"] },
-    { name: "Deadlift Focus", slots: ["hinge", "squat", "horizontal_pull", "core"] },
-  ],
-  fatloss: [
-    { name: "Full Body Strength", slots: ["squat", "horizontal_push", "horizontal_pull", "hinge", "conditioning"] },
-    { name: "Conditioning Circuit", slots: ["conditioning", "squat", "horizontal_push", "core"] },
-    { name: "Upper Circuit", slots: ["horizontal_push", "horizontal_pull", "vertical_push", "vertical_pull", "core"] },
-    { name: "Lower Circuit", slots: ["squat", "hinge", "calf_raise", "core", "conditioning"] },
-  ],
-};
-
-const equipmentLabels = {
-  "full gym": "Full Gym",
-  dumbbells: "Dumbbells",
-  home: "Home / Minimal Kit",
-};
-
-function goalPrescription(goal, level) {
-  if (goal === "strength") {
-    return {
-      sets: level === "beginner" ? 3 : 4,
-      reps: "4-6",
-      rest: "120 sec",
-      note: "Heavy work. Longer rests. Add load slowly.",
-    };
-  }
-
-  if (goal === "fatloss") {
-    return {
-      sets: level === "beginner" ? 2 : 3,
-      reps: "10-15",
-      rest: "45-60 sec",
-      note: "Controlled pace. Keep the heart rate up.",
-    };
-  }
-
-  return {
-    sets: level === "beginner" ? 2 : 3,
-    reps: "8-12",
-    rest: "60-90 sec",
-    note: "Muscle building range. Chase quality reps.",
-  };
-}
-
-function equipmentMatches(exercise, equipment) {
-  if (equipment === "full gym") return true;
-
-  const exerciseEquipment = (exercise.equipment || []).join(" ").toLowerCase();
-
-  if (equipment === "dumbbells") {
-    return exerciseEquipment.includes("dumbbell") || exerciseEquipment.includes("body only");
-  }
-
-  if (equipment === "home") {
-    return exerciseEquipment.includes("body only") || exerciseEquipment.includes("dumbbell");
-  }
-
-  return true;
-}
-
-function injurySafe(exercise, injuryFocus) {
-  if (injuryFocus === "none") return true;
-
-  const name = exercise.name.toLowerCase();
-  const pattern = exercise.movementPattern || "";
-
-  if (injuryFocus === "shoulder") {
-    return !name.includes("behind the neck") && pattern !== "vertical_push";
-  }
-
-  if (injuryFocus === "knee") {
-    return pattern !== "squat" || name.includes("bodyweight") || name.includes("box");
-  }
-
-  if (injuryFocus === "lower_back") {
-    return pattern !== "hinge" || name.includes("dumbbell") || name.includes("glute");
-  }
-
-  return true;
-}
-
-function scoreExercise(exercise, slot, equipment, usedExerciseIds, injuryFocus) {
-  let score = 0;
-
-  if (exercise.movementPattern === slot) score += 60;
-  if (equipmentMatches(exercise, equipment)) score += 25;
-  if (injurySafe(exercise, injuryFocus)) score += 15;
-  if (usedExerciseIds.has(exercise.id)) score -= 100;
-  if ((exercise.difficulty || "").toLowerCase() === "beginner") score += 2;
-
-  return score;
-}
-
-function pickExercise(slot, equipment, usedExerciseIds, injuryFocus) {
-  const rankedExercises = exerciseLibrary
-    .map((exercise) => ({
-      exercise,
-      score: scoreExercise(exercise, slot, equipment, usedExerciseIds, injuryFocus),
-    }))
-    .filter((item) => item.score > 0)
-    .sort((a, b) => b.score - a.score || a.exercise.name.localeCompare(b.exercise.name));
-
-  return rankedExercises[0]?.exercise || exerciseLibrary[0];
-}
 
 function convertDayToWorkout(day) {
   return day.exercises.map((exercise) => ({
@@ -130,6 +20,7 @@ function convertDayToWorkout(day) {
     equipment: exercise.equipment || [],
     movementPattern: exercise.movementPattern || "unknown",
     instructions: exercise.instructions || [],
+    defaultRestSeconds: Number.parseInt(exercise.rest, 10) || 90,
     sets: Array.from({ length: exercise.sets }, () => ({
       id: crypto.randomUUID(),
       weight: "",
@@ -152,55 +43,33 @@ export default function AIWorkoutBuilder() {
 
   const prescription = useMemo(() => goalPrescription(goal, level), [goal, level]);
 
-  const plan = useMemo(() => {
-    const selectedTemplates = splitTemplates[goal].slice(0, Number(days));
-    const usedExerciseIds = new Set();
-
-    /*
-      AI Builder v2 brain
-
-      This builder now works from the TrackFit exercise library instead of hardcoded exercises.
-      The flow is:
-      1. Pick a training split based on the user's goal and days per week.
-      2. Convert each workout into movement pattern slots.
-      3. Search exerciseLibrary for the best exercise for each slot.
-      4. Score choices by movement pattern, equipment, injury filter, and duplicates.
-      5. Save the generated days into the same workout logger format the app already uses.
-
-      This keeps one source of truth:
-      Exercise Library -> AI Builder -> Workout Logger -> History -> Future Coach.
-    */
-    return selectedTemplates.map((template, index) => ({
-      id: `ai-${index + 1}`,
-      name: template.name,
-      focus: goal,
-      time,
-      level,
-      equipment,
-      injuryFocus,
-      planVersion,
-      exercises: template.slots.map((slot) => {
-        const selectedExercise = pickExercise(slot, equipment, usedExerciseIds, injuryFocus);
-        usedExerciseIds.add(selectedExercise.id);
-
-        return {
-          id: selectedExercise.id,
-          name: selectedExercise.name,
-          movementPattern: selectedExercise.movementPattern,
-          primaryMuscles: selectedExercise.primaryMuscles || [],
-          equipment: selectedExercise.equipment || [],
-          instructions: selectedExercise.instructions || [],
-          ...prescription,
-        };
+  const plan = useMemo(
+    () =>
+      generateWorkoutPlan({
+        goal,
+        days,
+        time,
+        level,
+        equipment,
+        injuryFocus,
+        planVersion,
       }),
-    }));
-  }, [days, equipment, goal, injuryFocus, level, planVersion, prescription, time]);
+    [days, equipment, goal, injuryFocus, level, planVersion, time],
+  );
 
   function savePlan() {
-    localStorage.setItem("trackfit_ai_workout_plan", JSON.stringify(plan));
+    /*
+      Saving the AI plan creates two records:
+      1. trackfit_ai_workout_plan: shown on the Workouts page.
+      2. trackfit_workout_ai-X: the actual editable workout logger data.
+
+      This keeps generated plans editable instead of locking them inside the AI
+      Builder screen. It also means AI and manual workouts share the same logger.
+    */
+    writeJson("trackfit_ai_workout_plan", plan);
 
     plan.forEach((day) => {
-      localStorage.setItem(`trackfit_workout_${day.id}`, JSON.stringify(convertDayToWorkout(day)));
+      writeJson(`trackfit_workout_${day.id}`, convertDayToWorkout(day));
     });
 
     setSaved(true);
@@ -213,17 +82,19 @@ export default function AIWorkoutBuilder() {
 
   return (
     <main className="screen tf-ai-builder ai-builder-v2">
+      {/* Page hero: explains that this builder is driven by library logic, not fake presets. */}
       <header className="tf-builder-top ai-builder-hero">
         <Link to="/workouts" aria-label="Back to workouts">
           <ArrowLeft size={24} />
         </Link>
         <div>
-          <p>AI Builder v2</p>
+          <p>AI Builder v3</p>
           <h1>Build Workout</h1>
-          <span>Uses the real TrackFit exercise library.</span>
+          <span>Library-based plans, ready to edit and log.</span>
         </div>
       </header>
 
+      {/* User inputs become constraints for the AI rules engine. */}
       <section className="tf-builder-panel ai-control-panel">
         <label>
           Goal
@@ -280,13 +151,14 @@ export default function AIWorkoutBuilder() {
         </label>
       </section>
 
+      {/* Short explanation so the user knows why the generated plan changed. */}
       <section className="ai-builder-brain-card">
         <Brain size={22} />
         <div>
           <strong>How this plan was built</strong>
           <p>
-            TrackFit picks movement patterns first, then selects matching exercises from the library based on your goal,
-            kit, level and protect-area setting.
+            TrackFit chooses movement patterns first, then picks matching exercises from the library based on your goal,
+            equipment, level and protect-area setting.
           </p>
         </div>
       </section>

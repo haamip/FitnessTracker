@@ -138,7 +138,7 @@ export default function Workouts() {
                 <h2>{workout.title}</h2>
                 <p>{formatDate(workout.completedAt)}</p>
                 <span>
-                  {workout.completedSets}/{workout.totalSets} sets • {Math.round(workout.volume)} kg • {Math.round(workout.durationSeconds / 60)} min
+                  {workout.completedSets}/{workout.totalSets} sets • {Math.round(workout.volume)} kg • {workout.prs?.length || 0} PRs
                 </span>
               </div>
             </article>
