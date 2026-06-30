@@ -6,26 +6,26 @@ import {
   ArrowLeft,
   ArrowUp,
   ChevronRight,
-  Circle,
   Copy,
   Info,
   MoreHorizontal,
-  Pause,
-  Play,
   Plus,
-  SkipForward,
   Trash2,
 } from "lucide-react";
 import ExercisePicker from "../components/ExercisePicker";
+import ExerciseImage from "../components/ui/ExerciseImage";
+import RestTimer from "../components/ui/RestTimer";
+import SetLogger from "../components/ui/SetLogger";
+import WorkoutSummary from "../components/ui/WorkoutSummary";
+import { exerciseLibrary } from "../data/exerciseLibrary";
 import { detectWorkoutPRs } from "../services/prEngine";
-import { getExerciseRecommendation, getTargetSetLabel } from "../services/progressionEngine";
+import { getExerciseRecommendation } from "../services/progressionEngine";
 import {
   buildCompletedWorkout,
   calculateWorkoutTotals,
   findPreviousExercise,
   formatClock,
   generateWarmUpSets,
-  getPreviousSetLabel,
   readWorkoutHistory,
   WORKOUT_HISTORY_KEY,
 } from "../services/workoutEngine";
@@ -33,6 +33,28 @@ import { readJson, writeJson } from "../services/storage";
 import "./TrackFitScreens.css";
 
 const DEFAULT_REST_SECONDS = 90;
+
+const FALLBACK_EXERCISE_IMAGE = "/exercise-images/trackfit-fallback.svg";
+
+function findLibraryExerciseById(id) {
+  return exerciseLibrary.find((exercise) => exercise.id === id);
+}
+
+function findLibraryExerciseByName(name) {
+  const normalisedName = String(name || "").trim().toLowerCase();
+  return exerciseLibrary.find((exercise) => exercise.name.toLowerCase() === normalisedName);
+}
+
+function resolveExerciseImage(exercise) {
+  if (exercise?.image && exercise.image !== "TF") {
+    return exercise.image;
+  }
+
+  const libraryExercise =
+    findLibraryExerciseById(exercise?.libraryId || exercise?.id) || findLibraryExerciseByName(exercise?.name);
+
+  return libraryExercise?.image || FALLBACK_EXERCISE_IMAGE;
+}
 
 function parseRestSeconds(value) {
   if (typeof value === "number") {
@@ -80,7 +102,7 @@ function createDefaultExercises() {
       id: "rdl",
       name: "Dumbbell Romanian Deadlift",
       target: "2 sets • 10 reps",
-      image: "TF",
+      image: resolveExerciseImage({ id: "rdl", name: "Dumbbell Romanian Deadlift" }),
       primaryMuscles: ["hamstrings"],
       equipment: ["dumbbell"],
       movementPattern: "hinge",
@@ -91,7 +113,7 @@ function createDefaultExercises() {
       id: "calf",
       name: "Dumbbell Standing Calf Raise",
       target: "2 sets • 12 reps",
-      image: "TF",
+      image: resolveExerciseImage({ id: "calf", name: "Dumbbell Standing Calf Raise" }),
       primaryMuscles: ["calves"],
       equipment: ["dumbbell"],
       movementPattern: "calf_raise",
@@ -102,7 +124,7 @@ function createDefaultExercises() {
       id: "press",
       name: "Dumbbell Shoulder Press",
       target: "2 sets • 10 reps",
-      image: "TF",
+      image: resolveExerciseImage({ id: "press", name: "Dumbbell Shoulder Press" }),
       primaryMuscles: ["shoulders"],
       equipment: ["dumbbell"],
       movementPattern: "vertical_push",
@@ -113,7 +135,7 @@ function createDefaultExercises() {
       id: "row",
       name: "Dumbbell Row",
       target: "2 sets • 10 reps",
-      image: "TF",
+      image: resolveExerciseImage({ id: "row", name: "Dumbbell Row" }),
       primaryMuscles: ["lats"],
       equipment: ["dumbbell"],
       movementPattern: "horizontal_pull",
@@ -124,7 +146,7 @@ function createDefaultExercises() {
       id: "squat",
       name: "Barbell Back Squat",
       target: "2 sets • 10 reps",
-      image: "TF",
+      image: resolveExerciseImage({ id: "squat", name: "Barbell Back Squat" }),
       primaryMuscles: ["quadriceps"],
       equipment: ["barbell"],
       movementPattern: "squat",
@@ -145,7 +167,7 @@ function convertAiDayToWorkout(day) {
     libraryId: exercise.id,
     name: exercise.name,
     target: `${exercise.sets} sets • ${exercise.reps} reps`,
-    image: "TF",
+    image: resolveExerciseImage(exercise),
     primaryMuscles: exercise.primaryMuscles || [],
     equipment: exercise.equipment || [],
     movementPattern: exercise.movementPattern || "unknown",
@@ -412,7 +434,7 @@ export default function WorkoutDetail() {
       libraryId: libraryExercise.id,
       name: libraryExercise.name,
       target: `${setCount} sets • ${reps} reps`,
-      image: "TF",
+      image: libraryExercise.image || FALLBACK_EXERCISE_IMAGE,
       primaryMuscles: libraryExercise.primaryMuscles || [],
       equipment: libraryExercise.equipment || [],
       movementPattern: libraryExercise.movementPattern || "unknown",
@@ -497,20 +519,7 @@ export default function WorkoutDetail() {
         </div>
 
         {/* Live workout intelligence: simple stats that update as sets are checked off. */}
-        <div className="tf-live-stats">
-          <div>
-            <strong>{formatClock(seconds)}</strong>
-            <span>Duration</span>
-          </div>
-          <div>
-            <strong>{Math.round(totals.volume)}</strong>
-            <span>Volume kg</span>
-          </div>
-          <div>
-            <strong>{totals.totalSets - totals.doneSets}</strong>
-            <span>Sets left</span>
-          </div>
-        </div>
+        <WorkoutSummary seconds={seconds} totals={totals} />
       </section>
 
       {exercises.length === 0 && (
@@ -537,7 +546,7 @@ export default function WorkoutDetail() {
                 type="button"
               >
                 <span className="tf-exercise-number">{exerciseIndex + 1}</span>
-                <span className="tf-exercise-art" aria-hidden="true">{exercise.image || "TF"}</span>
+                <ExerciseImage exercise={exercise} />
 
                 <span className="tf-exercise-title">
                   <strong>{exercise.name}</strong>
@@ -586,129 +595,18 @@ export default function WorkoutDetail() {
 
                   {/* Previous session + progression reason for this exercise. */}
                   <div className="tf-coach-cue">
-                    <strong>TrackFit target</strong>
+                    <strong>Coach target</strong>
                     <span>{recommendation.reason}</span>
                   </div>
 
-                  {/* Pro logging legend: W = warm-up, S = standard, D = drop set, F = failure set. */}
-                  <div className="tf-pro-legend">
-                    <span>W Warm-up</span>
-                    <span>S Working</span>
-                    <span>D Drop</span>
-                    <span>F Failure</span>
-                  </div>
-
-                  <div className="tf-sets-head intelligence">
-                    <span>Set</span>
-                    <span>Last</span>
-                    <span>Target</span>
-                    <span>Weight</span>
-                    <span>Reps</span>
-                    <span>Type</span>
-                    <span>Done</span>
-                  </div>
-
-                  <div className="tf-set-list">
-                    {exercise.sets.map((set, setIndex) => (
-                      <div className="tf-set-block" key={set.id}>
-                        <div className={set.done ? "tf-set-row intelligence done" : "tf-set-row intelligence"}>
-                          <span>{set.type === "W" ? "WU" : setIndex + 1}</span>
-
-                          <small>{getPreviousSetLabel(previousExercise, setIndex)}</small>
-                          <small>{getTargetSetLabel(recommendation, setIndex)}</small>
-
-                          <input
-                            inputMode="decimal"
-                            onChange={(event) =>
-                              updateSet(exercise.id, set.id, "weight", event.target.value)
-                            }
-                            value={set.weight}
-                          />
-
-                          <input
-                            inputMode="numeric"
-                            onChange={(event) =>
-                              updateSet(exercise.id, set.id, "reps", event.target.value)
-                            }
-                            value={set.reps}
-                          />
-
-                          <select
-                            onChange={(event) =>
-                              updateSet(exercise.id, set.id, "type", event.target.value)
-                            }
-                            value={set.type}
-                          >
-                            <option value="S">S</option>
-                            <option value="W">W</option>
-                            <option value="D">D</option>
-                            <option value="F">F</option>
-                          </select>
-
-                          <button
-                            aria-label={`Mark set ${setIndex + 1} done`}
-                            className="tf-done-btn"
-                            onClick={() => updateSet(exercise.id, set.id, "done", !set.done)}
-                            type="button"
-                          >
-                            <Circle size={22} />
-                          </button>
-
-                          {exercise.sets.length > 1 && (
-                            <button
-                              aria-label={`Remove set ${setIndex + 1}`}
-                              className="tf-remove-set-btn"
-                              onClick={() => removeSet(exercise.id, set.id)}
-                              type="button"
-                            >
-                              <Trash2 size={15} />
-                            </button>
-                          )}
-                        </div>
-
-                        {/* Optional advanced fields for lifters who track effort quality. */}
-                        <div className="tf-set-extra-row">
-                          <label>
-                            RPE
-                            <input
-                              inputMode="decimal"
-                              placeholder="8"
-                              value={set.rpe || ""}
-                              onChange={(event) => updateSet(exercise.id, set.id, "rpe", event.target.value)}
-                            />
-                          </label>
-                          <label>
-                            RIR
-                            <input
-                              inputMode="numeric"
-                              placeholder="2"
-                              value={set.rir || ""}
-                              onChange={(event) => updateSet(exercise.id, set.id, "rir", event.target.value)}
-                            />
-                          </label>
-                          <label className="tf-failure-toggle">
-                            <input
-                              checked={Boolean(set.failure)}
-                              onChange={(event) => updateSet(exercise.id, set.id, "failure", event.target.checked)}
-                              type="checkbox"
-                            />
-                            Failure
-                          </label>
-                          <input
-                            className="tf-set-note-input"
-                            placeholder="Set note"
-                            value={set.note || ""}
-                            onChange={(event) => updateSet(exercise.id, set.id, "note", event.target.value)}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <button className="tf-add-set-btn" onClick={() => addSet(exercise.id)} type="button">
-                    <Plus size={19} />
-                    Add Set
-                  </button>
+                  <SetLogger
+                    exercise={exercise}
+                    previousExercise={previousExercise}
+                    recommendation={recommendation}
+                    onAddSet={addSet}
+                    onRemoveSet={removeSet}
+                    onUpdateSet={updateSet}
+                  />
 
                   {exercise.instructions?.length > 0 && (
                     <details className="tf-instructions-box">
@@ -721,27 +619,15 @@ export default function WorkoutDetail() {
                     </details>
                   )}
 
-                  <div className={restRunning ? "tf-rest-card running" : "tf-rest-card"}>
-                    <div>
-                      <strong>AUTO REST TIMER</strong>
-                      <small>{activeRestLabel}</small>
-                      <span>{formatClock(restSeconds)}</span>
-                      <em>{restCompletedMessage || "Tick a set done to start rest automatically."}</em>
-                    </div>
-
-                    <div className="tf-rest-controls">
-                      <button
-                        aria-label={restRunning ? "Pause rest timer" : "Resume rest timer"}
-                        className="tf-play-btn"
-                        onClick={() => setRestRunning((current) => !current)}
-                        type="button"
-                      >
-                        {restRunning ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" />}
-                      </button>
-                      <button onClick={() => addRestTime(15)} type="button">+15s</button>
-                      <button onClick={skipRestTimer} type="button"><SkipForward size={15} /> Skip</button>
-                    </div>
-                  </div>
+                  <RestTimer
+                    activeRestLabel={activeRestLabel}
+                    restCompletedMessage={restCompletedMessage}
+                    restRunning={restRunning}
+                    restSeconds={restSeconds}
+                    onAddTime={addRestTime}
+                    onSkip={skipRestTimer}
+                    onToggle={() => setRestRunning((current) => !current)}
+                  />
 
                   <textarea
                     className="tf-notes-input"

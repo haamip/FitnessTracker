@@ -15,7 +15,7 @@ function convertDayToWorkout(day) {
     libraryId: exercise.id,
     name: exercise.name,
     target: `${exercise.sets} sets • ${exercise.reps} reps`,
-    image: "TF",
+    image: exercise.image || "/exercise-images/trackfit-fallback.svg",
     primaryMuscles: exercise.primaryMuscles || [],
     equipment: exercise.equipment || [],
     movementPattern: exercise.movementPattern || "unknown",
@@ -59,12 +59,12 @@ export default function AIWorkoutBuilder() {
 
   function savePlan() {
     /*
-      Saving the AI plan creates two records:
+      Saving the generated training plan creates two records:
       1. trackfit_ai_workout_plan: shown on the Workouts page.
       2. trackfit_workout_ai-X: the actual editable workout logger data.
 
-      This keeps generated plans editable instead of locking them inside the AI
-      Builder screen. It also means AI and manual workouts share the same logger.
+      This keeps generated plans editable instead of locking them inside the
+      Workout Builder screen. It also means generated and manual workouts share the same logger.
     */
     writeJson("trackfit_ai_workout_plan", plan);
 
@@ -88,13 +88,13 @@ export default function AIWorkoutBuilder() {
           <ArrowLeft size={24} />
         </Link>
         <div>
-          <p>AI Builder v3</p>
-          <h1>Build Workout</h1>
+          <p>Workout Builder</p>
+          <h1>Build Training Plan</h1>
           <span>Library-based plans, ready to edit and log.</span>
         </div>
       </header>
 
-      {/* User inputs become constraints for the AI rules engine. */}
+      {/* User inputs become constraints for the internal plan-generation engine. */}
       <section className="tf-builder-panel ai-control-panel">
         <label>
           Goal
@@ -167,7 +167,7 @@ export default function AIWorkoutBuilder() {
         <div className="tf-generated-head">
           <div>
             <p>Generated From Exercise Library</p>
-            <h2>{days} Day Program</h2>
+            <h2>{days} Day Training Plan</h2>
           </div>
           <Sparkles size={24} />
         </div>
@@ -208,7 +208,7 @@ export default function AIWorkoutBuilder() {
 
         <button className="tf-save-plan-btn" onClick={savePlan} type="button">
           <Save size={20} />
-          {saved ? "Plan Saved - go to Workouts" : "Save Program"}
+          {saved ? "Training Plan Saved - go to Workouts" : "Save Training Plan"}
         </button>
       </div>
     </main>

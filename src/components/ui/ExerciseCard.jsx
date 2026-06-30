@@ -1,23 +1,51 @@
-import { Trophy } from "lucide-react";
+import { ChevronRight } from "lucide-react";
+import ExerciseImage from "./ExerciseImage";
 
-export default function ExerciseCard({ name, target, sets = [] }) {
+/**
+ * ExerciseCard
+ *
+ * Reusable compact exercise card used by supporting workout screens.
+ * The live Train page uses the same ExerciseImage pipeline, so every screen
+ * now has consistent artwork, fallback handling, and readable card layout.
+ */
+export default function ExerciseCard({
+  name,
+  target,
+  sets = [],
+  image,
+  exercise,
+  onClick,
+}) {
+  const cardExercise = exercise || { name, image };
+  const completedSets = sets.filter((set, index) => {
+    if (typeof set === "object") {
+      return Boolean(set.done);
+    }
+
+    return index === 0;
+  }).length;
+
   return (
-    <section className="exercise-card">
-      <div className="exercise-card-head">
-        <div>
-          <h3>{name}</h3>
-          <p>{target}</p>
-        </div>
-        <Trophy size={18} />
-      </div>
+    <section className="tf-compact-exercise-card">
+      <button className="tf-compact-exercise-card__button" onClick={onClick} type="button">
+        <ExerciseImage
+          className="tf-compact-exercise-card__image"
+          exercise={cardExercise}
+          size={48}
+        />
 
-      <div className="set-grid">
-        {sets.map((set, index) => (
-          <button className={index === 0 ? "set-pill done" : "set-pill"} key={set}>
-            {index === 0 ? "✓ " : ""}{set}
-          </button>
-        ))}
-      </div>
+        <span className="tf-compact-exercise-card__body">
+          <strong>{name}</strong>
+          <small>{target}</small>
+          {sets.length > 0 && (
+            <em>
+              {completedSets}/{sets.length} sets complete
+            </em>
+          )}
+        </span>
+
+        <ChevronRight size={20} aria-hidden="true" />
+      </button>
     </section>
   );
 }

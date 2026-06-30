@@ -17,6 +17,8 @@ const muscleFilters = [
   "calves",
 ];
 
+const FALLBACK_EXERCISE_IMAGE = "/exercise-images/trackfit-fallback.svg";
+
 const equipmentFilters = [
   "all",
   "barbell",
@@ -59,13 +61,15 @@ function formatLabel(value) {
 
 function ExerciseAvatar({ exercise }) {
   const [hasImage, setHasImage] = useState(Boolean(exercise.image));
+  const imageSource = exercise.image || FALLBACK_EXERCISE_IMAGE;
 
   return (
     <span className="tf-picker-art">
-      {hasImage && exercise.image ? (
+      {hasImage ? (
         <img
           alt=""
-          src={exercise.image}
+          loading="lazy"
+          src={imageSource}
           onError={() => setHasImage(false)}
         />
       ) : (

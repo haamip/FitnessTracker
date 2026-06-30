@@ -52,9 +52,9 @@ function formatDate(value) {
 }
 
 export default function Workouts() {
-  const savedAiPlan = useMemo(() => readJson("trackfit_ai_workout_plan", []), []);
+  const savedTrainingPlan = useMemo(() => readJson("trackfit_ai_workout_plan", []), []);
   const workoutHistory = useMemo(() => readJson("trackfit_workout_history", []).slice(0, 3), []);
-  const hasAiProgram = savedAiPlan.length > 0;
+  const hasTrainingPlan = savedTrainingPlan.length > 0;
 
   return (
     <motion.div
@@ -69,25 +69,25 @@ export default function Workouts() {
         <span>Build, save and log your sessions.</span>
       </section>
 
-      {/* AI builder entry point. Kept separate from the program list so the Train page
+      {/* Workout Builder entry point. Kept separate from the program list so the Train page
           never looks like two workout programs are stacked on top of each other. */}
       <Link className="tf-builder-card" to="/workouts/builder">
         <div>
           <Sparkles size={22} />
-          <strong>AI Workout Builder</strong>
-          <span>{hasAiProgram ? "Edit or rebuild your program" : "Build a program from the exercise library"}</span>
+          <strong>Workout Builder</strong>
+          <span>{hasTrainingPlan ? "Edit or rebuild your training plan" : "Build a training plan from the exercise library"}</span>
         </div>
         <ChevronRight size={22} />
       </Link>
 
       {/* Show one primary program source at a time.
-          If an AI program exists it becomes the active training plan.
+          If a generated training plan exists it becomes the active training plan.
           If not, the starter templates are shown as the default quick-start option. */}
       <section className="tf-workout-stack">
-        <div className="tf-section-label">{hasAiProgram ? "Active AI Program" : "Quick Start"}</div>
+        <div className="tf-section-label">{hasTrainingPlan ? "Training Plan" : "Quick Start"}</div>
 
-        {hasAiProgram
-          ? savedAiPlan.map((day) => (
+        {hasTrainingPlan
+          ? savedTrainingPlan.map((day) => (
               <Link className="tf-plan-card" to={`/workouts/${day.id}`} key={day.id}>
                 <div className="tf-plan-icon">
                   <Sparkles size={22} />
