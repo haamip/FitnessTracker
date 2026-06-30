@@ -3,9 +3,10 @@
 // ----------------------------------------------------------------------------
 // Lightweight deterministic generator used by the public Workout Builder.
 //
-// v0.10.3 change:
-// This service no longer imports exerciseLibrary directly. The page loads the
-// library only when Workout Builder opens, then passes it into generateWorkoutPlan.
+// v0.10.4 change:
+// Regenerate now rotates through strong exercise alternatives instead of always
+// selecting the single highest-scoring match. This keeps the builder stable,
+// fast and predictable while making each regenerate feel genuinely different.
 // ============================================================================
 
 export const equipmentLabels = {
@@ -112,6 +113,12 @@ function injurySafe(exercise, injuryFocus) {
   return true;
 }
 
+/**
+ * Small deterministic number used to rotate good alternatives.
+ *
+ * This gives different regenerate versions without using Math.random(), which
+ * keeps tests and future debugging predictable.
+ */
 function deterministicShuffle(exercise, slot, planVersion) {
   const seed = `${exercise.id}-${slot}-${planVersion}`;
   return [...seed].reduce((total, char) => total + char.charCodeAt(0), 0) % 17;
@@ -130,20 +137,39 @@ function scoreExercise(exercise, slot, options) {
   return score + deterministicShuffle(exercise, slot, planVersion);
 }
 
+/**
+ * Picks from the strongest matching exercises instead of always taking #1.
+ *
+ * Previous behaviour:
+ *   Regenerate often picked the same exercise because the highest score stayed
+ *   highest on every version.
+ *
+ * New behaviour:
+ *   Build a small shortlist of quality matches, then rotate through that
+ *   shortlist using planVersion, day index and slot index.
+ */
 function pickExercise(slot, exerciseLibrary, options) {
-  let bestExercise = null;
-  let bestScore = -Infinity;
+  const rankedExercises = exerciseLibrary
+    .map((exercise) => ({
+      exercise,
+      score: scoreExercise(exercise, slot, options),
+    }))
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score);
 
-  for (const exercise of exerciseLibrary) {
-    const score = scoreExercise(exercise, slot, options);
-
-    if (score > bestScore) {
-      bestExercise = exercise;
-      bestScore = score;
-    }
+  if (rankedExercises.length === 0) {
+    return exerciseLibrary[0];
   }
 
-  return bestExercise || exerciseLibrary[0];
+  const bestScore = rankedExercises[0].score;
+
+  const strongMatches = rankedExercises.filter((item) => item.score >= bestScore - 18);
+  const shortlist = strongMatches.slice(0, 8);
+
+  const rotationIndex =
+    (options.planVersion + options.dayIndex + options.slotIndex) % Math.max(shortlist.length, 1);
+
+  return shortlist[rotationIndex]?.exercise || rankedExercises[0].exercise;
 }
 
 function buildGeneratedExercise(exercise, prescription) {
@@ -171,9 +197,7 @@ export function generateWorkoutPlan({
   injuryFocus = "none",
   planVersion = 1,
 } = {}) {
-  if (!exerciseLibrary.length) {
-    return [];
-  }
+  if (!exerciseLibrary.length) return [];
 
   const safeGoal = splitTemplates[goal] ? goal : "muscle";
   const dayCount = Number(days) || 4;
@@ -181,13 +205,15 @@ export function generateWorkoutPlan({
   const selectedTemplates = splitTemplates[safeGoal].slice(0, dayCount);
   const usedExerciseIds = new Set();
 
-  return selectedTemplates.map((template, index) => {
-    const exercises = template.slots.map((slot) => {
+  return selectedTemplates.map((template, dayIndex) => {
+    const exercises = template.slots.map((slot, slotIndex) => {
       const selectedExercise = pickExercise(slot, exerciseLibrary, {
         equipment,
         injuryFocus,
         planVersion,
         usedExerciseIds,
+        dayIndex,
+        slotIndex,
       });
 
       usedExerciseIds.add(selectedExercise.id);
@@ -196,7 +222,7 @@ export function generateWorkoutPlan({
     });
 
     return {
-      id: `ai-${index + 1}`,
+      id: `ai-${dayIndex + 1}`,
       name: template.name,
       focus: safeGoal,
       time,
