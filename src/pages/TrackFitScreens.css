@@ -5620,3 +5620,52 @@ body,
     min-width: 138px;
   }
 }
+/* Gym Mode V2: guided exercise completion */
+.gym-complete-panel {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top right, rgba(185, 131, 24, 0.18), transparent 36%),
+    #171717;
+  color: #ffffff;
+  box-shadow: 0 16px 34px rgba(23, 23, 23, 0.18);
+}
+
+.gym-complete-panel strong {
+  display: block;
+  color: #ffffff;
+  font-size: 20px;
+  line-height: 1.05;
+  font-weight: 950;
+  letter-spacing: -0.4px;
+}
+
+.gym-complete-panel span {
+  display: block;
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.gym-complete-panel button {
+  width: 100%;
+  min-height: 54px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--gold);
+  color: #171717;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.gym-complete-panel button:disabled {
+  opacity: 0.45;
+}

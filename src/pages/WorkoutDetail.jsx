@@ -92,7 +92,7 @@ function createDefaultExercises() {
     {
       id: "rdl",
       name: "Dumbbell Romanian Deadlift",
-      target: "2 sets • 10 reps",
+      target: "2 sets â€¢ 10 reps",
       image: resolveExerciseImage({ id: "rdl", name: "Dumbbell Romanian Deadlift" }),
       primaryMuscles: ["hamstrings"],
       equipment: ["dumbbell"],
@@ -103,7 +103,7 @@ function createDefaultExercises() {
     {
       id: "calf",
       name: "Dumbbell Standing Calf Raise",
-      target: "2 sets • 12 reps",
+      target: "2 sets â€¢ 12 reps",
       image: resolveExerciseImage({ id: "calf", name: "Dumbbell Standing Calf Raise" }),
       primaryMuscles: ["calves"],
       equipment: ["dumbbell"],
@@ -114,7 +114,7 @@ function createDefaultExercises() {
     {
       id: "press",
       name: "Dumbbell Shoulder Press",
-      target: "2 sets • 10 reps",
+      target: "2 sets â€¢ 10 reps",
       image: resolveExerciseImage({ id: "press", name: "Dumbbell Shoulder Press" }),
       primaryMuscles: ["shoulders"],
       equipment: ["dumbbell"],
@@ -125,7 +125,7 @@ function createDefaultExercises() {
     {
       id: "row",
       name: "Dumbbell Row",
-      target: "2 sets • 10 reps",
+      target: "2 sets â€¢ 10 reps",
       image: resolveExerciseImage({ id: "row", name: "Dumbbell Row" }),
       primaryMuscles: ["lats"],
       equipment: ["dumbbell"],
@@ -136,7 +136,7 @@ function createDefaultExercises() {
     {
       id: "squat",
       name: "Barbell Back Squat",
-      target: "2 sets • 10 reps",
+      target: "2 sets â€¢ 10 reps",
       image: resolveExerciseImage({ id: "squat", name: "Barbell Back Squat" }),
       primaryMuscles: ["quadriceps"],
       equipment: ["barbell"],
@@ -157,7 +157,7 @@ function convertAiDayToWorkout(day) {
     id: `${exercise.id}-${crypto.randomUUID()}`,
     libraryId: exercise.id,
     name: exercise.name,
-    target: `${exercise.sets} sets • ${exercise.reps} reps`,
+    target: `${exercise.sets} sets â€¢ ${exercise.reps} reps`,
     image: resolveExerciseImage(exercise),
     primaryMuscles: exercise.primaryMuscles || [],
     equipment: exercise.equipment || [],
@@ -216,6 +216,16 @@ export default function WorkoutDetail() {
   const currentExerciseTotalSets = currentExercise?.sets.length || 0;
   const currentExercisePercent =
     currentExerciseTotalSets > 0 ? Math.round((currentExerciseDoneSets / currentExerciseTotalSets) * 100) : 0;
+
+/**
+ * Guided Exercise Flow
+ *
+ * When every set for the focused exercise is complete, Gym Mode changes from
+ * "log this set" into "move to the next exercise". This keeps the workout
+ * flowing without forcing the user to scan the exercise strip manually.
+ */
+const isCurrentExerciseComplete =
+  currentExerciseTotalSets > 0 && currentExerciseDoneSets === currentExerciseTotalSets;
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -394,7 +404,7 @@ export default function WorkoutDetail() {
       id: `${libraryExercise.id}-${crypto.randomUUID()}`,
       libraryId: libraryExercise.id,
       name: libraryExercise.name,
-      target: `${setCount} sets • ${reps} reps`,
+      target: `${setCount} sets â€¢ ${reps} reps`,
       image: libraryExercise.image || FALLBACK_EXERCISE_IMAGE,
       primaryMuscles: libraryExercise.primaryMuscles || [],
       equipment: libraryExercise.equipment || [],
@@ -459,6 +469,7 @@ export default function WorkoutDetail() {
 
   const workoutTitle = aiDay?.name || "Workout 1";
   const canFinish = totals.doneSets > 0;
+  const isWorkoutComplete = totals.totalSets > 0 && totals.doneSets === totals.totalSets;
   const recommendation = currentExercise ? getExerciseRecommendation(currentExercise, workoutHistory) : null;
   const previousExercise = currentExercise
     ? recommendation?.previousExercise || findPreviousExercise(workoutHistory, currentExercise)
@@ -488,7 +499,7 @@ export default function WorkoutDetail() {
         <div className="tf-progress-meta">
           <span>{totals.percent}% COMPLETE</span>
           <span>
-            {totals.doneSets}/{totals.totalSets} SETS • {Math.round(totals.volume)} KG
+            {totals.doneSets}/{totals.totalSets} SETS â€¢ {Math.round(totals.volume)} KG
           </span>
         </div>
 
@@ -529,7 +540,7 @@ export default function WorkoutDetail() {
             <p>{currentExercise.target}</p>
             <h2>{currentExercise.name}</h2>
             <span>
-              {(currentExercise.primaryMuscles || []).slice(0, 3).join(" • ") || "Strength"} •{" "}
+              {(currentExercise.primaryMuscles || []).slice(0, 3).join(" â€¢ ") || "Strength"} â€¢{" "}
               {String(currentExercise.movementPattern || "training").replaceAll("_", " ")}
             </span>
           </div>
@@ -610,14 +621,28 @@ export default function WorkoutDetail() {
             value={currentExercise.exerciseNote || ""}
           />
 
-          {nextExercise && (
-            <button className="gym-next-exercise" onClick={() => goToExercise(1)} type="button">
-              Next exercise
-              <span>
-                {nextExercise.name} <ArrowRight size={16} />
-              </span>
-            </button>
-          )}
+          {isCurrentExerciseComplete && (
+  <div className="gym-complete-panel">
+    <div>
+      <strong>{currentExercise.name} complete</strong>
+      <span>
+        {isWorkoutComplete
+          ? "Workout complete. Save when ready."
+          : `Next up: ${nextExercise?.name || "final review"}`}
+      </span>
+    </div>
+
+    {nextExercise ? (
+      <button onClick={() => goToExercise(1)} type="button">
+        Start next exercise <ArrowRight size={16} />
+      </button>
+    ) : (
+      <button className={canFinish ? "ready" : ""} disabled={!canFinish} onClick={finishWorkout} type="button">
+        Save workout
+      </button>
+    )}
+  </div>
+)}
         </section>
       )}
 
