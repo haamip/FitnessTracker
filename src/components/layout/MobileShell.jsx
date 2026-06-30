@@ -2,6 +2,12 @@
 import logo from "../../assets/brand/trackfit-logo.png";
 import "./MobileShell.css";
 
+/**
+ * MobileShell
+ *
+ * Main phone-frame layout used across TrackFit.
+ * Keeps the top brand bar, routed page content, and bottom navigation consistent.
+ */
 export default function MobileShell({ children }) {
   return (
     <div className="mobile-frame">
@@ -19,4 +25,3 @@ export default function MobileShell({ children }) {
     </div>
   );
 }
-

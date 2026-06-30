@@ -23,10 +23,10 @@ export default function Coach() {
 
   return (
     <main className="screen tf-coach-page">
-      {/* Coach hero: the first thing users see should answer “what should I do today?” */}
+      {/* Coach hero: the first thing users see should answer â€œwhat should I do today?â€ */}
       <section className="tf-coach-hero">
         <div>
-          <p className="eyebrow">AI Coach v0.7</p>
+          <p className="eyebrow">Training Coach</p>
           <h1>{coach.title}</h1>
           <p>{coach.readiness.note}</p>
         </div>
@@ -108,7 +108,7 @@ export default function Coach() {
         {showWhy && (
           <div className="tf-why-list">
             {coach.reasons.map((reason) => (
-              <p key={reason}>• {reason}</p>
+              <p key={reason}>â€¢ {reason}</p>
             ))}
           </div>
         )}

@@ -3,10 +3,12 @@ import {
   Activity,
   Clock,
   Flame,
-  HeartPulse,  Plus,
+  HeartPulse,
+  Plus,
   Route,
   Sparkles,
-  Timer,  Zap,
+  Timer,
+  Zap,
 } from "lucide-react";
 
 import Button from "../components/ui/Button";
@@ -27,6 +29,12 @@ const sessions = [
   { type: "Treadmill", distance: "2.4km", time: "20 min", pace: "8:20/km", zone: "Zone 2" },
 ];
 
+/**
+ * CardioLog
+ *
+ * Cardio tracking surface for weekly movement, recent sessions and conditioning guidance.
+ * This is still demo-data driven, but the layout is ready for live cardio entries later.
+ */
 export default function CardioLog() {
   return (
     <motion.div
@@ -99,7 +107,9 @@ export default function CardioLog() {
 
             <div>
               <strong>{session.type}</strong>
-              <p>{session.distance} · {session.time} · {session.pace}</p>
+              <p>
+                {session.distance} · {session.time} · {session.pace}
+              </p>
             </div>
 
             <span>{session.zone}</span>
@@ -131,8 +141,8 @@ export default function CardioLog() {
           <p className="eyebrow">Coach note</p>
           <h2>Cardio is helping the cut.</h2>
           <p>
-            Keep two easy Zone 2 sessions and one harder interval session each week.
-            That gives fitness without cooking your legs.
+            Keep two easy Zone 2 sessions and one harder interval session each week. That gives fitness without cooking
+            your legs.
           </p>
         </div>
       </section>

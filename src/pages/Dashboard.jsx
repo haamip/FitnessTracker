@@ -167,7 +167,7 @@ export default function Dashboard() {
           {allTimePrs.slice(0, 3).map((pr) => (
             <article key={pr.exercise}>
               <strong>{pr.exercise}</strong>
-              <span>{pr.set} • e1RM {pr.e1rm}kg</span>
+              <span>{pr.set} â€¢ e1RM {pr.e1rm}kg</span>
             </article>
           ))}
         </section>
@@ -175,8 +175,8 @@ export default function Dashboard() {
 
       <section className="v4-coach-card">
         <div>
-          <p className="eyebrow">AI Coach</p>
-          <h2>AI Coach is watching the pattern.</h2>
+          <p className="eyebrow">Training Coach</p>
+          <h2>Your coach is watching the pattern.</h2>
           <p>{coachBrief.weeklySummaryText}</p>
         </div>
         <Sparkles size={24} />
