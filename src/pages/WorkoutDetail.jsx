@@ -4,11 +4,12 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowDown,
   ArrowLeft,
+  ArrowRight,
   ArrowUp,
+  ChevronLeft,
   ChevronRight,
   Copy,
   Info,
-  MoreHorizontal,
   Plus,
   Trash2,
 } from "lucide-react";
@@ -33,7 +34,6 @@ import { readJson, writeJson } from "../services/storage";
 import "./TrackFitScreens.css";
 
 const DEFAULT_REST_SECONDS = 90;
-
 const FALLBACK_EXERCISE_IMAGE = "/exercise-images/trackfit-fallback.svg";
 
 function findLibraryExerciseById(id) {
@@ -57,26 +57,17 @@ function resolveExerciseImage(exercise) {
 }
 
 function parseRestSeconds(value) {
-  if (typeof value === "number") {
-    return value;
-  }
-
-  if (!value) {
-    return DEFAULT_REST_SECONDS;
-  }
+  if (typeof value === "number") return value;
+  if (!value) return DEFAULT_REST_SECONDS;
 
   const restText = String(value).toLowerCase();
   const rangeMatch = restText.match(/(\d+)\s*-\s*(\d+)/);
 
-  if (rangeMatch) {
-    return Number.parseInt(rangeMatch[2], 10);
-  }
+  if (rangeMatch) return Number.parseInt(rangeMatch[2], 10);
 
   const singleMatch = restText.match(/(\d+)/);
 
-  if (!singleMatch) {
-    return DEFAULT_REST_SECONDS;
-  }
+  if (!singleMatch) return DEFAULT_REST_SECONDS;
 
   const restValue = Number.parseInt(singleMatch[1], 10);
   return restText.includes("min") ? restValue * 60 : restValue;
@@ -205,22 +196,26 @@ export default function WorkoutDetail() {
 
   const [exercises, setExercises] = useState(() => {
     const savedWorkout = readJson(storageKey, null);
-
-    if (savedWorkout) {
-      return savedWorkout;
-    }
-
-    if (aiDay) {
-      return convertAiDayToWorkout(aiDay);
-    }
-
+    if (savedWorkout) return savedWorkout;
+    if (aiDay) return convertAiDayToWorkout(aiDay);
     return createDefaultExercises();
   });
 
   const [openExerciseId, setOpenExerciseId] = useState(() => exercises[0]?.id || "");
-
-  // Workout history feeds previous-set targets, PR checks and progression advice.
   const workoutHistory = useMemo(() => readWorkoutHistory(), []);
+
+  const currentExerciseIndex = Math.max(
+    0,
+    exercises.findIndex((exercise) => exercise.id === openExerciseId),
+  );
+  const currentExercise = exercises[currentExerciseIndex];
+  const nextExercise = exercises[currentExerciseIndex + 1];
+  const previousExerciseInWorkout = exercises[currentExerciseIndex - 1];
+
+  const currentExerciseDoneSets = currentExercise?.sets.filter((set) => set.done).length || 0;
+  const currentExerciseTotalSets = currentExercise?.sets.length || 0;
+  const currentExercisePercent =
+    currentExerciseTotalSets > 0 ? Math.round((currentExerciseDoneSets / currentExerciseTotalSets) * 100) : 0;
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -246,12 +241,10 @@ export default function WorkoutDetail() {
   }, []);
 
   function requestNotificationPermission() {
-    if (!("Notification" in window) || Notification.permission !== "default") {
-      return;
-    }
+    if (!("Notification" in window) || Notification.permission !== "default") return;
 
     Notification.requestPermission().catch(() => {
-      // If the phone/browser blocks notification permission, TrackFit still uses the in-app timer.
+      // Browser may block notification permission. In-app timer still works.
     });
   }
 
@@ -262,16 +255,6 @@ export default function WorkoutDetail() {
   function startRestTimer(exercise) {
     const restDuration = getExerciseRestSeconds(exercise);
 
-    /*
-      Rest timer automation
-
-      The user should not have to press a separate Start Rest button while training.
-      When a set is ticked done, TrackFit automatically:
-      1. reads the exercise rest time,
-      2. starts the countdown,
-      3. asks for notification permission if needed,
-      4. vibrates/sends a notification when rest finishes.
-    */
     setRestSeconds(restDuration);
     setActiveRestLabel(`${exercise.name} rest`);
     setRestCompletedMessage("");
@@ -291,9 +274,7 @@ export default function WorkoutDetail() {
   }
 
   useEffect(() => {
-    if (!restRunning) {
-      return undefined;
-    }
+    if (!restRunning) return undefined;
 
     const timer = window.setInterval(() => {
       setRestSeconds((currentSeconds) => {
@@ -320,9 +301,7 @@ export default function WorkoutDetail() {
   function updateSet(exerciseId, setId, field, value) {
     setExercises((currentExercises) =>
       currentExercises.map((exercise) => {
-        if (exercise.id !== exerciseId) {
-          return exercise;
-        }
+        if (exercise.id !== exerciseId) return exercise;
 
         if (field === "done" && value) {
           startRestTimer(exercise);
@@ -330,9 +309,7 @@ export default function WorkoutDetail() {
 
         return {
           ...exercise,
-          sets: exercise.sets.map((set) =>
-            set.id === setId ? { ...set, [field]: value } : set,
-          ),
+          sets: exercise.sets.map((set) => (set.id === setId ? { ...set, [field]: value } : set)),
         };
       }),
     );
@@ -341,9 +318,7 @@ export default function WorkoutDetail() {
   function addSet(exerciseId) {
     setExercises((currentExercises) =>
       currentExercises.map((exercise) => {
-        if (exercise.id !== exerciseId) {
-          return exercise;
-        }
+        if (exercise.id !== exerciseId) return exercise;
 
         const previousSet = exercise.sets.at(-1) || {
           weight: "",
@@ -362,9 +337,7 @@ export default function WorkoutDetail() {
   function removeSet(exerciseId, setId) {
     setExercises((currentExercises) =>
       currentExercises.map((exercise) => {
-        if (exercise.id !== exerciseId || exercise.sets.length === 1) {
-          return exercise;
-        }
+        if (exercise.id !== exerciseId || exercise.sets.length === 1) return exercise;
 
         return {
           ...exercise,
@@ -379,9 +352,7 @@ export default function WorkoutDetail() {
       const currentIndex = currentExercises.findIndex((exercise) => exercise.id === exerciseId);
       const nextIndex = currentIndex + direction;
 
-      if (currentIndex < 0 || nextIndex < 0 || nextIndex >= currentExercises.length) {
-        return currentExercises;
-      }
+      if (currentIndex < 0 || nextIndex < 0 || nextIndex >= currentExercises.length) return currentExercises;
 
       const reorderedExercises = [...currentExercises];
       const [movedExercise] = reorderedExercises.splice(currentIndex, 1);
@@ -415,16 +386,6 @@ export default function WorkoutDetail() {
     setOpenExerciseId(duplicatedExercise.id);
   }
 
-  /*
-    This is where the Exercise Engine plugs into the Workout Logger.
-
-    The picker sends one clean exercise object from exerciseLibrary.js.
-    We convert it into a loggable workout exercise with sets, reps, weight,
-    and completion status.
-
-    The AI Builder saves workouts in this same shape, so manual workouts and
-    AI workouts stay compatible from day one.
-  */
   function addExerciseFromLibrary(libraryExercise) {
     const setCount = libraryExercise.defaultSets || 3;
     const reps = String(libraryExercise.defaultReps || "8-12");
@@ -450,9 +411,7 @@ export default function WorkoutDetail() {
 
   function updateExerciseField(exerciseId, field, value) {
     setExercises((currentExercises) =>
-      currentExercises.map((exercise) =>
-        exercise.id === exerciseId ? { ...exercise, [field]: value } : exercise,
-      ),
+      currentExercises.map((exercise) => (exercise.id === exerciseId ? { ...exercise, [field]: value } : exercise)),
     );
   }
 
@@ -489,12 +448,25 @@ export default function WorkoutDetail() {
     navigate("/workouts");
   }
 
+  function goToExercise(direction) {
+    const nextIndex = currentExerciseIndex + direction;
+    const nextWorkoutExercise = exercises[nextIndex];
+
+    if (nextWorkoutExercise) {
+      setOpenExerciseId(nextWorkoutExercise.id);
+    }
+  }
+
   const workoutTitle = aiDay?.name || "Workout 1";
   const canFinish = totals.doneSets > 0;
+  const recommendation = currentExercise ? getExerciseRecommendation(currentExercise, workoutHistory) : null;
+  const previousExercise = currentExercise
+    ? recommendation?.previousExercise || findPreviousExercise(workoutHistory, currentExercise)
+    : null;
 
   return (
     <motion.div
-      className="screen tf-gym-mode"
+      className="screen tf-gym-mode gym-mode-v1"
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
@@ -515,10 +487,11 @@ export default function WorkoutDetail() {
 
         <div className="tf-progress-meta">
           <span>{totals.percent}% COMPLETE</span>
-          <span>{totals.doneSets}/{totals.totalSets} SETS • {Math.round(totals.volume)} KG</span>
+          <span>
+            {totals.doneSets}/{totals.totalSets} SETS • {Math.round(totals.volume)} KG
+          </span>
         </div>
 
-        {/* Live workout intelligence: simple stats that update as sets are checked off. */}
         <WorkoutSummary seconds={seconds} totals={totals} />
       </section>
 
@@ -532,122 +505,147 @@ export default function WorkoutDetail() {
         </section>
       )}
 
-      <section className="tf-exercise-stack">
+      {currentExercise && (
+        <section className="gym-focus-card">
+          <div className="gym-focus-card__top">
+            <button disabled={!previousExerciseInWorkout} onClick={() => goToExercise(-1)} type="button">
+              <ChevronLeft size={20} />
+            </button>
+
+            <span>
+              Exercise {currentExerciseIndex + 1} of {exercises.length}
+            </span>
+
+            <button disabled={!nextExercise} onClick={() => goToExercise(1)} type="button">
+              <ChevronRight size={20} />
+            </button>
+          </div>
+
+          <div className="gym-focus-card__art">
+            <ExerciseImage exercise={currentExercise} size={108} />
+          </div>
+
+          <div className="gym-focus-card__title">
+            <p>{currentExercise.target}</p>
+            <h2>{currentExercise.name}</h2>
+            <span>
+              {(currentExercise.primaryMuscles || []).slice(0, 3).join(" • ") || "Strength"} •{" "}
+              {String(currentExercise.movementPattern || "training").replaceAll("_", " ")}
+            </span>
+          </div>
+
+          <div className="gym-current-progress">
+            <div>
+              <strong>
+                {currentExerciseDoneSets}/{currentExerciseTotalSets}
+              </strong>
+              <span>sets complete</span>
+            </div>
+
+            <i>
+              <b style={{ width: `${currentExercisePercent}%` }} />
+            </i>
+          </div>
+
+          <div className="tf-exercise-tools gym-tools">
+            <button onClick={() => moveExercise(currentExercise.id, -1)} type="button">
+              <ArrowUp size={16} /> Up
+            </button>
+            <button onClick={() => moveExercise(currentExercise.id, 1)} type="button">
+              <ArrowDown size={16} /> Down
+            </button>
+            <button onClick={() => addWarmUpSets(currentExercise)} type="button">
+              <Plus size={16} /> Warm-up
+            </button>
+            <button onClick={() => duplicateExercise(currentExercise)} type="button">
+              <Copy size={16} /> Duplicate
+            </button>
+            <Link className="tf-detail-link" state={{ returnTo: `/workouts/${id}` }} to={`/exercises/${currentExercise.libraryId || currentExercise.id}`}>
+              <Info size={16} /> Details
+            </Link>
+            <button className="danger" onClick={() => removeExercise(currentExercise.id)} type="button">
+              <Trash2 size={16} /> Delete
+            </button>
+          </div>
+
+          <div className="tf-coach-cue">
+            <strong>Coach target</strong>
+            <span>{recommendation?.reason}</span>
+          </div>
+
+          <SetLogger
+            exercise={currentExercise}
+            previousExercise={previousExercise}
+            recommendation={recommendation}
+            onAddSet={addSet}
+            onRemoveSet={removeSet}
+            onUpdateSet={updateSet}
+          />
+
+          {currentExercise.instructions?.length > 0 && (
+            <details className="tf-instructions-box">
+              <summary>How to perform</summary>
+              <ol>
+                {currentExercise.instructions.slice(0, 4).map((instruction) => (
+                  <li key={instruction}>{instruction}</li>
+                ))}
+              </ol>
+            </details>
+          )}
+
+          <RestTimer
+            activeRestLabel={activeRestLabel}
+            restCompletedMessage={restCompletedMessage}
+            restRunning={restRunning}
+            restSeconds={restSeconds}
+            onAddTime={addRestTime}
+            onSkip={skipRestTimer}
+            onToggle={() => setRestRunning((current) => !current)}
+          />
+
+          <textarea
+            className="tf-notes-input"
+            onChange={(event) => updateExerciseField(currentExercise.id, "exerciseNote", event.target.value)}
+            placeholder="Exercise notes, pain, form cues, setup reminders..."
+            value={currentExercise.exerciseNote || ""}
+          />
+
+          {nextExercise && (
+            <button className="gym-next-exercise" onClick={() => goToExercise(1)} type="button">
+              Next exercise
+              <span>
+                {nextExercise.name} <ArrowRight size={16} />
+              </span>
+            </button>
+          )}
+        </section>
+      )}
+
+      <section className="gym-exercise-strip">
         {exercises.map((exercise, exerciseIndex) => {
-          const isOpen = exercise.id === openExerciseId;
-          const recommendation = getExerciseRecommendation(exercise, workoutHistory);
-          const previousExercise = recommendation.previousExercise || findPreviousExercise(workoutHistory, exercise);
+          const isActive = exercise.id === openExerciseId;
+          const doneSets = exercise.sets.filter((set) => set.done).length;
 
           return (
-            <article className={isOpen ? "tf-exercise-card open" : "tf-exercise-card"} key={exercise.id}>
-              <button
-                className="tf-exercise-summary"
-                onClick={() => setOpenExerciseId(exercise.id)}
-                type="button"
-              >
-                <span className="tf-exercise-number">{exerciseIndex + 1}</span>
-                <ExerciseImage exercise={exercise} />
-
-                <span className="tf-exercise-title">
-                  <strong>{exercise.name}</strong>
-                  <small>
-                    {exercise.target}
-                    {exercise.movementPattern ? ` • ${exercise.movementPattern.replaceAll("_", " ")}` : ""}
-                  </small>
-                </span>
-
-                {isOpen ? <MoreHorizontal size={24} /> : <ChevronRight size={24} />}
-              </button>
-
-              {isOpen && (
-                <div className="tf-open-panel">
-                  <div className="tf-exercise-tools">
-                    <button onClick={() => moveExercise(exercise.id, -1)} type="button">
-                      <ArrowUp size={16} /> Up
-                    </button>
-                    <button onClick={() => moveExercise(exercise.id, 1)} type="button">
-                      <ArrowDown size={16} /> Down
-                    </button>
-                    <button onClick={() => addWarmUpSets(exercise)} type="button">
-                      <Plus size={16} /> Warm-up
-                    </button>
-                    <button onClick={() => duplicateExercise(exercise)} type="button">
-                      <Copy size={16} /> Duplicate
-                    </button>
-                    <button className="danger" onClick={() => removeExercise(exercise.id)} type="button">
-                      <Trash2 size={16} /> Delete
-                    </button>
-                  </div>
-
-                  <div className="tf-target-box">
-                    <div>
-                      <strong>TARGET</strong>
-                      <span>{exercise.target}</span>
-                    </div>
-
-                    <div>
-                      <strong>DETAILS</strong>
-                      <Link
-                        className="tf-detail-link"
-                        state={{ returnTo: `/workouts/${id}` }}
-                        to={`/exercises/${exercise.libraryId || exercise.id}`}
-                      >
-                        <Info size={18} /> Open
-                      </Link>
-                    </div>
-                  </div>
-
-                  {/* Previous session + progression reason for this exercise. */}
-                  <div className="tf-coach-cue">
-                    <strong>Coach target</strong>
-                    <span>{recommendation.reason}</span>
-                  </div>
-
-                  <SetLogger
-                    exercise={exercise}
-                    previousExercise={previousExercise}
-                    recommendation={recommendation}
-                    onAddSet={addSet}
-                    onRemoveSet={removeSet}
-                    onUpdateSet={updateSet}
-                  />
-
-                  {exercise.instructions?.length > 0 && (
-                    <details className="tf-instructions-box">
-                      <summary>How to perform</summary>
-                      <ol>
-                        {exercise.instructions.slice(0, 4).map((instruction) => (
-                          <li key={instruction}>{instruction}</li>
-                        ))}
-                      </ol>
-                    </details>
-                  )}
-
-                  <RestTimer
-                    activeRestLabel={activeRestLabel}
-                    restCompletedMessage={restCompletedMessage}
-                    restRunning={restRunning}
-                    restSeconds={restSeconds}
-                    onAddTime={addRestTime}
-                    onSkip={skipRestTimer}
-                    onToggle={() => setRestRunning((current) => !current)}
-                  />
-
-                  <textarea
-                    className="tf-notes-input"
-                    onChange={(event) => updateExerciseField(exercise.id, "exerciseNote", event.target.value)}
-                    placeholder="Exercise notes, pain, form cues, setup reminders..."
-                    value={exercise.exerciseNote || ""}
-                  />
-                </div>
-              )}
-            </article>
+            <button
+              className={isActive ? "gym-strip-item active" : "gym-strip-item"}
+              key={exercise.id}
+              onClick={() => setOpenExerciseId(exercise.id)}
+              type="button"
+            >
+              <span>{exerciseIndex + 1}</span>
+              <strong>{exercise.name}</strong>
+              <small>
+                {doneSets}/{exercise.sets.length}
+              </small>
+            </button>
           );
         })}
 
-        <button className="tf-add-exercise-card" onClick={() => setIsPickerOpen(true)} type="button">
-          <Plus size={20} />
-          Add Exercise
+        <button className="gym-strip-item add" onClick={() => setIsPickerOpen(true)} type="button">
+          <span>+</span>
+          <strong>Add Exercise</strong>
+          <small>Library</small>
         </button>
       </section>
 
