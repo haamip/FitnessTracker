@@ -1,13 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Dumbbell } from "lucide-react";
 import { FALLBACK_EXERCISE_IMAGE, resolveExerciseImage } from "../../services/exerciseResolver";
 
 /**
  * ExerciseImage
  *
- * Single reusable artwork component for every exercise surface in TrackFit.
- * It uses the Exercise Resolver so exercise variations can share a sensible
- * family image instead of relying on exact exercise-name filename matches.
+ * Reusable exercise artwork with safe fallback handling.
+ * Keying the img by source lets React reset failed-image state without a sync setState effect.
  */
 export default function ExerciseImage({
   exercise,
@@ -16,24 +15,22 @@ export default function ExerciseImage({
   size = 44,
 }) {
   const imageSource = useMemo(() => resolveExerciseImage(exercise), [exercise]);
-  const [activeSource, setActiveSource] = useState(imageSource);
-  const [showFallbackIcon, setShowFallbackIcon] = useState(false);
+  const [failedSources, setFailedSources] = useState(() => new Set());
 
-  /**
-   * Reset image state whenever React reuses this component for another card.
-   */
-  useEffect(() => {
-    setActiveSource(imageSource);
-    setShowFallbackIcon(false);
-  }, [imageSource]);
+  const shouldUseFallbackImage = failedSources.has(imageSource);
+  const activeSource = shouldUseFallbackImage ? FALLBACK_EXERCISE_IMAGE : imageSource;
+  const showFallbackIcon = failedSources.has(FALLBACK_EXERCISE_IMAGE);
 
   function handleImageError() {
-    if (activeSource !== FALLBACK_EXERCISE_IMAGE) {
-      setActiveSource(FALLBACK_EXERCISE_IMAGE);
-      return;
-    }
+    setFailedSources((currentSources) => {
+      if (currentSources.has(activeSource)) {
+        return currentSources;
+      }
 
-    setShowFallbackIcon(true);
+      const nextSources = new Set(currentSources);
+      nextSources.add(activeSource);
+      return nextSources;
+    });
   }
 
   return (
@@ -48,7 +45,7 @@ export default function ExerciseImage({
           <small>{fallbackLabel}</small>
         </span>
       ) : (
-        <img alt="" loading="lazy" src={activeSource} onError={handleImageError} />
+        <img alt="" key={activeSource} loading="lazy" src={activeSource} onError={handleImageError} />
       )}
     </span>
   );

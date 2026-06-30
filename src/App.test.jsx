@@ -3,11 +3,15 @@ import { render, screen } from "@testing-library/react";
 import App from "./App";
 
 describe("TrackFit app shell", () => {
-  it("renders the dashboard landing page", () => {
+  it("renders the mobile app shell while lazy routes load", () => {
     render(<App />);
 
-    expect(screen.getByText(/Good morning/i)).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /Haami/i })).toBeInTheDocument();
-    expect(screen.getByText(/TrackFit level/i)).toBeInTheDocument();
+    expect(screen.getByText("TrackFit")).toBeInTheDocument();
+    expect(screen.getByText("Built to move")).toBeInTheDocument();
+    expect(screen.getByText(/Loading TrackFit/i)).toBeInTheDocument();
+
+    expect(screen.getByRole("link", { name: /Home/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Train/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Progress/i })).toBeInTheDocument();
   });
 });
