@@ -5694,3 +5694,143 @@ body,
 .tf-simple-set__delete svg {
   display: block;
 }
+/* Gym Mode V2: premium rest timer sheet */
+.tf-rest-sheet {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid rgba(235, 232, 223, 0.92);
+  border-radius: 28px;
+  background: #ffffff;
+  box-shadow: 0 14px 38px rgba(24, 24, 24, 0.07);
+}
+
+.tf-rest-sheet.active {
+  position: sticky;
+  bottom: 92px;
+  z-index: 15;
+  border-color: rgba(185, 131, 24, 0.35);
+  background:
+    radial-gradient(circle at top right, rgba(185, 131, 24, 0.13), transparent 38%),
+    #171717;
+  color: #ffffff;
+  box-shadow: 0 24px 54px rgba(23, 23, 23, 0.28);
+}
+
+.tf-rest-sheet__handle {
+  width: 44px;
+  height: 5px;
+  margin: 0 auto;
+  border-radius: 999px;
+  background: rgba(23, 23, 23, 0.14);
+}
+
+.tf-rest-sheet.active .tf-rest-sheet__handle {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.tf-rest-sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.tf-rest-sheet__head strong {
+  display: block;
+  color: #171717;
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.tf-rest-sheet.active .tf-rest-sheet__head strong {
+  color: #ffffff;
+}
+
+.tf-rest-sheet__head span {
+  display: block;
+  margin-top: 4px;
+  color: #6f6f6f;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.tf-rest-sheet.active .tf-rest-sheet__head span {
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.tf-rest-sheet__icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: var(--gold-soft);
+  color: #8a5f08;
+}
+
+.tf-rest-sheet__time {
+  color: #171717;
+  font-size: 54px;
+  line-height: 0.9;
+  font-weight: 950;
+  letter-spacing: -2px;
+}
+
+.tf-rest-sheet.active .tf-rest-sheet__time {
+  color: #ffffff;
+}
+
+.tf-rest-sheet p {
+  margin: 0;
+  color: #6f6f6f;
+  font-size: 13px;
+  line-height: 1.35;
+  font-weight: 850;
+}
+
+.tf-rest-sheet.active p {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.tf-rest-sheet__actions {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr 0.9fr;
+  gap: 9px;
+}
+
+.tf-rest-sheet__actions button {
+  min-height: 48px;
+  border: 0;
+  border-radius: 17px;
+  background: rgba(23, 23, 23, 0.07);
+  color: #171717;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.tf-rest-sheet.active .tf-rest-sheet__actions button {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.tf-rest-sheet__actions button.primary,
+.tf-rest-sheet.active .tf-rest-sheet__actions button.primary {
+  background: var(--gold);
+  color: #171717;
+}
+
+@media (max-width: 360px) {
+  .tf-rest-sheet__actions {
+    grid-template-columns: 1fr;
+  }
+
+  .tf-rest-sheet__time {
+    font-size: 48px;
+  }
+}

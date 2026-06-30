@@ -35,7 +35,7 @@ export default function SetLogger({
                 <div>
                   <strong>{setLabel}</strong>
                   <span>
-                    Last: {previousLabel} · Target: {targetLabel}
+                    Last: {previousLabel} Â· Target: {targetLabel}
                   </span>
                 </div>
 
@@ -60,8 +60,8 @@ export default function SetLogger({
                       aria-label={`${exercise.name} ${setLabel} weight`}
                       inputMode="decimal"
                       onChange={(event) => onUpdateSet(exercise.id, set.id, "weight", event.target.value)}
-                      placeholder="0"
-                      value={set.weight}
+                      placeholder="Weight"
+                      value={set.weight === "0" || set.weight === 0 ? "" : set.weight}
                     />
                     <span>kg</span>
                   </div>
@@ -73,8 +73,8 @@ export default function SetLogger({
                     aria-label={`${exercise.name} ${setLabel} reps`}
                     inputMode="numeric"
                     onChange={(event) => onUpdateSet(exercise.id, set.id, "reps", event.target.value)}
-                    placeholder="8"
-                    value={set.reps}
+                    placeholder="Reps"
+                    value={set.reps === "8-12" ? "" : set.reps}
                   />
                 </label>
               </div>
@@ -112,7 +112,7 @@ export default function SetLogger({
                     <input
                       inputMode="decimal"
                       onChange={(event) => onUpdateSet(exercise.id, set.id, "rpe", event.target.value)}
-                      placeholder="8"
+                      placeholder="Reps"
                       value={set.rpe || ""}
                     />
                   </label>

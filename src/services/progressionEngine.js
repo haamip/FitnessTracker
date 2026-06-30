@@ -54,9 +54,9 @@ export function getExerciseRecommendation(exercise, history) {
 export function getTargetSetLabel(recommendation, setIndex) {
   const target = recommendation.targets[setIndex];
 
-  if (!target) return "—";
+  if (!target) return "â€”";
 
-  const weight = target.weight || "—";
-  const reps = target.reps || "—";
+  const weight = target.weight || "â€”";
+  const reps = target.reps || "â€”";
   return `${weight} x ${reps}`;
 }

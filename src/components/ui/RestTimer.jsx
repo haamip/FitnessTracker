@@ -1,12 +1,12 @@
-import { Pause, Play, SkipForward } from "lucide-react";
+import { Pause, Play, SkipForward, TimerReset } from "lucide-react";
 import { formatClock } from "../../services/workoutEngine";
 
 /**
  * RestTimer
  *
- * Shared rest timer UI used by the live workout logger.
- * The countdown logic still lives in WorkoutDetail for now, while this
- * component owns the presentation and controls.
+ * Premium bottom-sheet style rest timer used inside Gym Mode.
+ * WorkoutDetail owns the countdown state; this component keeps the UI focused,
+ * thumb-friendly, and visually obvious during live training.
  */
 export default function RestTimer({
   activeRestLabel,
@@ -17,33 +17,42 @@ export default function RestTimer({
   onSkip,
   onToggle,
 }) {
+  const isActive = restRunning || restSeconds > 0 || Boolean(restCompletedMessage);
+
   return (
-    <div className={restRunning ? "tf-rest-card running" : "tf-rest-card"}>
-      <div>
-        <strong>AUTO REST TIMER</strong>
-        <small>{activeRestLabel}</small>
-        <span>{formatClock(restSeconds)}</span>
-        <em>{restCompletedMessage || "Tick a set done to start rest automatically."}</em>
+    <section className={isActive ? "tf-rest-sheet active" : "tf-rest-sheet"}>
+      <div className="tf-rest-sheet__handle" />
+
+      <div className="tf-rest-sheet__head">
+        <div>
+          <strong>{restRunning ? "Rest timer" : "Rest ready"}</strong>
+          <span>{activeRestLabel}</span>
+        </div>
+
+        <div className="tf-rest-sheet__icon">
+          <TimerReset size={21} />
+        </div>
       </div>
 
-      <div className="tf-rest-controls">
-        <button
-          aria-label={restRunning ? "Pause rest timer" : "Resume rest timer"}
-          className="tf-play-btn"
-          onClick={onToggle}
-          type="button"
-        >
-          {restRunning ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" />}
+      <div className="tf-rest-sheet__time">{formatClock(restSeconds)}</div>
+
+      <p>{restCompletedMessage || "Complete a set and TrackFit will start your rest automatically."}</p>
+
+      <div className="tf-rest-sheet__actions">
+        <button className="primary" onClick={onToggle} type="button">
+          {restRunning ? <Pause size={19} fill="currentColor" /> : <Play size={19} fill="currentColor" />}
+          {restRunning ? "Pause" : "Resume"}
         </button>
 
-        <button onClick={() => onAddTime(15)} type="button">
-          +15s
+        <button onClick={() => onAddTime(30)} type="button">
+          +30 sec
         </button>
 
         <button onClick={onSkip} type="button">
-          <SkipForward size={15} /> Skip
+          <SkipForward size={16} />
+          Skip
         </button>
       </div>
-    </div>
+    </section>
   );
 }
