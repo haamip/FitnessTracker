@@ -92,7 +92,7 @@ function createDefaultExercises() {
     {
       id: "rdl",
       name: "Dumbbell Romanian Deadlift",
-      target: "2 sets â€¢ 10 reps",
+      target: "2 sets Ã¢â‚¬Â¢ 10 reps",
       image: resolveExerciseImage({ id: "rdl", name: "Dumbbell Romanian Deadlift" }),
       primaryMuscles: ["hamstrings"],
       equipment: ["dumbbell"],
@@ -103,7 +103,7 @@ function createDefaultExercises() {
     {
       id: "calf",
       name: "Dumbbell Standing Calf Raise",
-      target: "2 sets â€¢ 12 reps",
+      target: "2 sets Ã¢â‚¬Â¢ 12 reps",
       image: resolveExerciseImage({ id: "calf", name: "Dumbbell Standing Calf Raise" }),
       primaryMuscles: ["calves"],
       equipment: ["dumbbell"],
@@ -114,7 +114,7 @@ function createDefaultExercises() {
     {
       id: "press",
       name: "Dumbbell Shoulder Press",
-      target: "2 sets â€¢ 10 reps",
+      target: "2 sets Ã¢â‚¬Â¢ 10 reps",
       image: resolveExerciseImage({ id: "press", name: "Dumbbell Shoulder Press" }),
       primaryMuscles: ["shoulders"],
       equipment: ["dumbbell"],
@@ -125,7 +125,7 @@ function createDefaultExercises() {
     {
       id: "row",
       name: "Dumbbell Row",
-      target: "2 sets â€¢ 10 reps",
+      target: "2 sets Ã¢â‚¬Â¢ 10 reps",
       image: resolveExerciseImage({ id: "row", name: "Dumbbell Row" }),
       primaryMuscles: ["lats"],
       equipment: ["dumbbell"],
@@ -136,7 +136,7 @@ function createDefaultExercises() {
     {
       id: "squat",
       name: "Barbell Back Squat",
-      target: "2 sets â€¢ 10 reps",
+      target: "2 sets Ã¢â‚¬Â¢ 10 reps",
       image: resolveExerciseImage({ id: "squat", name: "Barbell Back Squat" }),
       primaryMuscles: ["quadriceps"],
       equipment: ["barbell"],
@@ -157,7 +157,7 @@ function convertAiDayToWorkout(day) {
     id: `${exercise.id}-${crypto.randomUUID()}`,
     libraryId: exercise.id,
     name: exercise.name,
-    target: `${exercise.sets} sets â€¢ ${exercise.reps} reps`,
+    target: `${exercise.sets} sets Ã¢â‚¬Â¢ ${exercise.reps} reps`,
     image: resolveExerciseImage(exercise),
     primaryMuscles: exercise.primaryMuscles || [],
     equipment: exercise.equipment || [],
@@ -243,10 +243,14 @@ const isCurrentExerciseComplete =
     }
 
     if ("Notification" in window && Notification.permission === "granted") {
-      new Notification("TrackFit rest finished", {
-        body: message,
-        silent: false,
-      });
+      try {
+        new Notification("TrackFit rest finished", {
+          body: message,
+          silent: false,
+        });
+      } catch {
+        setRestCompletedMessage(message);
+      }
     }
   }, []);
 
@@ -404,7 +408,7 @@ const isCurrentExerciseComplete =
       id: `${libraryExercise.id}-${crypto.randomUUID()}`,
       libraryId: libraryExercise.id,
       name: libraryExercise.name,
-      target: `${setCount} sets â€¢ ${reps} reps`,
+      target: `${setCount} sets Ã¢â‚¬Â¢ ${reps} reps`,
       image: libraryExercise.image || FALLBACK_EXERCISE_IMAGE,
       primaryMuscles: libraryExercise.primaryMuscles || [],
       equipment: libraryExercise.equipment || [],
@@ -499,7 +503,7 @@ const isCurrentExerciseComplete =
         <div className="tf-progress-meta">
           <span>{totals.percent}% COMPLETE</span>
           <span>
-            {totals.doneSets}/{totals.totalSets} SETS â€¢ {Math.round(totals.volume)} KG
+            {totals.doneSets}/{totals.totalSets} SETS Ã¢â‚¬Â¢ {Math.round(totals.volume)} KG
           </span>
         </div>
 
@@ -540,7 +544,7 @@ const isCurrentExerciseComplete =
             <p>{currentExercise.target}</p>
             <h2>{currentExercise.name}</h2>
             <span>
-              {(currentExercise.primaryMuscles || []).slice(0, 3).join(" â€¢ ") || "Strength"} â€¢{" "}
+              {(currentExercise.primaryMuscles || []).slice(0, 3).join(" Ã¢â‚¬Â¢ ") || "Strength"} Ã¢â‚¬Â¢{" "}
               {String(currentExercise.movementPattern || "training").replaceAll("_", " ")}
             </span>
           </div>

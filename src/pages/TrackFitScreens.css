@@ -5669,3 +5669,28 @@ body,
 .gym-complete-panel button:disabled {
   opacity: 0.45;
 }
+/* Gym Mode polish: keep exercise tool buttons from clipping on phone */
+.gym-tools {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.gym-tools button,
+.gym-tools .tf-detail-link {
+  width: 100%;
+  min-width: 0;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+/* Set logger polish: centre delete/bin icon properly */
+.tf-simple-set__delete {
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+}
+
+.tf-simple-set__delete svg {
+  display: block;
+}
