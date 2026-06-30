@@ -587,7 +587,11 @@ export default function WorkoutDetail() {
 
                     <div>
                       <strong>DETAILS</strong>
-                      <Link className="tf-detail-link" to={`/exercises/${exercise.libraryId || exercise.id}`}>
+                      <Link
+                        className="tf-detail-link"
+                        state={{ returnTo: `/workouts/${id}` }}
+                        to={`/exercises/${exercise.libraryId || exercise.id}`}
+                      >
                         <Info size={18} /> Open
                       </Link>
                     </div>

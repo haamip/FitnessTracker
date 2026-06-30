@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   BarChart3,
@@ -10,6 +10,7 @@ import {
   Sparkles,
   Trophy,
 } from "lucide-react";
+import ExerciseImage from "../components/ui/ExerciseImage";
 import {
   findExerciseById,
   formatKg,
@@ -21,29 +22,31 @@ import {
 import { readWorkoutHistory } from "../services/workoutEngine";
 import "./TrackFitScreens.css";
 
+/**
+ * Converts enum-style data into readable UI text.
+ *
+ * Exercise metadata still uses developer-friendly keys such as
+ * `horizontal_push`, while the screen should display polished copy such as
+ * `Horizontal Push`.
+ */
 function pretty(value) {
   return String(value || "")
     .replaceAll("_", " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function ExerciseHeroImage({ exercise }) {
-  return (
-    <div className="tf-exercise-hero-art" aria-hidden="true">
-      {exercise.image ? <img src={exercise.image} alt="" /> : <span>TF</span>}
-    </div>
-  );
-}
-
 /**
- * TrackFit v0.6 Exercise Detail page.
+ * ExerciseDetail
  *
- * This turns each library item into a mini knowledge page: instructions, tips,
- * common mistakes, alternatives and personal history. This is the foundation
- * for the future muscle-map and AI Coach experience.
+ * Knowledge page for one exercise. The important navigation detail here is the
+ * back button: when the user opens this page from an active workout, it returns
+ * to that exact workout session instead of dumping them back into the Workout
+ * Builder or generic Train list.
  */
 export default function ExerciseDetail() {
   const { id } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const exercise = findExerciseById(id);
   const history = useMemo(() => readWorkoutHistory(), []);
   const stats = useMemo(() => getExerciseHistoryStats(history, exercise), [exercise, history]);
@@ -51,12 +54,29 @@ export default function ExerciseDetail() {
   const coachTips = useMemo(() => getCoachTips(exercise), [exercise]);
   const mistakes = useMemo(() => getCommonMistakes(exercise), [exercise]);
 
+  /**
+   * Keeps the exercise detail page compatible with multiple entry points.
+   *
+   * - Active workout session: uses Link state from WorkoutDetail.jsx.
+   * - Normal library browsing: falls back to the Train page.
+   */
+  function handleBack() {
+    const returnTo = location.state?.returnTo;
+
+    if (returnTo) {
+      navigate(returnTo);
+      return;
+    }
+
+    navigate("/workouts");
+  }
+
   if (!exercise) {
     return (
       <main className="screen tf-exercise-detail-page">
-        <Link className="tf-back-pill" to="/workouts">
+        <button className="tf-back-pill" onClick={handleBack} type="button">
           <ArrowLeft size={18} /> Back
-        </Link>
+        </button>
         <section className="tf-empty-workout">
           <strong>Exercise not found</strong>
           <span>The library item may have been renamed or removed.</span>
@@ -67,13 +87,15 @@ export default function ExerciseDetail() {
 
   return (
     <main className="screen tf-exercise-detail-page">
-      <Link className="tf-back-pill" to="/workouts">
+      <button className="tf-back-pill" onClick={handleBack} type="button">
         <ArrowLeft size={18} /> Back
-      </Link>
+      </button>
 
       {/* Exercise identity block: quick visual + the most useful metadata. */}
       <section className="tf-exercise-detail-hero">
-        <ExerciseHeroImage exercise={exercise} />
+        <div className="tf-exercise-hero-art" aria-hidden="true">
+          <ExerciseImage exercise={exercise} />
+        </div>
         <div>
           <p>Exercise Detail</p>
           <h1>{exercise.name}</h1>
@@ -184,7 +206,7 @@ export default function ExerciseDetail() {
         </div>
         <div className="tf-alternative-list">
           {alternatives.map((alternative) => (
-            <Link to={`/exercises/${alternative.id}`} key={alternative.id}>
+            <Link to={`/exercises/${alternative.id}`} key={alternative.id} state={location.state}>
               <strong>{alternative.name}</strong>
               <span>{pretty(alternative.movementPattern)}</span>
             </Link>
