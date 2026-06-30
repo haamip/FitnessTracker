@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
@@ -35,6 +35,7 @@ import "./TrackFitScreens.css";
 
 const DEFAULT_REST_SECONDS = 90;
 const FALLBACK_EXERCISE_IMAGE = "/exercise-images/trackfit-fallback.svg";
+const MIN_SWIPE_DISTANCE = 54;
 
 function findLibraryExerciseById(id) {
   return exerciseLibrary.find((exercise) => exercise.id === id);
@@ -193,6 +194,7 @@ export default function WorkoutDetail() {
   const [restCompletedMessage, setRestCompletedMessage] = useState("");
   const [notes, setNotes] = useState("");
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const swipeStartX = useRef(null);
 
   const [exercises, setExercises] = useState(() => {
     const savedWorkout = readJson(storageKey, null);
@@ -471,6 +473,26 @@ const isCurrentExerciseComplete =
     }
   }
 
+  function handleExerciseSwipeStart(event) {
+    swipeStartX.current = event.clientX;
+  }
+
+  function handleExerciseSwipeEnd(event) {
+    if (swipeStartX.current === null) return;
+
+    const swipeDistance = event.clientX - swipeStartX.current;
+    swipeStartX.current = null;
+
+    if (Math.abs(swipeDistance) < MIN_SWIPE_DISTANCE) return;
+
+    if (swipeDistance < 0) {
+      goToExercise(1);
+      return;
+    }
+
+    goToExercise(-1);
+  }
+
   const workoutTitle = aiDay?.name || "Workout 1";
   const canFinish = totals.doneSets > 0;
   const isWorkoutComplete = totals.totalSets > 0 && totals.doneSets === totals.totalSets;
@@ -481,7 +503,7 @@ const isCurrentExerciseComplete =
 
   return (
     <motion.div
-      className="screen tf-gym-mode gym-mode-v1"
+      className="screen tf-gym-mode gym-mode-v1 gym-mode-v2"
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
@@ -521,7 +543,14 @@ const isCurrentExerciseComplete =
       )}
 
       {currentExercise && (
-        <section className="gym-focus-card">
+        <section
+          className="gym-focus-card"
+          onPointerCancel={() => {
+            swipeStartX.current = null;
+          }}
+          onPointerDown={handleExerciseSwipeStart}
+          onPointerUp={handleExerciseSwipeEnd}
+        >
           <div className="gym-focus-card__top">
             <button disabled={!previousExerciseInWorkout} onClick={() => goToExercise(-1)} type="button">
               <ChevronLeft size={20} />
@@ -529,6 +558,7 @@ const isCurrentExerciseComplete =
 
             <span>
               Exercise {currentExerciseIndex + 1} of {exercises.length}
+              <small>Swipe to change</small>
             </span>
 
             <button disabled={!nextExercise} onClick={() => goToExercise(1)} type="button">
