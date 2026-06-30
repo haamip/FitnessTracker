@@ -1,16 +1,18 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ChevronRight, Dumbbell, History, Plus, Sparkles } from "lucide-react";
+import { ChevronRight, Clock3, Dumbbell, Flame, History, Plus, Sparkles } from "lucide-react";
 import "./TrackFitScreens.css";
 
-const workoutPlans = [
+const starterPlans = [
   {
     id: "workout-1",
     name: "Workout 1",
     detail: "Full body strength session",
     exercises: "5 exercises",
     sets: "12 sets",
+    time: "45 min",
+    progress: 18,
   },
   {
     id: "upper",
@@ -18,6 +20,8 @@ const workoutPlans = [
     detail: "Chest, back, shoulders and arms",
     exercises: "6 exercises",
     sets: "18 sets",
+    time: "60 min",
+    progress: 0,
   },
   {
     id: "lower",
@@ -25,6 +29,8 @@ const workoutPlans = [
     detail: "Quads, hamstrings, glutes and core",
     exercises: "6 exercises",
     sets: "18 sets",
+    time: "60 min",
+    progress: 0,
   },
 ];
 
@@ -56,90 +62,126 @@ export default function Workouts() {
   const workoutHistory = useMemo(() => readJson("trackfit_workout_history", []).slice(0, 3), []);
   const hasTrainingPlan = savedTrainingPlan.length > 0;
 
+  const visiblePlans = hasTrainingPlan
+    ? savedTrainingPlan.map((day) => ({
+        id: day.id,
+        name: day.name,
+        detail: `${day.focus} • ${day.equipment}`,
+        exercises: `${day.exercises.length} exercises`,
+        sets: `${day.exercises.reduce((total, exercise) => total + Number(exercise.sets || 0), 0)} sets`,
+        time: `${day.time} min`,
+        progress: 0,
+        generated: true,
+      }))
+    : starterPlans;
+
   return (
     <motion.div
-      className="screen tf-workouts-page"
+      className="screen workouts-v4"
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
     >
-      <section className="tf-page-head">
-        <p>Training</p>
-        <h1>Workouts</h1>
-        <span>Build, save and log your sessions.</span>
+      <section className="v4-workout-hero">
+        <div>
+          <p className="eyebrow">Training</p>
+          <h1>Workouts</h1>
+          <p>Build, save and log clean training sessions without the clutter.</p>
+        </div>
+
+        <span className="v4-hero-badge">
+          <Flame size={15} />
+          {hasTrainingPlan ? "Plan active" : "Quick start"}
+        </span>
       </section>
 
-      {/* Workout Builder entry point. Kept separate from the program list so the Train page
-          never looks like two workout programs are stacked on top of each other. */}
-      <Link className="tf-builder-card" to="/workouts/builder">
-        <div>
-          <Sparkles size={22} />
+      <section className="v4-quick-grid">
+        <Link className="v4-quick-card" to="/workouts/builder">
+          <Sparkles size={24} />
           <strong>Workout Builder</strong>
-          <span>{hasTrainingPlan ? "Edit or rebuild your training plan" : "Build a training plan from the exercise library"}</span>
-        </div>
-        <ChevronRight size={22} />
-      </Link>
+          <span>{hasTrainingPlan ? "Edit or rebuild plan" : "Create a smart plan"}</span>
+        </Link>
 
-      {/* Show one primary program source at a time.
-          If a generated training plan exists it becomes the active training plan.
-          If not, the starter templates are shown as the default quick-start option. */}
-      <section className="tf-workout-stack">
-        <div className="tf-section-label">{hasTrainingPlan ? "Training Plan" : "Quick Start"}</div>
-
-        {hasTrainingPlan
-          ? savedTrainingPlan.map((day) => (
-              <Link className="tf-plan-card" to={`/workouts/${day.id}`} key={day.id}>
-                <div className="tf-plan-icon">
-                  <Sparkles size={22} />
-                </div>
-
-                <div>
-                  <h2>{day.name}</h2>
-                  <p>{day.exercises.length} exercises • {day.time} mins</p>
-                  <span>{day.focus} • {day.equipment}</span>
-                </div>
-
-                <ChevronRight className="tf-plan-arrow" size={22} />
-              </Link>
-            ))
-          : workoutPlans.map((plan) => (
-              <Link className="tf-plan-card" to={`/workouts/${plan.id}`} key={plan.id}>
-                <div className="tf-plan-icon">
-                  <Dumbbell size={22} />
-                </div>
-
-                <div>
-                  <h2>{plan.name}</h2>
-                  <p>{plan.detail}</p>
-                  <span>{plan.exercises} • {plan.sets}</span>
-                </div>
-
-                <ChevronRight className="tf-plan-arrow" size={22} />
-              </Link>
-            ))}
-
-        <Link className="tf-add-exercise-card" to="/workouts/workout-1">
-          <Plus size={20} />
-          Start Empty Workout
+        <Link className="v4-quick-card" to="/workouts/workout-1">
+          <Plus size={24} />
+          <strong>Empty Workout</strong>
+          <span>Start fresh and add exercises</span>
         </Link>
       </section>
 
-      {workoutHistory.length > 0 && (
-        <section className="tf-workout-stack">
-          <div className="tf-section-label">Recent History</div>
+      <section className="v4-workout-list">
+        <div className="v4-section-heading">
+          <div>
+            <p className="eyebrow">{hasTrainingPlan ? "Generated Plan" : "Starter Templates"}</p>
+            <h2>{hasTrainingPlan ? "Your training plan" : "Choose a workout"}</h2>
+          </div>
+          <span>{visiblePlans.length} options</span>
+        </div>
 
-          {workoutHistory.map((workout) => (
-            <article className="tf-history-card" key={workout.id}>
-              <div className="tf-plan-icon">
-                <History size={21} />
+        {visiblePlans.map((plan) => (
+          <Link className="v4-workout-card" to={`/workouts/${plan.id}`} key={plan.id}>
+            <div className="v4-workout-card__top">
+              <span className="v4-chip">{plan.generated ? "Smart Plan" : "Template"}</span>
+              <span className="v4-time">{plan.time}</span>
+            </div>
+
+            <div className="v4-workout-card__body">
+              <div className="v4-workout-icon">
+                {plan.generated ? <Sparkles size={22} /> : <Dumbbell size={22} />}
               </div>
 
               <div>
-                <h2>{workout.title}</h2>
-                <p>{formatDate(workout.completedAt)}</p>
+                <h3>{plan.name}</h3>
+                <p>{plan.detail}</p>
+              </div>
+
+              <ChevronRight className="v4-chevron" size={22} />
+            </div>
+
+            <div className="v4-workout-card__footer">
+              <span>
+                <Dumbbell size={15} />
+                {plan.exercises} • {plan.sets}
+              </span>
+
+              <div className="v4-workout-progress">
+                <i style={{ width: `${plan.progress}%` }} />
+              </div>
+            </div>
+          </Link>
+        ))}
+      </section>
+
+      {workoutHistory.length > 0 && (
+        <section className="v4-workout-list">
+          <div className="v4-section-heading">
+            <div>
+              <p className="eyebrow">Recent</p>
+              <h2>Workout history</h2>
+            </div>
+            <span>{workoutHistory.length}</span>
+          </div>
+
+          {workoutHistory.map((workout) => (
+            <article className="v4-workout-card" key={workout.id}>
+              <div className="v4-workout-card__body">
+                <div className="v4-workout-icon">
+                  <History size={22} />
+                </div>
+
+                <div>
+                  <h3>{workout.title}</h3>
+                  <p>{formatDate(workout.completedAt)}</p>
+                </div>
+              </div>
+
+              <div className="v4-workout-card__footer">
                 <span>
-                  {workout.completedSets}/{workout.totalSets} sets • {Math.round(workout.volume)} kg • {workout.prs?.length || 0} PRs
+                  <Clock3 size={15} />
+                  {workout.completedSets}/{workout.totalSets} sets • {Math.round(workout.volume)} kg
                 </span>
+
+                <span>{workout.prs?.length || 0} PRs</span>
               </div>
             </article>
           ))}
