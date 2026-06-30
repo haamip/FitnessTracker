@@ -1,13 +1,16 @@
 import { CheckCircle2, Circle, Plus, Trash2 } from "lucide-react";
 import { getPreviousSetLabel } from "../../services/workoutEngine";
 import { getTargetSetLabel } from "../../services/progressionEngine";
+import "./SetLogger.css";
 
 /**
  * SetLogger
  *
- * Clean mobile-first set logger. The default view focuses on the two fields
- * lifters need mid-session: weight and reps. Advanced effort data remains
- * available behind a details drawer so the workout screen stays tidy on a phone.
+ * Commercial mobile-first set logger.
+ *
+ * The default view keeps training fast by focusing on the two fields most users
+ * need during a workout: weight and reps. Effort details such as RPE, RIR,
+ * set type, failure and notes remain available inside the Advanced drawer.
  */
 export default function SetLogger({
   exercise,
@@ -19,22 +22,26 @@ export default function SetLogger({
 }) {
   return (
     <section className="tf-simple-set-logger">
+      {/* Set list: every set is its own touch-friendly card. */}
       <div className="tf-simple-set-list">
         {exercise.sets.map((set, setIndex) => {
           const previousLabel = getPreviousSetLabel(previousExercise, setIndex);
           const targetLabel = getTargetSetLabel(recommendation, setIndex);
+          const setLabel = set.type === "W" ? "Warm-up" : `Set ${setIndex + 1}`;
 
           return (
             <article className={set.done ? "tf-simple-set done" : "tf-simple-set"} key={set.id}>
               <header className="tf-simple-set__head">
                 <div>
-                  <strong>{set.type === "W" ? "Warm-up" : `Set ${setIndex + 1}`}</strong>
-                  <span>Last: {previousLabel} • Target: {targetLabel}</span>
+                  <strong>{setLabel}</strong>
+                  <span>
+                    Last: {previousLabel} · Target: {targetLabel}
+                  </span>
                 </div>
 
                 {exercise.sets.length > 1 && (
                   <button
-                    aria-label={`Remove set ${setIndex + 1}`}
+                    aria-label={`Remove ${setLabel}`}
                     className="tf-simple-set__delete"
                     onClick={() => onRemoveSet(exercise.id, set.id)}
                     type="button"
@@ -44,12 +51,13 @@ export default function SetLogger({
                 )}
               </header>
 
+              {/* Primary logging controls: keep these big, clear and fast. */}
               <div className="tf-simple-set__inputs">
                 <label>
                   Weight
                   <div>
                     <input
-                      aria-label={`${exercise.name} set ${setIndex + 1} weight`}
+                      aria-label={`${exercise.name} ${setLabel} weight`}
                       inputMode="decimal"
                       onChange={(event) => onUpdateSet(exercise.id, set.id, "weight", event.target.value)}
                       placeholder="0"
@@ -62,7 +70,7 @@ export default function SetLogger({
                 <label>
                   Reps
                   <input
-                    aria-label={`${exercise.name} set ${setIndex + 1} reps`}
+                    aria-label={`${exercise.name} ${setLabel} reps`}
                     inputMode="numeric"
                     onChange={(event) => onUpdateSet(exercise.id, set.id, "reps", event.target.value)}
                     placeholder="8"
@@ -80,6 +88,7 @@ export default function SetLogger({
                 {set.done ? "Completed" : "Complete Set"}
               </button>
 
+              {/* Advanced data stays available without cluttering the main logger. */}
               <details className="tf-set-advanced">
                 <summary>Advanced</summary>
 
@@ -87,7 +96,7 @@ export default function SetLogger({
                   <label>
                     Type
                     <select
-                      aria-label={`${exercise.name} set ${setIndex + 1} type`}
+                      aria-label={`${exercise.name} ${setLabel} type`}
                       onChange={(event) => onUpdateSet(exercise.id, set.id, "type", event.target.value)}
                       value={set.type}
                     >
@@ -102,9 +111,9 @@ export default function SetLogger({
                     RPE
                     <input
                       inputMode="decimal"
+                      onChange={(event) => onUpdateSet(exercise.id, set.id, "rpe", event.target.value)}
                       placeholder="8"
                       value={set.rpe || ""}
-                      onChange={(event) => onUpdateSet(exercise.id, set.id, "rpe", event.target.value)}
                     />
                   </label>
 
@@ -112,9 +121,9 @@ export default function SetLogger({
                     RIR
                     <input
                       inputMode="numeric"
+                      onChange={(event) => onUpdateSet(exercise.id, set.id, "rir", event.target.value)}
                       placeholder="2"
                       value={set.rir || ""}
-                      onChange={(event) => onUpdateSet(exercise.id, set.id, "rir", event.target.value)}
                     />
                   </label>
 
@@ -130,9 +139,9 @@ export default function SetLogger({
 
                 <input
                   className="tf-set-note-input"
+                  onChange={(event) => onUpdateSet(exercise.id, set.id, "note", event.target.value)}
                   placeholder="Set note"
                   value={set.note || ""}
-                  onChange={(event) => onUpdateSet(exercise.id, set.id, "note", event.target.value)}
                 />
               </details>
             </article>
