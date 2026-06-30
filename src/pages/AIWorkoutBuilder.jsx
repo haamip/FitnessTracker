@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Brain, Dumbbell, RefreshCcw, Save, Sparkles } from "lucide-react";
 import {
@@ -40,12 +40,36 @@ export default function AIWorkoutBuilder() {
   const [injuryFocus, setInjuryFocus] = useState("none");
   const [saved, setSaved] = useState(false);
   const [planVersion, setPlanVersion] = useState(1);
+  const [exerciseLibrary, setExerciseLibrary] = useState([]);
+  const [libraryLoading, setLibraryLoading] = useState(true);
+
+  /**
+   * Load the heavy exercise library only when Workout Builder opens.
+   *
+   * This keeps the first TrackFit app load much lighter and avoids dragging the
+   * 1 MB+ exercise library into the main route bundle.
+   */
+  useEffect(() => {
+    let active = true;
+
+    import("../data/exerciseLibrary").then((module) => {
+      if (!active) return;
+
+      setExerciseLibrary(module.exerciseLibrary || []);
+      setLibraryLoading(false);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const prescription = useMemo(() => goalPrescription(goal, level), [goal, level]);
 
   const plan = useMemo(
     () =>
       generateWorkoutPlan({
+        exerciseLibrary,
         goal,
         days,
         time,
@@ -54,18 +78,10 @@ export default function AIWorkoutBuilder() {
         injuryFocus,
         planVersion,
       }),
-    [days, equipment, goal, injuryFocus, level, planVersion, time],
+    [days, equipment, exerciseLibrary, goal, injuryFocus, level, planVersion, time],
   );
 
   function savePlan() {
-    /*
-      Saving the generated training plan creates two records:
-      1. trackfit_ai_workout_plan: shown on the Workouts page.
-      2. trackfit_workout_ai-X: the actual editable workout logger data.
-
-      This keeps generated plans editable instead of locking them inside the
-      Workout Builder screen. It also means generated and manual workouts share the same logger.
-    */
     writeJson("trackfit_ai_workout_plan", plan);
 
     plan.forEach((day) => {
@@ -82,7 +98,6 @@ export default function AIWorkoutBuilder() {
 
   return (
     <main className="screen tf-ai-builder ai-builder-v2">
-      {/* Page hero: explains that this builder is driven by library logic, not fake presets. */}
       <header className="tf-builder-top ai-builder-hero">
         <Link to="/workouts" aria-label="Back to workouts">
           <ArrowLeft size={24} />
@@ -94,7 +109,6 @@ export default function AIWorkoutBuilder() {
         </div>
       </header>
 
-      {/* User inputs become constraints for the internal plan-generation engine. */}
       <section className="tf-builder-panel ai-control-panel">
         <label>
           Goal
@@ -151,7 +165,6 @@ export default function AIWorkoutBuilder() {
         </label>
       </section>
 
-      {/* Short explanation so the user knows why the generated plan changed. */}
       <section className="ai-builder-brain-card">
         <Brain size={22} />
         <div>
@@ -166,7 +179,7 @@ export default function AIWorkoutBuilder() {
       <section className="tf-generated-plan">
         <div className="tf-generated-head">
           <div>
-            <p>Generated From Exercise Library</p>
+            <p>{libraryLoading ? "Loading Exercise Library" : "Generated From Exercise Library"}</p>
             <h2>{days} Day Training Plan</h2>
           </div>
           <Sparkles size={24} />
@@ -179,34 +192,45 @@ export default function AIWorkoutBuilder() {
           <span>{prescription.rest}</span>
         </div>
 
-        {plan.map((day) => (
-          <article className="tf-generated-day ai-day-card" key={day.id}>
+        {libraryLoading && (
+          <article className="tf-generated-day ai-day-card">
             <div className="ai-day-head">
               <Dumbbell size={22} />
-              <h3>{day.name}</h3>
-              <span>{day.time} mins • {day.equipment}</span>
-            </div>
-
-            <div className="ai-exercise-list">
-              {day.exercises.map((exercise) => (
-                <div className="ai-exercise-row" key={`${day.id}-${exercise.id}`}>
-                  <strong>{exercise.name}</strong>
-                  <span>{exercise.movementPattern?.replaceAll("_", " ") || "movement"}</span>
-                  <small>{exercise.sets} sets x {exercise.reps} • {exercise.rest}</small>
-                </div>
-              ))}
+              <h3>Preparing your training plan</h3>
+              <span>Loading exercise library...</span>
             </div>
           </article>
-        ))}
+        )}
+
+        {!libraryLoading &&
+          plan.map((day) => (
+            <article className="tf-generated-day ai-day-card" key={day.id}>
+              <div className="ai-day-head">
+                <Dumbbell size={22} />
+                <h3>{day.name}</h3>
+                <span>{day.time} mins • {day.equipment}</span>
+              </div>
+
+              <div className="ai-exercise-list">
+                {day.exercises.map((exercise) => (
+                  <div className="ai-exercise-row" key={`${day.id}-${exercise.id}`}>
+                    <strong>{exercise.name}</strong>
+                    <span>{exercise.movementPattern?.replaceAll("_", " ") || "movement"}</span>
+                    <small>{exercise.sets} sets x {exercise.reps} • {exercise.rest}</small>
+                  </div>
+                ))}
+              </div>
+            </article>
+          ))}
       </section>
 
       <div className="ai-builder-actions">
-        <button className="ai-secondary-btn" onClick={regeneratePlan} type="button">
+        <button className="ai-secondary-btn" disabled={libraryLoading} onClick={regeneratePlan} type="button">
           <RefreshCcw size={18} />
           Regenerate
         </button>
 
-        <button className="tf-save-plan-btn" onClick={savePlan} type="button">
+        <button className="tf-save-plan-btn" disabled={libraryLoading || plan.length === 0} onClick={savePlan} type="button">
           <Save size={20} />
           {saved ? "Training Plan Saved - go to Workouts" : "Save Training Plan"}
         </button>
