@@ -78,10 +78,10 @@ export function findPreviousExercise(history, exercise) {
 export function getPreviousSetLabel(previousExercise, setIndex) {
   const previousSet = previousExercise?.sets?.[setIndex];
 
-  if (!previousSet) return "â€”";
+  if (!previousSet) return "-";
 
-  const weight = previousSet.weight || "â€”";
-  const reps = previousSet.reps || "â€”";
+  const weight = previousSet.weight || "-";
+  const reps = previousSet.reps || "-";
   return `${weight} x ${reps}`;
 }
 
