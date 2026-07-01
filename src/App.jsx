@@ -1,6 +1,7 @@
 import { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route, useParams } from "react-router-dom";
 import MobileShell from "./components/layout/MobileShell";
+import "./pages/WorkoutCompleteOverlay.css";
 
 /**
  * TrackFit route-level code splitting.
