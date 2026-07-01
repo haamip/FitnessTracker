@@ -6,7 +6,7 @@ import {
   generateWorkoutPlan,
   goalPrescription,
 } from "../services/aiWorkoutEngine";
-import { writeJson } from "../services/storage";
+import { AIPlanRepository, WorkoutRepository } from "../services/trackfitDataLayer";
 import "./TrackFitScreens.css";
 
 function convertDayToWorkout(day) {
@@ -83,10 +83,10 @@ export default function AIWorkoutBuilder() {
   );
 
   function savePlan() {
-    writeJson("trackfit_ai_workout_plan", plan);
+    AIPlanRepository.savePlan(plan);
 
     plan.forEach((day) => {
-      writeJson(`trackfit_workout_${day.id}`, convertDayToWorkout(day));
+      WorkoutRepository.saveById(day.id, convertDayToWorkout(day));
     });
 
     setSaved(true);
