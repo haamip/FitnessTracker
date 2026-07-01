@@ -26,8 +26,47 @@
   box-sizing: border-box;
 }
 
+.v4-workout-hero,
+.ai-builder-hero,
+.gym-focus-card,
+.tf-session-note-card,
+.v4-workout-card,
+.v4-quick-card,
+.ai-builder-brain-card,
+.tf-generated-day {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.v4-workout-hero,
+.ai-builder-hero {
+  min-height: 150px;
+}
+
+.v4-workout-hero p,
+.ai-builder-hero span,
+.ai-builder-brain-card p {
+  line-height: 1.35;
+}
+
+.v4-quick-grid {
+  align-items: stretch;
+}
+
+.v4-quick-card {
+  display: grid;
+  align-content: space-between;
+  gap: 12px;
+  min-height: 132px;
+}
+
+.v4-workout-card {
+  overflow: hidden;
+}
+
 .v4-workout-card__body {
+  display: grid;
   grid-template-columns: 50px minmax(0, 1fr) 24px;
+  align-items: center;
 }
 
 .v4-workout-card__body > div:not(.v4-workout-icon) {
@@ -86,6 +125,17 @@
   padding: 6px;
 }
 
+.gym-focus-card {
+  overflow: hidden;
+  padding-bottom: 18px;
+}
+
+.gym-focus-card__art {
+  display: grid;
+  place-items: center;
+  margin: 10px 0 4px;
+}
+
 .gym-focus-card__art .tf-exercise-art {
   width: min(128px, 42vw);
   height: min(128px, 42vw);
@@ -114,10 +164,6 @@
   line-height: 1;
 }
 
-.gym-focus-card {
-  overflow: hidden;
-}
-
 .gym-focus-card__top {
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr) 44px;
@@ -125,9 +171,33 @@
   gap: 10px;
 }
 
+.gym-focus-card__top > span {
+  display: grid;
+  gap: 2px;
+  text-align: center;
+  font-weight: 950;
+}
+
+.gym-focus-card__top small {
+  color: #777;
+  font-size: 11px;
+  font-weight: 850;
+}
+
 .gym-focus-card__title {
   min-width: 0;
   text-align: center;
+}
+
+.gym-focus-card__title h2 {
+  letter-spacing: -0.4px;
+}
+
+.gym-current-progress,
+.tf-coach-cue,
+.tf-instructions-box,
+.tf-session-note-card {
+  max-width: 100%;
 }
 
 .tf-exercise-tools.gym-tools {
@@ -150,6 +220,7 @@
   overflow-x: auto;
   padding: 2px 2px 10px;
   scrollbar-width: none;
+  scroll-snap-type: x proximity;
 }
 
 .gym-exercise-strip::-webkit-scrollbar {
@@ -160,6 +231,7 @@
   flex: 0 0 150px;
   max-width: 170px;
   overflow: hidden;
+  scroll-snap-align: start;
 }
 
 .gym-strip-item strong,
@@ -172,13 +244,45 @@
   overflow-wrap: break-word;
 }
 
+.ai-control-panel {
+  gap: 14px;
+}
+
+.ai-control-panel label {
+  min-width: 0;
+}
+
+.ai-control-panel select {
+  width: 100%;
+}
+
+.ai-program-summary {
+  margin-bottom: 2px;
+}
+
+.ai-exercise-row {
+  border-radius: 12px;
+}
+
+.tf-workout-actions,
+.ai-builder-actions {
+  backdrop-filter: blur(8px);
+}
+
 @media (max-width: 430px) {
   .v4-quick-grid {
     grid-template-columns: 1fr;
   }
 
-  .v4-workout-hero {
+  .v4-workout-hero,
+  .ai-builder-hero {
     flex-direction: column;
+    min-height: auto;
+  }
+
+  .v4-workout-hero h1,
+  .ai-builder-hero h1 {
+    font-size: clamp(31px, 10vw, 38px);
   }
 
   .v4-hero-badge {
@@ -190,11 +294,31 @@
     gap: 4px;
   }
 
+  .tf-live-stats,
+  .tf-intelligence-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .tf-exercise-tools.gym-tools {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .gym-strip-item {
     flex-basis: 132px;
+  }
+
+  .tf-workout-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 360px) {
+  .tf-exercise-tools.gym-tools {
+    grid-template-columns: 1fr;
+  }
+
+  .tf-live-stats,
+  .tf-intelligence-grid {
+    grid-template-columns: 1fr;
   }
 }
