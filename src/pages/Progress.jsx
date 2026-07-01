@@ -138,7 +138,7 @@ export default function Progress() {
         </div>
 
         <div>
-          <p className="eyebrow">AI insight</p>
+          <p className="eyebrow">Coach insight</p>
           <h2>{weeklySummary.totalPrs > 0 ? "Strength is moving." : "Build the data trail."}</h2>
           <p>
             {weeklySummary.totalPrs > 0
