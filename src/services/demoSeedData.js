@@ -81,7 +81,7 @@ function createWorkout(id, daysBack, title, exercises, prs = []) {
   };
 }
 
-function createPlanExercise(id, name, movementPattern, sets, reps, rest = "90 sec") {
+function createPlanExercise(id, name, movementPattern, sets, reps, rest = "90 sec", demoWeight = "") {
   return {
     id,
     name,
@@ -93,6 +93,7 @@ function createPlanExercise(id, name, movementPattern, sets, reps, rest = "90 se
     equipment: ["gym"],
     movementPattern,
     instructions: [],
+    demoWeight,
   };
 }
 
@@ -111,7 +112,7 @@ function createWorkoutFromPlanDay(day) {
     exerciseNote: "",
     sets: Array.from({ length: exercise.sets }, (_, index) => ({
       id: `${exercise.id}-planned-set-${index + 1}`,
-      weight: "",
+      weight: exercise.demoWeight || "",
       reps: exercise.reps,
       type: "S",
       done: false,
@@ -132,10 +133,10 @@ function createDemoPlan() {
       equipment: "Full gym",
       time: 60,
       exercises: [
-        createPlanExercise("barbell-bench-press-medium-grip", "Barbell Bench Press", "horizontal_push", 4, "6-8", "120 sec"),
-        createPlanExercise("barbell-rear-delt-row", "Barbell Rear Delt Row", "horizontal_pull", 3, "8-10"),
-        createPlanExercise("barbell-shoulder-pres", "Barbell Shoulder Press", "vertical_push", 3, "8-10"),
-        createPlanExercise("barbell-curl", "Barbell Curl", "elbow_flexion", 3, "10-12", "60 sec"),
+        createPlanExercise("barbell-bench-press-medium-grip", "Barbell Bench Press", "horizontal_push", 4, "6", "120 sec", "82.5"),
+        createPlanExercise("barbell-rear-delt-row", "Barbell Rear Delt Row", "horizontal_pull", 3, "8", "90 sec", "55"),
+        createPlanExercise("barbell-shoulder-pres", "Barbell Shoulder Press", "vertical_push", 3, "8", "90 sec", "45"),
+        createPlanExercise("barbell-curl", "Barbell Curl", "elbow_flexion", 3, "10", "60 sec", "35"),
       ],
     },
     {
@@ -145,9 +146,9 @@ function createDemoPlan() {
       equipment: "Full gym",
       time: 60,
       exercises: [
-        createPlanExercise("barbell-lunge", "Barbell Lunge", "squat", 4, "8-10", "120 sec"),
-        createPlanExercise("barbell-glute-bridge", "Barbell Glute Bridge", "hinge", 4, "8-10", "120 sec"),
-        createPlanExercise("barbell-shrug", "Barbell Shrug", "carry", 3, "10-12"),
+        createPlanExercise("barbell-lunge", "Barbell Lunge", "squat", 4, "8", "120 sec", "55"),
+        createPlanExercise("barbell-glute-bridge", "Barbell Glute Bridge", "hinge", 4, "8", "120 sec", "105"),
+        createPlanExercise("barbell-shrug", "Barbell Shrug", "carry", 3, "10", "90 sec", "90"),
       ],
     },
     {
@@ -157,9 +158,9 @@ function createDemoPlan() {
       equipment: "Full gym",
       time: 50,
       exercises: [
-        createPlanExercise("barbell-incline-bench-press-medium-grip", "Incline Bench Press", "horizontal_push", 3, "8-12"),
-        createPlanExercise("barbell-guillotine-bench-press", "Guillotine Bench Press", "horizontal_push", 3, "10-12"),
-        createPlanExercise("barbell-shoulder-pres", "Barbell Shoulder Press", "vertical_push", 3, "8-10"),
+        createPlanExercise("barbell-incline-bench-press-medium-grip", "Incline Bench Press", "horizontal_push", 3, "10"),
+        createPlanExercise("barbell-guillotine-bench-press", "Guillotine Bench Press", "horizontal_push", 3, "10"),
+        createPlanExercise("barbell-shoulder-pres", "Barbell Shoulder Press", "vertical_push", 3, "8", "90 sec", "45"),
       ],
     },
     {
@@ -169,9 +170,9 @@ function createDemoPlan() {
       equipment: "Full gym",
       time: 50,
       exercises: [
-        createPlanExercise("barbell-rear-delt-row", "Barbell Rear Delt Row", "horizontal_pull", 4, "8-12"),
-        createPlanExercise("back-flyes-with-bands", "Back Flyes With Bands", "rear_delt", 3, "12-15", "60 sec"),
-        createPlanExercise("barbell-curl", "Barbell Curl", "elbow_flexion", 3, "10-12", "60 sec"),
+        createPlanExercise("barbell-rear-delt-row", "Barbell Rear Delt Row", "horizontal_pull", 4, "10"),
+        createPlanExercise("back-flyes-with-bands", "Back Flyes With Bands", "rear_delt", 3, "12", "60 sec"),
+        createPlanExercise("barbell-curl", "Barbell Curl", "elbow_flexion", 3, "10", "60 sec", "35"),
       ],
     },
   ];

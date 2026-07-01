@@ -74,7 +74,7 @@ export default function DeveloperTools() {
         <span>Checked {status.checkedAt}</span>
       </section>
 
-      <Link className="tf-save-plan-btn" to={`/workouts?refresh=${Date.now()}`}>
+      <Link className="tf-save-plan-btn" to="/workouts?refresh=manual">
         Open workouts
       </Link>
     </main>

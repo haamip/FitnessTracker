@@ -1,10 +1,8 @@
 /**
  * TrackFit Data Layer v1.
  *
- * These repositories are the single local data access point for the app while
- * TrackFit is offline-first. Screens should call repositories instead of
- * reading localStorage directly so future Firebase/Supabase migration stays
- * boring, predictable and clean.
+ * Repositories are the single local data access point while TrackFit is
+ * offline-first. Pages should not touch localStorage directly.
  */
 import { readJson, writeJson } from "./storage";
 
@@ -22,10 +20,9 @@ function newestFirst(left, right) {
   return new Date(right.completedAt || right.date || 0) - new Date(left.completedAt || left.date || 0);
 }
 
-/** Handles editable workout sessions keyed by workout/template id. */
 export const WorkoutRepository = {
   getById(workoutId) {
-    return readJson(`${WORKOUT_KEY_PREFIX}${workoutId}`, []);
+    return readJson(`${WORKOUT_KEY_PREFIX}${workoutId}`, null);
   },
 
   saveById(workoutId, workout) {
@@ -37,7 +34,6 @@ export const WorkoutRepository = {
   },
 };
 
-/** Handles completed workout history records. */
 export const HistoryRepository = {
   getAll() {
     return readJson(WORKOUT_HISTORY_KEY, []).sort(newestFirst);
@@ -62,7 +58,6 @@ export const HistoryRepository = {
   },
 };
 
-/** Handles generated smart training plans. */
 export const AIPlanRepository = {
   getPlan() {
     return readJson(AI_PLAN_KEY, []);
@@ -77,7 +72,6 @@ export const AIPlanRepository = {
   },
 };
 
-/** Handles logged cardio sessions. */
 export const CardioRepository = {
   getAll() {
     return readJson(CARDIO_KEY, []).sort(newestFirst);
@@ -92,7 +86,6 @@ export const CardioRepository = {
   },
 };
 
-/** Handles daily wellness and nutrition check-ins. */
 export const CheckInRepository = {
   getAll() {
     return readJson(CHECKINS_KEY, []).sort(newestFirst);

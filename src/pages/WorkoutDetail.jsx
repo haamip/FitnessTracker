@@ -170,7 +170,9 @@ function convertAiDayToWorkout(day) {
     movementPattern: exercise.movementPattern || "unknown",
     defaultRestSeconds: parseRestSeconds(exercise.rest),
     exerciseNote: "",
-    sets: Array.from({ length: exercise.sets }, () => createSet("", exercise.reps, "S")),
+    sets: Array.from({ length: exercise.sets }, () =>
+      createSet(exercise.demoWeight || exercise.defaultWeight || "", exercise.reps, "S")
+    ),
   }));
 }
 
