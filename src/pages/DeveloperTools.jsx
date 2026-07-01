@@ -1,21 +1,37 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Database, Trash2 } from "lucide-react";
 import { clearDemoData, seedDemoData } from "../services/demoSeedData";
+import {
+  AIPlanRepository,
+  CardioRepository,
+  CheckInRepository,
+  HistoryRepository,
+} from "../services/trackfitDataLayer";
 import "./TrackFitScreens.css";
 
-function reloadWorkouts(status) {
-  window.location.assign(`/workouts?refresh=${Date.now()}&demo=${status}`);
+function readDemoStatus(action = "Ready") {
+  return {
+    action,
+    planCount: AIPlanRepository.getPlan().length,
+    historyCount: HistoryRepository.getAll().length,
+    checkInCount: CheckInRepository.getAll().length,
+    cardioCount: CardioRepository.getAll().length,
+    checkedAt: new Date().toLocaleTimeString(),
+  };
 }
 
 export default function DeveloperTools() {
+  const [status, setStatus] = useState(() => readDemoStatus());
+
   function handleSeedDemoData() {
-    const workouts = seedDemoData();
-    reloadWorkouts(`seeded-${workouts.length}`);
+    seedDemoData();
+    setStatus(readDemoStatus("Seeded demo data"));
   }
 
   function handleClearDemoData() {
     clearDemoData();
-    reloadWorkouts("cleared");
+    setStatus(readDemoStatus("Cleared demo data"));
   }
 
   return (
@@ -48,6 +64,19 @@ export default function DeveloperTools() {
           </div>
         </button>
       </section>
+
+      <section className="tf-history-card">
+        <strong>{status.action}</strong>
+        <p>Plan days: {status.planCount}</p>
+        <p>Workout history: {status.historyCount}</p>
+        <p>Check-ins: {status.checkInCount}</p>
+        <p>Cardio sessions: {status.cardioCount}</p>
+        <span>Checked {status.checkedAt}</span>
+      </section>
+
+      <Link className="tf-save-plan-btn" to={`/workouts?refresh=${Date.now()}`}>
+        Open workouts
+      </Link>
     </main>
   );
 }
