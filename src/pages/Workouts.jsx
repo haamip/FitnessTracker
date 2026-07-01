@@ -4,6 +4,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { ChevronRight, Clock3, Dumbbell, Flame, History, Plus, Sparkles } from "lucide-react";
 import { AIPlanRepository, HistoryRepository } from "../services/trackfitDataLayer";
 import "./TrackFitScreens.css";
+import "../styles/TrackFitWorkoutFixes.css";
 
 const starterPlans = [
   {
@@ -124,7 +125,7 @@ export default function Workouts() {
       <section className="v4-workout-list">
         <div className="v4-section-heading">
           <div>
-            <p className="eyebrow">{hasTrainingPlan ? "Generated Plan" : "Starter Templates"}</p>
+            <p className="eyebrow">{hasTrainingPlan ? "Smart Plan" : "Starter Templates"}</p>
             <h2>{hasTrainingPlan ? "Your training plan" : "Choose a workout"}</h2>
           </div>
           <span>{visiblePlans.length} options</span>
