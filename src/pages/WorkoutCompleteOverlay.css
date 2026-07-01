@@ -3,24 +3,32 @@
    ----------------------------------------------------------------------------
    Keeps the saved workout summary in the middle of the screen so finishing a
    workout feels like a proper reward moment instead of another card in the page.
+
+   Important notes:
+   - WorkoutDetail lazily imports TrackFitScreens.css after App.jsx loads.
+   - These rules intentionally use !important for the overlay shell so older
+     completed-workout page-flow rules cannot pull the finish screen downward.
 ============================================================================ */
 
 .tf-workout-complete-screen {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  width: 100%;
-  min-height: 100dvh;
-  padding: 24px 18px max(24px, env(safe-area-inset-bottom));
-  background: rgba(7, 7, 7, 0.58);
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 999 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 16px !important;
+  width: 100vw !important;
+  min-width: 100vw !important;
+  min-height: 100dvh !important;
+  margin: 0 !important;
+  padding: 24px 18px max(24px, env(safe-area-inset-bottom)) !important;
+  background: rgba(7, 7, 7, 0.58) !important;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  text-align: center;
+  text-align: center !important;
+  transform: none !important;
 }
 
 .tf-workout-complete-screen::before {
@@ -125,8 +133,8 @@
 
 @media (max-height: 690px) {
   .tf-workout-complete-screen {
-    justify-content: flex-start;
-    overflow-y: auto;
-    padding-top: 36px;
+    justify-content: flex-start !important;
+    overflow-y: auto !important;
+    padding-top: 36px !important;
   }
 }
