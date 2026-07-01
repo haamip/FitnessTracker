@@ -71,14 +71,18 @@ export default function Workouts() {
   /**
    * Read workout overview data through repositories only.
    *
-   * The refresh query is used by developer tools after seeding/clearing demo
-   * data so the screen can rebuild its snapshot without direct storage access.
+   * Referencing the refresh token inside the memo makes deliberate refresh query
+   * updates rebuild this snapshot without the page touching storage directly.
    */
   const dataSnapshot = useMemo(
-    () => ({
-      savedTrainingPlan: AIPlanRepository.getPlan(),
-      workoutHistory: HistoryRepository.getRecent(6),
-    }),
+    () => {
+      void refreshToken;
+
+      return {
+        savedTrainingPlan: AIPlanRepository.getPlan(),
+        workoutHistory: HistoryRepository.getRecent(6),
+      };
+    },
     [refreshToken],
   );
 
