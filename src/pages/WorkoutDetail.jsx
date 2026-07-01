@@ -30,11 +30,11 @@ import {
   formatClock,
   generateWarmUpSets,
   readWorkoutHistory,
-  WORKOUT_HISTORY_KEY,
 } from "../services/workoutEngine";
 import {
   WorkoutRepository,
   AIPlanRepository,
+  HistoryRepository,
 } from "../services/trackfitDataLayer";
 import "./TrackFitScreens.css";
 
@@ -189,7 +189,6 @@ function duplicateWorkoutExercise(exercise) {
 export default function WorkoutDetail() {
   const { id = "workout-1" } = useParams();
   const navigate = useNavigate();
-  const storageKey = `trackfit_workout_${id}`;
   const aiDay = findAiDay(id);
 
   const [seconds, setSeconds] = useState(0);
@@ -226,15 +225,15 @@ export default function WorkoutDetail() {
   const currentExercisePercent =
     currentExerciseTotalSets > 0 ? Math.round((currentExerciseDoneSets / currentExerciseTotalSets) * 100) : 0;
 
-/**
- * Guided Exercise Flow
- *
- * When every set for the focused exercise is complete, Gym Mode changes from
- * "log this set" into "move to the next exercise". This keeps the workout
- * flowing without forcing the user to scan the exercise strip manually.
- */
-const isCurrentExerciseComplete =
-  currentExerciseTotalSets > 0 && currentExerciseDoneSets === currentExerciseTotalSets;
+  /**
+   * Guided Exercise Flow
+   *
+   * When every set for the focused exercise is complete, Gym Mode changes from
+   * "log this set" into "move to the next exercise". This keeps the workout
+   * flowing without forcing the user to scan the exercise strip manually.
+   */
+  const isCurrentExerciseComplete =
+    currentExerciseTotalSets > 0 && currentExerciseDoneSets === currentExerciseTotalSets;
 
   const isCurrentExerciseCelebrating = completedExerciseId === currentExercise?.id;
 
@@ -329,7 +328,7 @@ const isCurrentExerciseComplete =
 
   useEffect(() => {
     WorkoutRepository.saveById(id, exercises);
-  }, [exercises, storageKey]);
+  }, [exercises, id]);
 
   const totals = useMemo(() => calculateWorkoutTotals(exercises), [exercises]);
 
@@ -497,7 +496,7 @@ const isCurrentExerciseComplete =
       prs,
     });
 
-    writeJson(WORKOUT_HISTORY_KEY, [finishedWorkout, ...history]);
+    HistoryRepository.add(finishedWorkout);
     WorkoutRepository.removeById(id);
     setFinishedWorkoutSummary(finishedWorkout);
     window.scrollTo({ top: window.scrollY, behavior: "instant" });
@@ -702,32 +701,32 @@ const isCurrentExerciseComplete =
           />
 
           {isCurrentExerciseComplete && (
-  <motion.div
-    className="gym-complete-panel"
-    initial={{ opacity: 0, y: 10, scale: 0.98 }}
-    animate={{ opacity: 1, y: 0, scale: 1 }}
-    transition={{ duration: 0.22 }}
-  >
-    <div>
-      <strong>{currentExercise.name} complete</strong>
-      <span>
-        {isWorkoutComplete
-          ? "Workout complete. Save when ready."
-          : `Next up: ${nextExercise?.name || "final review"}`}
-      </span>
-    </div>
+            <motion.div
+              className="gym-complete-panel"
+              initial={{ opacity: 0, y: 10, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.22 }}
+            >
+              <div>
+                <strong>{currentExercise.name} complete</strong>
+                <span>
+                  {isWorkoutComplete
+                    ? "Workout complete. Save when ready."
+                    : `Next up: ${nextExercise?.name || "final review"}`}
+                </span>
+              </div>
 
-    {nextExercise ? (
-      <button onClick={() => goToExercise(1)} type="button">
-        Start next exercise <ArrowRight size={16} />
-      </button>
-    ) : (
-      <button className={canFinish ? "ready" : ""} disabled={!canFinish} onClick={finishWorkout} type="button">
-        Save workout
-      </button>
-    )}
-  </motion.div>
-)}
+              {nextExercise ? (
+                <button onClick={() => goToExercise(1)} type="button">
+                  Start next exercise <ArrowRight size={16} />
+                </button>
+              ) : (
+                <button className={canFinish ? "ready" : ""} disabled={!canFinish} onClick={finishWorkout} type="button">
+                  Save workout
+                </button>
+              )}
+            </motion.div>
+          )}
         </section>
       )}
 
