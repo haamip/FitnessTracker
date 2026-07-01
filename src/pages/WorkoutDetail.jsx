@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Copy,
@@ -194,6 +195,7 @@ export default function WorkoutDetail() {
   const [restCompletedMessage, setRestCompletedMessage] = useState("");
   const [notes, setNotes] = useState("");
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [completedExerciseId, setCompletedExerciseId] = useState("");
   const swipeStartX = useRef(null);
 
   const [exercises, setExercises] = useState(() => {
@@ -229,6 +231,8 @@ export default function WorkoutDetail() {
 const isCurrentExerciseComplete =
   currentExerciseTotalSets > 0 && currentExerciseDoneSets === currentExerciseTotalSets;
 
+  const isCurrentExerciseCelebrating = completedExerciseId === currentExercise?.id;
+
   useEffect(() => {
     const timer = window.setInterval(() => {
       setSeconds((currentSeconds) => currentSeconds + 1);
@@ -236,6 +240,16 @@ const isCurrentExerciseComplete =
 
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!completedExerciseId) return undefined;
+
+    const celebrationTimer = window.setTimeout(() => {
+      setCompletedExerciseId("");
+    }, 1200);
+
+    return () => window.clearTimeout(celebrationTimer);
+  }, [completedExerciseId]);
 
   const notifyRestFinished = useCallback((exerciseName) => {
     const message = `${exerciseName || "Your"} rest is finished. Time for the next set.`;
@@ -314,14 +328,33 @@ const isCurrentExerciseComplete =
 
   const totals = useMemo(() => calculateWorkoutTotals(exercises), [exercises]);
 
+  function triggerExerciseCompletionFeedback(exercise) {
+    setCompletedExerciseId(exercise.id);
+
+    if ("vibrate" in navigator) {
+      navigator.vibrate([90, 45, 140]);
+    }
+  }
+
   function updateSet(exerciseId, setId, field, value) {
+    const targetExercise = exercises.find((exercise) => exercise.id === exerciseId);
+    const targetSet = targetExercise?.sets.find((set) => set.id === setId);
+    const isMarkingDone = field === "done" && value && !targetSet?.done;
+    const willCompleteExercise =
+      isMarkingDone &&
+      targetExercise?.sets.every((set) => (set.id === setId ? true : set.done));
+
+    if (isMarkingDone && targetExercise) {
+      startRestTimer(targetExercise);
+    }
+
+    if (willCompleteExercise && targetExercise) {
+      triggerExerciseCompletionFeedback(targetExercise);
+    }
+
     setExercises((currentExercises) =>
       currentExercises.map((exercise) => {
         if (exercise.id !== exerciseId) return exercise;
-
-        if (field === "done" && value) {
-          startRestTimer(exercise);
-        }
 
         return {
           ...exercise,
@@ -544,7 +577,7 @@ const isCurrentExerciseComplete =
 
       {currentExercise && (
         <section
-          className="gym-focus-card"
+          className={isCurrentExerciseCelebrating ? "gym-focus-card just-completed" : "gym-focus-card"}
           onPointerCancel={() => {
             swipeStartX.current = null;
           }}
@@ -578,6 +611,13 @@ const isCurrentExerciseComplete =
               {String(currentExercise.movementPattern || "training").replaceAll("_", " ")}
             </span>
           </div>
+
+          {isCurrentExerciseCelebrating && (
+            <div className="gym-completion-burst" aria-live="polite">
+              <CheckCircle2 size={18} />
+              Exercise complete
+            </div>
+          )}
 
           <div className="gym-current-progress">
             <div>
@@ -656,7 +696,12 @@ const isCurrentExerciseComplete =
           />
 
           {isCurrentExerciseComplete && (
-  <div className="gym-complete-panel">
+  <motion.div
+    className="gym-complete-panel"
+    initial={{ opacity: 0, y: 10, scale: 0.98 }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    transition={{ duration: 0.22 }}
+  >
     <div>
       <strong>{currentExercise.name} complete</strong>
       <span>
@@ -675,7 +720,7 @@ const isCurrentExerciseComplete =
         Save workout
       </button>
     )}
-  </div>
+  </motion.div>
 )}
         </section>
       )}
