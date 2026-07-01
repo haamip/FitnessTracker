@@ -6010,3 +6010,101 @@ body,
 .completed-workout-card {
   text-decoration: none;
 }
+
+/* TrackFit developer seed tools */
+.tf-dev-seed-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 24px;
+  background: #111;
+  color: #fff;
+}
+
+.tf-dev-seed-card strong,
+.tf-dev-seed-card span {
+  display: block;
+}
+
+.tf-dev-seed-card strong {
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.tf-dev-seed-card span {
+  margin-top: 3px;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.tf-dev-seed-card div:last-child {
+  display: flex;
+  gap: 8px;
+}
+
+.tf-dev-seed-card button {
+  min-height: 38px;
+  border: 0;
+  border-radius: 14px;
+  padding: 0 12px;
+  background: var(--tf-orange);
+  color: #111;
+  font-weight: 950;
+}
+
+/* Completed workout detail */
+.tf-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #111;
+  text-decoration: none;
+  font-weight: 950;
+}
+
+.tf-history-hero,
+.tf-history-empty {
+  padding: 22px;
+  border-radius: 30px;
+  background: #111;
+  color: #fff;
+}
+
+.tf-history-hero svg {
+  color: var(--tf-orange);
+}
+
+.tf-history-hero h1 {
+  margin: 8px 0;
+  color: #fff;
+  font-size: 36px;
+  line-height: 0.95;
+  font-weight: 950;
+}
+
+.tf-history-hero span,
+.tf-history-empty span {
+  color: rgba(255, 255, 255, 0.68);
+  font-weight: 800;
+}
+
+.history-detail-stats {
+  position: static;
+  color: inherit;
+}
+
+.history-detail-stats article {
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.history-detail-stats strong {
+  color: #111;
+}
+
+.history-detail-stats span {
+  color: #666;
+}

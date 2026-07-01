@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ChevronRight, Clock3, Dumbbell, Flame, History, Plus, Sparkles } from "lucide-react";
+import { clearDemoData, seedDemoData } from "../services/demoSeedData";
 import "./TrackFitScreens.css";
 
 const starterPlans = [
@@ -37,9 +38,7 @@ const starterPlans = [
 function readJson(key, fallback) {
   const saved = localStorage.getItem(key);
 
-  if (!saved) {
-    return fallback;
-  }
+  if (!saved) return fallback;
 
   try {
     return JSON.parse(saved);
@@ -58,18 +57,34 @@ function formatDate(value) {
 }
 
 export default function Workouts() {
-  const savedTrainingPlan = useMemo(() => readJson("trackfit_ai_workout_plan", []), []);
-  const workoutHistory = useMemo(() => readJson("trackfit_workout_history", []).slice(0, 3), []);
+  const [savedTrainingPlan, setSavedTrainingPlan] = useState(() => readJson("trackfit_ai_workout_plan", []));
+  const [workoutHistory, setWorkoutHistory] = useState(() => readJson("trackfit_workout_history", []).slice(0, 6));
+
+  function refreshLocalData() {
+    setSavedTrainingPlan(readJson("trackfit_ai_workout_plan", []));
+    setWorkoutHistory(readJson("trackfit_workout_history", []).slice(0, 6));
+  }
+
+  function handleSeedData() {
+    seedDemoData();
+    refreshLocalData();
+  }
+
+  function handleClearData() {
+    clearDemoData();
+    refreshLocalData();
+  }
+
   const hasTrainingPlan = savedTrainingPlan.length > 0;
 
   const visiblePlans = hasTrainingPlan
     ? savedTrainingPlan.map((day) => ({
         id: day.id,
         name: day.name,
-        detail: `${day.focus} - ${day.equipment}`,
-        exercises: `${day.exercises.length} exercises`,
-        sets: `${day.exercises.reduce((total, exercise) => total + Number(exercise.sets || 0), 0)} sets`,
-        time: `${day.time} min`,
+        detail: `${day.focus || "Training"} - ${day.equipment || "Equipment"}`,
+        exercises: `${day.exercises?.length || 0} exercises`,
+        sets: `${(day.exercises || []).reduce((total, exercise) => total + Number(exercise.sets || 0), 0)} sets`,
+        time: `${day.time || 45} min`,
         progress: 0,
         generated: true,
       }))
@@ -93,6 +108,22 @@ export default function Workouts() {
           <Flame size={15} />
           {hasTrainingPlan ? "Plan active" : "Quick start"}
         </span>
+      </section>
+
+      <section className="tf-dev-seed-card">
+        <div>
+          <strong>Developer seed data</strong>
+          <span>Add a few days of workouts, cardio and check-ins for testing.</span>
+        </div>
+
+        <div>
+          <button onClick={handleSeedData} type="button">
+            Seed data
+          </button>
+          <button onClick={handleClearData} type="button">
+            Clear
+          </button>
+        </div>
       </section>
 
       <section className="v4-quick-grid">
@@ -163,22 +194,26 @@ export default function Workouts() {
           </div>
 
           {workoutHistory.map((workout) => (
-            <Link className="v4-workout-card completed-workout-card" to={`/workouts/history/${workout.id}`} key={workout.id}>
+            <Link
+              className="v4-workout-card completed-workout-card"
+              to={`/workouts/history/${workout.id}`}
+              key={workout.id}
+            >
               <div className="v4-workout-card__body">
                 <div className="v4-workout-icon">
                   <History size={22} />
                 </div>
 
                 <div>
-                  <h3>{workout.title}</h3>
-                  <p>{formatDate(workout.completedAt)}</p>
+                  <h3>{workout.title || "Completed workout"}</h3>
+                  <p>{workout.completedAt ? formatDate(workout.completedAt) : "No timestamp"}</p>
                 </div>
               </div>
 
               <div className="v4-workout-card__footer">
                 <span>
                   <Clock3 size={15} />
-                  {workout.completedSets}/{workout.totalSets} sets - {Math.round(workout.volume)} kg
+                  {workout.completedSets || 0}/{workout.totalSets || 0} sets - {Math.round(workout.volume || 0)} kg
                 </span>
 
                 <span>{workout.prs?.length || 0} PRs</span>
