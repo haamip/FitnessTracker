@@ -1,5 +1,5 @@
 import { Suspense, lazy } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useParams } from "react-router-dom";
 import MobileShell from "./components/layout/MobileShell";
 
 /**
@@ -22,6 +22,11 @@ const Coach = lazy(() => import("./pages/Coach"));
 const Workouts = lazy(() => import("./pages/Workouts"));
 const AIWorkoutBuilder = lazy(() => import("./pages/AIWorkoutBuilder"));
 const WorkoutDetail = lazy(() => import("./pages/WorkoutDetail"));
+
+function WorkoutDetailRoute() {
+  const { id = "workout-1" } = useParams();
+  return <WorkoutDetail key={id} />;
+}
 const CompletedWorkoutDetail = lazy(() => import("./pages/CompletedWorkoutDetail"));
 const DeveloperTools = lazy(() => import("./pages/DeveloperTools"));
 const ExerciseDetail = lazy(() => import("./pages/ExerciseDetail"));
@@ -60,7 +65,7 @@ function App() {
             <Route path="/workouts/builder" element={<AIWorkoutBuilder />} />
             <Route path="/dev-tools" element={<DeveloperTools />} />
             <Route path="/workouts/history/:historyId" element={<CompletedWorkoutDetail />} />
-            <Route path="/workouts/:id" element={<WorkoutDetail />} />
+            <Route path="/workouts/:id" element={<WorkoutDetailRoute />} />
             <Route path="/exercises/:id" element={<ExerciseDetail />} />
           </Routes>
         </Suspense>
