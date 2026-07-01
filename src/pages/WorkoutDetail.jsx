@@ -32,7 +32,10 @@ import {
   readWorkoutHistory,
   WORKOUT_HISTORY_KEY,
 } from "../services/workoutEngine";
-import { readJson, writeJson } from "../services/storage";
+import {
+  WorkoutRepository,
+  AIPlanRepository,
+} from "../services/trackfitDataLayer";
 import "./TrackFitScreens.css";
 
 const DEFAULT_REST_SECONDS = 90;
@@ -151,7 +154,7 @@ function createDefaultExercises() {
 }
 
 function findAiDay(id) {
-  const plan = readJson("trackfit_ai_workout_plan", []);
+  const plan = AIPlanRepository.getPlan();
   return plan.find((day) => day.id === id);
 }
 
@@ -201,7 +204,7 @@ export default function WorkoutDetail() {
   const swipeStartX = useRef(null);
 
   const [exercises, setExercises] = useState(() => {
-    const savedWorkout = readJson(storageKey, null);
+    const savedWorkout = WorkoutRepository.getById(id);
     if (savedWorkout) return savedWorkout;
     if (aiDay) return convertAiDayToWorkout(aiDay);
     return createDefaultExercises();
@@ -325,7 +328,7 @@ const isCurrentExerciseComplete =
   }, [activeRestLabel, notifyRestFinished, restRunning]);
 
   useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(exercises));
+    WorkoutRepository.saveById(id, exercises);
   }, [exercises, storageKey]);
 
   const totals = useMemo(() => calculateWorkoutTotals(exercises), [exercises]);
@@ -495,7 +498,7 @@ const isCurrentExerciseComplete =
     });
 
     writeJson(WORKOUT_HISTORY_KEY, [finishedWorkout, ...history]);
-    localStorage.removeItem(storageKey);
+    WorkoutRepository.removeById(id);
     setFinishedWorkoutSummary(finishedWorkout);
     window.scrollTo({ top: window.scrollY, behavior: "instant" });
   }
