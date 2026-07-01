@@ -23,6 +23,7 @@ const Workouts = lazy(() => import("./pages/Workouts"));
 const AIWorkoutBuilder = lazy(() => import("./pages/AIWorkoutBuilder"));
 const WorkoutDetail = lazy(() => import("./pages/WorkoutDetail"));
 const CompletedWorkoutDetail = lazy(() => import("./pages/CompletedWorkoutDetail"));
+const DeveloperTools = lazy(() => import("./pages/DeveloperTools"));
 const ExerciseDetail = lazy(() => import("./pages/ExerciseDetail"));
 
 /**
@@ -57,6 +58,7 @@ function App() {
             <Route path="/coach" element={<Coach />} />
             <Route path="/workouts" element={<Workouts />} />
             <Route path="/workouts/builder" element={<AIWorkoutBuilder />} />
+            <Route path="/dev-tools" element={<DeveloperTools />} />
             <Route path="/workouts/history/:historyId" element={<CompletedWorkoutDetail />} />
             <Route path="/workouts/:id" element={<WorkoutDetail />} />
             <Route path="/exercises/:id" element={<ExerciseDetail />} />

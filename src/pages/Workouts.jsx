@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ChevronRight, Clock3, Dumbbell, Flame, History, Plus, Sparkles } from "lucide-react";
-import { clearDemoData, seedDemoData } from "../services/demoSeedData";
 import "./TrackFitScreens.css";
 
 const starterPlans = [
@@ -57,23 +56,8 @@ function formatDate(value) {
 }
 
 export default function Workouts() {
-  const [savedTrainingPlan, setSavedTrainingPlan] = useState(() => readJson("trackfit_ai_workout_plan", []));
-  const [workoutHistory, setWorkoutHistory] = useState(() => readJson("trackfit_workout_history", []).slice(0, 6));
-
-  function refreshLocalData() {
-    setSavedTrainingPlan(readJson("trackfit_ai_workout_plan", []));
-    setWorkoutHistory(readJson("trackfit_workout_history", []).slice(0, 6));
-  }
-
-  function handleSeedData() {
-    seedDemoData();
-    refreshLocalData();
-  }
-
-  function handleClearData() {
-    clearDemoData();
-    refreshLocalData();
-  }
+  const savedTrainingPlan = useMemo(() => readJson("trackfit_ai_workout_plan", []), []);
+  const workoutHistory = useMemo(() => readJson("trackfit_workout_history", []).slice(0, 6), []);
 
   const hasTrainingPlan = savedTrainingPlan.length > 0;
 
@@ -110,21 +94,6 @@ export default function Workouts() {
         </span>
       </section>
 
-      <section className="tf-dev-seed-card">
-        <div>
-          <strong>Developer seed data</strong>
-          <span>Add a few days of workouts, cardio and check-ins for testing.</span>
-        </div>
-
-        <div>
-          <button onClick={handleSeedData} type="button">
-            Seed data
-          </button>
-          <button onClick={handleClearData} type="button">
-            Clear
-          </button>
-        </div>
-      </section>
 
       <section className="v4-quick-grid">
         <Link className="v4-quick-card" to="/workouts/builder">
