@@ -1,0 +1,200 @@
+/* TrackFit workout fix pack
+   Keeps Train/Gym Mode tidy on narrow phones and makes exercise artwork render as real images. */
+
+.workouts-v4,
+.tf-gym-mode,
+.tf-ai-builder {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.v4-quick-grid,
+.v4-workout-card,
+.v4-workout-card *,
+.gym-focus-card,
+.gym-focus-card *,
+.gym-exercise-strip,
+.gym-strip-item,
+.gym-strip-item *,
+.tf-exercise-tools,
+.tf-exercise-tools *,
+.ai-exercise-list,
+.ai-exercise-row,
+.ai-exercise-row * {
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.v4-workout-card__body {
+  grid-template-columns: 50px minmax(0, 1fr) 24px;
+}
+
+.v4-workout-card__body > div:not(.v4-workout-icon) {
+  min-width: 0;
+}
+
+.v4-workout-card h3,
+.v4-workout-card p,
+.gym-focus-card__title h2,
+.gym-focus-card__title p,
+.gym-focus-card__title span,
+.gym-strip-item strong,
+.gym-strip-item small,
+.ai-exercise-row strong,
+.ai-exercise-row span,
+.ai-exercise-row small {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.v4-workout-card__footer {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.v4-workout-card__footer span {
+  flex: 1 1 180px;
+}
+
+.v4-workout-progress {
+  flex: 1 1 110px;
+  min-width: 110px;
+}
+
+.tf-exercise-art,
+.tf-picker-art {
+  width: var(--tf-exercise-image-size, 52px);
+  height: var(--tf-exercise-image-size, 52px);
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #111;
+  filter: none;
+}
+
+.tf-exercise-art img,
+.tf-picker-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 6px;
+}
+
+.gym-focus-card__art .tf-exercise-art {
+  width: min(128px, 42vw);
+  height: min(128px, 42vw);
+  margin: 0 auto;
+  border-radius: 28px;
+  background: #f7f2e8;
+}
+
+.gym-focus-card__art .tf-exercise-art img {
+  padding: 10px;
+}
+
+.tf-exercise-fallback {
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  width: 100%;
+  height: 100%;
+  color: #f59e0b;
+  font-weight: 950;
+}
+
+.tf-exercise-fallback small {
+  color: inherit;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.gym-focus-card {
+  overflow: hidden;
+}
+
+.gym-focus-card__top {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 10px;
+}
+
+.gym-focus-card__title {
+  min-width: 0;
+  text-align: center;
+}
+
+.tf-exercise-tools.gym-tools {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tf-exercise-tools.gym-tools button,
+.tf-exercise-tools.gym-tools a {
+  min-height: 42px;
+  justify-content: center;
+  white-space: normal;
+  line-height: 1.1;
+}
+
+.gym-exercise-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 2px 2px 10px;
+  scrollbar-width: none;
+}
+
+.gym-exercise-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.gym-strip-item {
+  flex: 0 0 150px;
+  max-width: 170px;
+  overflow: hidden;
+}
+
+.gym-strip-item strong,
+.gym-strip-item small {
+  display: block;
+}
+
+.ai-builder-hero h1,
+.ai-day-head h3 {
+  overflow-wrap: break-word;
+}
+
+@media (max-width: 430px) {
+  .v4-quick-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .v4-workout-hero {
+    flex-direction: column;
+  }
+
+  .v4-hero-badge {
+    width: fit-content;
+  }
+
+  .tf-progress-meta {
+    display: grid;
+    gap: 4px;
+  }
+
+  .tf-exercise-tools.gym-tools {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gym-strip-item {
+    flex-basis: 132px;
+  }
+}
