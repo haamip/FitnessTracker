@@ -13,6 +13,7 @@ import {
   Info,
   Plus,
   Trash2,
+  Trophy,
 } from "lucide-react";
 import ExercisePicker from "../components/ExercisePicker";
 import ExerciseImage from "../components/ui/ExerciseImage";
@@ -196,6 +197,7 @@ export default function WorkoutDetail() {
   const [notes, setNotes] = useState("");
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [completedExerciseId, setCompletedExerciseId] = useState("");
+  const [finishedWorkoutSummary, setFinishedWorkoutSummary] = useState(null);
   const swipeStartX = useRef(null);
 
   const [exercises, setExercises] = useState(() => {
@@ -494,7 +496,7 @@ const isCurrentExerciseComplete =
 
     writeJson(WORKOUT_HISTORY_KEY, [finishedWorkout, ...history]);
     localStorage.removeItem(storageKey);
-    navigate("/workouts");
+    setFinishedWorkoutSummary(finishedWorkout);
   }
 
   function goToExercise(direction) {
@@ -767,6 +769,48 @@ const isCurrentExerciseComplete =
         onClose={() => setIsPickerOpen(false)}
         onSelectExercise={addExerciseFromLibrary}
       />
+
+      {finishedWorkoutSummary && (
+        <motion.section
+          className="tf-workout-complete-screen"
+          initial={{ opacity: 0, y: 18, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.28 }}
+        >
+          <div className="tf-complete-medal">
+            <Trophy size={34} />
+          </div>
+
+          <p className="eyebrow">Workout saved</p>
+          <h2>Strong mahi.</h2>
+          <span className="tf-complete-copy">
+            Session locked in. Review the numbers, then head back to your training plan.
+          </span>
+
+          <div className="tf-complete-stats">
+            <article>
+              <strong>{formatClock(finishedWorkoutSummary.seconds)}</strong>
+              <span>Time</span>
+            </article>
+            <article>
+              <strong>{finishedWorkoutSummary.totals.doneSets}</strong>
+              <span>Sets</span>
+            </article>
+            <article>
+              <strong>{Math.round(finishedWorkoutSummary.totals.volume)}kg</strong>
+              <span>Volume</span>
+            </article>
+            <article>
+              <strong>{finishedWorkoutSummary.prs?.length || 0}</strong>
+              <span>PRs</span>
+            </article>
+          </div>
+
+          <button onClick={() => navigate("/workouts")} type="button">
+            Back to workouts
+          </button>
+        </motion.section>
+      )}
 
       <footer className="tf-workout-actions">
         <Link to="/workouts">Cancel Workout</Link>
