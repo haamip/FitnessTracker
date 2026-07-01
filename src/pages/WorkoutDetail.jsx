@@ -794,11 +794,11 @@ const isCurrentExerciseComplete =
               <span>Time</span>
             </article>
             <article>
-              <strong>{finishedWorkoutSummary.totals.doneSets}</strong>
+              <strong>{finishedWorkoutSummary.completedSets || finishedWorkoutSummary.doneSets || 0}</strong>
               <span>Sets</span>
             </article>
             <article>
-              <strong>{Math.round(finishedWorkoutSummary.totals.volume)}kg</strong>
+              <strong>{Math.round(finishedWorkoutSummary.volume || 0)}kg</strong>
               <span>Volume</span>
             </article>
             <article>
