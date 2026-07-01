@@ -1,11 +1,13 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Database, Trash2 } from "lucide-react";
 import { clearDemoData, seedDemoData } from "../services/demoSeedData";
 import "./TrackFitScreens.css";
 
 export default function DeveloperTools() {
-  function reloadAppData() {
-    window.location.reload();
+  const navigate = useNavigate();
+
+  function goToWorkouts() {
+    navigate(`/workouts?refresh=${Date.now()}`);
   }
 
   return (
@@ -25,7 +27,7 @@ export default function DeveloperTools() {
         <button
           onClick={() => {
             seedDemoData();
-            reloadAppData();
+            goToWorkouts();
           }}
           type="button"
         >
@@ -40,7 +42,7 @@ export default function DeveloperTools() {
           className="danger"
           onClick={() => {
             clearDemoData();
-            reloadAppData();
+            goToWorkouts();
           }}
           type="button"
         >

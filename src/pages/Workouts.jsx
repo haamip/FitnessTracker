@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { ChevronRight, Clock3, Dumbbell, Flame, History, Plus, Sparkles } from "lucide-react";
 import "./TrackFitScreens.css";
 
@@ -56,8 +56,16 @@ function formatDate(value) {
 }
 
 export default function Workouts() {
-  const savedTrainingPlan = useMemo(() => readJson("trackfit_ai_workout_plan", []), []);
-  const workoutHistory = useMemo(() => readJson("trackfit_workout_history", []).slice(0, 6), []);
+  const [searchParams] = useSearchParams();
+  const refreshToken = searchParams.get("refresh") || "initial";
+  const [dataSnapshot] = useState(() => ({
+    refreshToken,
+    savedTrainingPlan: readJson("trackfit_ai_workout_plan", []),
+    workoutHistory: readJson("trackfit_workout_history", []).slice(0, 6),
+  }));
+
+  const savedTrainingPlan = dataSnapshot.savedTrainingPlan;
+  const workoutHistory = dataSnapshot.workoutHistory;
 
   const hasTrainingPlan = savedTrainingPlan.length > 0;
 
