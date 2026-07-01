@@ -95,7 +95,7 @@ function createDefaultExercises() {
     {
       id: "rdl",
       name: "Dumbbell Romanian Deadlift",
-      target: "2 sets Ãƒ¢Ã¢â€š¬Ã‚¢ 10 reps",
+      target: "2 sets - 10 reps",
       image: resolveExerciseImage({ id: "rdl", name: "Dumbbell Romanian Deadlift" }),
       primaryMuscles: ["hamstrings"],
       equipment: ["dumbbell"],
@@ -106,7 +106,7 @@ function createDefaultExercises() {
     {
       id: "calf",
       name: "Dumbbell Standing Calf Raise",
-      target: "2 sets Ãƒ¢Ã¢â€š¬Ã‚¢ 12 reps",
+      target: "2 sets - 12 reps",
       image: resolveExerciseImage({ id: "calf", name: "Dumbbell Standing Calf Raise" }),
       primaryMuscles: ["calves"],
       equipment: ["dumbbell"],
@@ -117,7 +117,7 @@ function createDefaultExercises() {
     {
       id: "press",
       name: "Dumbbell Shoulder Press",
-      target: "2 sets Ãƒ¢Ã¢â€š¬Ã‚¢ 10 reps",
+      target: "2 sets - 10 reps",
       image: resolveExerciseImage({ id: "press", name: "Dumbbell Shoulder Press" }),
       primaryMuscles: ["shoulders"],
       equipment: ["dumbbell"],
@@ -128,7 +128,7 @@ function createDefaultExercises() {
     {
       id: "row",
       name: "Dumbbell Row",
-      target: "2 sets Ãƒ¢Ã¢â€š¬Ã‚¢ 10 reps",
+      target: "2 sets - 10 reps",
       image: resolveExerciseImage({ id: "row", name: "Dumbbell Row" }),
       primaryMuscles: ["lats"],
       equipment: ["dumbbell"],
@@ -139,7 +139,7 @@ function createDefaultExercises() {
     {
       id: "squat",
       name: "Barbell Back Squat",
-      target: "2 sets Ãƒ¢Ã¢â€š¬Ã‚¢ 10 reps",
+      target: "2 sets - 10 reps",
       image: resolveExerciseImage({ id: "squat", name: "Barbell Back Squat" }),
       primaryMuscles: ["quadriceps"],
       equipment: ["barbell"],
@@ -160,7 +160,7 @@ function convertAiDayToWorkout(day) {
     id: `${exercise.id}-${crypto.randomUUID()}`,
     libraryId: exercise.id,
     name: exercise.name,
-    target: `${exercise.sets} sets Ãƒ¢Ã¢â€š¬Ã‚¢ ${exercise.reps} reps`,
+    target: `${exercise.sets} sets - ${exercise.reps} reps`,
     image: resolveExerciseImage(exercise),
     primaryMuscles: exercise.primaryMuscles || [],
     equipment: exercise.equipment || [],
@@ -445,7 +445,7 @@ const isCurrentExerciseComplete =
       id: `${libraryExercise.id}-${crypto.randomUUID()}`,
       libraryId: libraryExercise.id,
       name: libraryExercise.name,
-      target: `${setCount} sets Ãƒ¢Ã¢â€š¬Ã‚¢ ${reps} reps`,
+      target: `${setCount} sets - ${reps} reps`,
       image: libraryExercise.image || FALLBACK_EXERCISE_IMAGE,
       primaryMuscles: libraryExercise.primaryMuscles || [],
       equipment: libraryExercise.equipment || [],
@@ -497,6 +497,7 @@ const isCurrentExerciseComplete =
     writeJson(WORKOUT_HISTORY_KEY, [finishedWorkout, ...history]);
     localStorage.removeItem(storageKey);
     setFinishedWorkoutSummary(finishedWorkout);
+    window.scrollTo({ top: window.scrollY, behavior: "instant" });
   }
 
   function goToExercise(direction) {
@@ -560,7 +561,7 @@ const isCurrentExerciseComplete =
         <div className="tf-progress-meta">
           <span>{totals.percent}% COMPLETE</span>
           <span>
-            {totals.doneSets}/{totals.totalSets} SETS Ãƒ¢Ã¢â€š¬Ã‚¢ {Math.round(totals.volume)} KG
+            {totals.doneSets}/{totals.totalSets} SETS - {Math.round(totals.volume)} KG
           </span>
         </div>
 
@@ -609,7 +610,7 @@ const isCurrentExerciseComplete =
             <p>{currentExercise.target}</p>
             <h2>{currentExercise.name}</h2>
             <span>
-              {(currentExercise.primaryMuscles || []).slice(0, 3).join(" Ãƒ¢Ã¢â€š¬Ã‚¢ ") || "Strength"} Ãƒ¢Ã¢â€š¬Ã‚¢{" "}
+              {(currentExercise.primaryMuscles || []).slice(0, 3).join(" - ") || "Strength"} -{" "}
               {String(currentExercise.movementPattern || "training").replaceAll("_", " ")}
             </span>
           </div>

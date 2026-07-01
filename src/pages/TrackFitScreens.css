@@ -5998,3 +5998,15 @@ body,
   font-size: 16px;
   font-weight: 950;
 }
+
+/* Gym Mode V2 - completion overlay viewport polish */
+.tf-workout-complete-screen {
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
+  min-height: min(620px, calc(100dvh - 28px));
+}
+
+.completed-workout-card {
+  text-decoration: none;
+}

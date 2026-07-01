@@ -66,7 +66,7 @@ export default function Workouts() {
     ? savedTrainingPlan.map((day) => ({
         id: day.id,
         name: day.name,
-        detail: `${day.focus} • ${day.equipment}`,
+        detail: `${day.focus} - ${day.equipment}`,
         exercises: `${day.exercises.length} exercises`,
         sets: `${day.exercises.reduce((total, exercise) => total + Number(exercise.sets || 0), 0)} sets`,
         time: `${day.time} min`,
@@ -141,7 +141,7 @@ export default function Workouts() {
             <div className="v4-workout-card__footer">
               <span>
                 <Dumbbell size={15} />
-                {plan.exercises} • {plan.sets}
+                {plan.exercises} - {plan.sets}
               </span>
 
               <div className="v4-workout-progress">
@@ -163,7 +163,7 @@ export default function Workouts() {
           </div>
 
           {workoutHistory.map((workout) => (
-            <article className="v4-workout-card" key={workout.id}>
+            <Link className="v4-workout-card completed-workout-card" to={`/workouts/history/${workout.id}`} key={workout.id}>
               <div className="v4-workout-card__body">
                 <div className="v4-workout-icon">
                   <History size={22} />
@@ -178,12 +178,12 @@ export default function Workouts() {
               <div className="v4-workout-card__footer">
                 <span>
                   <Clock3 size={15} />
-                  {workout.completedSets}/{workout.totalSets} sets • {Math.round(workout.volume)} kg
+                  {workout.completedSets}/{workout.totalSets} sets - {Math.round(workout.volume)} kg
                 </span>
 
                 <span>{workout.prs?.length || 0} PRs</span>
               </div>
-            </article>
+            </Link>
           ))}
         </section>
       )}

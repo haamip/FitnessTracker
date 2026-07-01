@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Brain, Dumbbell, RefreshCcw, Save, Sparkles } from "lucide-react";
 import {
   equipmentLabels,
@@ -14,7 +14,7 @@ function convertDayToWorkout(day) {
     id: `${exercise.id}-${crypto.randomUUID()}`,
     libraryId: exercise.id,
     name: exercise.name,
-    target: `${exercise.sets} sets • ${exercise.reps} reps`,
+    target: `${exercise.sets} sets - ${exercise.reps} reps`,
     image: exercise.image || "/exercise-images/trackfit-fallback.svg",
     primaryMuscles: exercise.primaryMuscles || [],
     equipment: exercise.equipment || [],
@@ -32,6 +32,7 @@ function convertDayToWorkout(day) {
 }
 
 export default function AIWorkoutBuilder() {
+  const navigate = useNavigate();
   const [goal, setGoal] = useState("muscle");
   const [days, setDays] = useState("4");
   const [time, setTime] = useState("60");
@@ -89,6 +90,7 @@ export default function AIWorkoutBuilder() {
     });
 
     setSaved(true);
+    navigate("/workouts");
   }
 
   function regeneratePlan() {
@@ -208,7 +210,7 @@ export default function AIWorkoutBuilder() {
               <div className="ai-day-head">
                 <Dumbbell size={22} />
                 <h3>{day.name}</h3>
-                <span>{day.time} mins • {day.equipment}</span>
+                <span>{day.time} mins - {day.equipment}</span>
               </div>
 
               <div className="ai-exercise-list">
@@ -216,7 +218,7 @@ export default function AIWorkoutBuilder() {
                   <div className="ai-exercise-row" key={`${day.id}-${exercise.id}`}>
                     <strong>{exercise.name}</strong>
                     <span>{exercise.movementPattern?.replaceAll("_", " ") || "movement"}</span>
-                    <small>{exercise.sets} sets x {exercise.reps} • {exercise.rest}</small>
+                    <small>{exercise.sets} sets x {exercise.reps} - {exercise.rest}</small>
                   </div>
                 ))}
               </div>
