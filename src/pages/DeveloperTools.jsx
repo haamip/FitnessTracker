@@ -1,13 +1,21 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { ArrowLeft, Database, Trash2 } from "lucide-react";
 import { clearDemoData, seedDemoData } from "../services/demoSeedData";
 import "./TrackFitScreens.css";
 
-export default function DeveloperTools() {
-  const navigate = useNavigate();
+function reloadWorkouts(status) {
+  window.location.assign(`/workouts?refresh=${Date.now()}&demo=${status}`);
+}
 
-  function goToWorkouts() {
-    navigate(`/workouts?refresh=${Date.now()}`);
+export default function DeveloperTools() {
+  function handleSeedDemoData() {
+    const workouts = seedDemoData();
+    reloadWorkouts(`seeded-${workouts.length}`);
+  }
+
+  function handleClearDemoData() {
+    clearDemoData();
+    reloadWorkouts("cleared");
   }
 
   return (
@@ -24,13 +32,7 @@ export default function DeveloperTools() {
       </section>
 
       <section className="tf-dev-tool-list">
-        <button
-          onClick={() => {
-            seedDemoData();
-            goToWorkouts();
-          }}
-          type="button"
-        >
+        <button onClick={handleSeedDemoData} type="button">
           <Database size={20} />
           <div>
             <strong>Seed demo data</strong>
@@ -38,14 +40,7 @@ export default function DeveloperTools() {
           </div>
         </button>
 
-        <button
-          className="danger"
-          onClick={() => {
-            clearDemoData();
-            goToWorkouts();
-          }}
-          type="button"
-        >
+        <button className="danger" onClick={handleClearDemoData} type="button">
           <Trash2 size={20} />
           <div>
             <strong>Clear demo data</strong>
