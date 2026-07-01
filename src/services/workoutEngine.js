@@ -95,13 +95,21 @@ export function getPreviousSetLabel(previousExercise, setIndex) {
  * can use this same shape rather than reverse-engineering the UI state.
  */
 export function buildCompletedWorkout({ id, title, seconds, notes, exercises, totals, prs = [] }) {
+  const safeSeconds = Number.isFinite(Number(seconds)) ? Math.max(0, Math.floor(Number(seconds))) : 0;
+
   return {
     id: crypto.randomUUID(),
     workoutId: id,
     title,
     completedAt: new Date().toISOString(),
-    durationSeconds: seconds,
+
+    // Keep both fields for compatibility: older UI reads `seconds`, while
+    // repository/history code reads `durationSeconds`.
+    seconds: safeSeconds,
+    durationSeconds: safeSeconds,
+
     completedSets: totals.doneSets,
+    doneSets: totals.doneSets,
     totalSets: totals.totalSets,
     volume: totals.volume,
     notes,
@@ -139,7 +147,8 @@ export function generateWarmUpSets(exercise, createSet) {
  * Converts seconds into a gym-friendly clock.
  */
 export function formatClock(totalSeconds) {
-  const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
-  const seconds = (totalSeconds % 60).toString().padStart(2, "0");
+  const safeSeconds = Number.isFinite(Number(totalSeconds)) ? Math.max(0, Math.floor(Number(totalSeconds))) : 0;
+  const minutes = Math.floor(safeSeconds / 60).toString().padStart(2, "0");
+  const seconds = (safeSeconds % 60).toString().padStart(2, "0");
   return `${minutes}:${seconds}`;
 }
