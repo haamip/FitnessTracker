@@ -2,9 +2,16 @@ import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link, useSearchParams } from "react-router-dom";
 import { ChevronRight, Clock3, Dumbbell, Flame, History, Plus, Sparkles } from "lucide-react";
-import { AIPlanRepository, HistoryRepository } from "../services/trackfitDataLayer";
+import {
+  AIPlanRepository,
+  CardioRepository,
+  CheckInRepository,
+  HistoryRepository,
+} from "../services/trackfitDataLayer";
 import "./TrackFitScreens.css";
 import "../styles/TrackFitWorkoutFixes.css";
+
+const SHOW_WORKOUTS_DEBUG = true;
 
 const starterPlans = [
   {
@@ -81,6 +88,14 @@ export default function Workouts() {
       return {
         savedTrainingPlan: AIPlanRepository.getPlan(),
         workoutHistory: HistoryRepository.getRecent(6),
+        debug: {
+          planCount: AIPlanRepository.getPlan().length,
+          historyCount: HistoryRepository.getAll().length,
+          checkInCount: CheckInRepository.getAll().length,
+          cardioCount: CardioRepository.getAll().length,
+          refreshToken,
+          checkedAt: new Date().toLocaleTimeString(),
+        },
       };
     },
     [refreshToken],
@@ -111,6 +126,18 @@ export default function Workouts() {
           {hasTrainingPlan ? "Plan active" : "Quick start"}
         </span>
       </section>
+
+      {SHOW_WORKOUTS_DEBUG && (
+        <section className="tf-history-card" style={{ border: "2px dashed #f59e0b" }}>
+          <strong>Temporary Workouts debug</strong>
+          <p>Plan days: {dataSnapshot.debug.planCount}</p>
+          <p>Workout history: {dataSnapshot.debug.historyCount}</p>
+          <p>Check-ins: {dataSnapshot.debug.checkInCount}</p>
+          <p>Cardio sessions: {dataSnapshot.debug.cardioCount}</p>
+          <p>Refresh token: {dataSnapshot.debug.refreshToken}</p>
+          <span>Checked {dataSnapshot.debug.checkedAt}</span>
+        </section>
+      )}
 
       <section className="v4-quick-grid">
         <Link className="v4-quick-card" to="/workouts/builder">
