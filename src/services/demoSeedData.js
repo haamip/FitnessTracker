@@ -1,15 +1,18 @@
+import {
+  AIPlanRepository,
+  CardioRepository,
+  CheckInRepository,
+  HistoryRepository,
+  WorkoutRepository,
+} from "./trackfitDataLayer";
+
 /**
  * TrackFit demo seed data.
  *
  * Creates realistic local demo records so development and phone testing feel
- * populated immediately. This is intentionally localStorage-only and should
- * stay behind the hidden developer tools route.
+ * populated immediately. The repositories keep this offline-first while avoiding
+ * direct storage access from app-facing seed logic.
  */
-
-const WORKOUT_HISTORY_KEY = "trackfit_workout_history";
-const CHECKINS_KEY = "trackfit_checkins";
-const CARDIO_KEY = "trackfit_cardio";
-const AI_PLAN_KEY = "trackfit_ai_workout_plan";
 
 function daysAgo(days) {
   const date = new Date();
@@ -174,6 +177,18 @@ function createDemoPlan() {
   ];
 }
 
+function saveDemoPlanWorkouts(plan) {
+  plan.forEach((day) => {
+    WorkoutRepository.saveById(day.id, createWorkoutFromPlanDay(day));
+  });
+}
+
+function clearDemoPlanWorkouts(plan) {
+  plan.forEach((day) => {
+    WorkoutRepository.removeById(day.id);
+  });
+}
+
 export function seedDemoData() {
   const plan = createDemoPlan();
 
@@ -218,27 +233,20 @@ export function seedDemoData() {
     { id: "demo-cardio-5", date: daysAgo(10), type: "Rower", distance: 2.2, duration: 12 },
   ];
 
-  localStorage.setItem(AI_PLAN_KEY, JSON.stringify(plan));
-  localStorage.setItem(WORKOUT_HISTORY_KEY, JSON.stringify(workouts));
-  localStorage.setItem(CHECKINS_KEY, JSON.stringify(checkins));
-  localStorage.setItem(CARDIO_KEY, JSON.stringify(cardio));
-
-  plan.forEach((day) => {
-    localStorage.setItem(`trackfit_workout_${day.id}`, JSON.stringify(createWorkoutFromPlanDay(day)));
-  });
+  clearDemoData();
+  AIPlanRepository.savePlan(plan);
+  HistoryRepository.saveAll(workouts);
+  CheckInRepository.saveAll(checkins);
+  CardioRepository.saveAll(cardio);
+  saveDemoPlanWorkouts(plan);
 
   return workouts;
 }
 
 export function clearDemoData() {
-  const plan = JSON.parse(localStorage.getItem(AI_PLAN_KEY) || "[]");
-
-  plan.forEach((day) => {
-    localStorage.removeItem(`trackfit_workout_${day.id}`);
-  });
-
-  localStorage.removeItem(AI_PLAN_KEY);
-  localStorage.removeItem(WORKOUT_HISTORY_KEY);
-  localStorage.removeItem(CHECKINS_KEY);
-  localStorage.removeItem(CARDIO_KEY);
+  clearDemoPlanWorkouts(AIPlanRepository.getPlan());
+  AIPlanRepository.clear();
+  HistoryRepository.clear();
+  CheckInRepository.clear();
+  CardioRepository.clear();
 }
