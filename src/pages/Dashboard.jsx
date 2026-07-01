@@ -20,7 +20,7 @@ import LineChartCard from "../components/LineChartCard";
 import GamificationPanel from "../components/ui/GamificationPanel";
 import { generateDailyCoachBrief } from "../services/aiCoachEngine";
 import { getAllTimePRs } from "../services/prEngine";
-import { readWorkoutHistory } from "../services/workoutEngine";
+import { HistoryRepository } from "../services/trackfitDataLayer";
 import { getWeeklyTrainingSummary } from "../services/workoutSummaryEngine";
 import "./TrackFitScreens.css";
 
@@ -46,7 +46,7 @@ const achievements = [
 ];
 
 export default function Dashboard() {
-  const workoutHistory = useMemo(() => readWorkoutHistory(), []);
+  const workoutHistory = useMemo(() => HistoryRepository.getAll(), []);
   const weeklySummary = useMemo(() => getWeeklyTrainingSummary(workoutHistory), [workoutHistory]);
   const coachBrief = useMemo(() => generateDailyCoachBrief(workoutHistory), [workoutHistory]);
   const allTimePrs = useMemo(() => getAllTimePRs(workoutHistory), [workoutHistory]);
@@ -117,7 +117,7 @@ export default function Dashboard() {
         </article>
       </section>
 
-      {/* Daily AI Coach card: converts workout history into one recommended action. */}
+      {/* Daily Coach card: converts workout history into one recommended action. */}
       <section className="v4-today-card">
         <div className="v4-icon-bubble">
           <Dumbbell size={22} />
