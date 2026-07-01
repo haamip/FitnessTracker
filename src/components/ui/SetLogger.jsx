@@ -35,11 +35,7 @@ export default function SetLogger({
                 <div>
                   <strong>{setLabel}</strong>
                   <span>
-<<<<<<< HEAD
-                    Last: {previousLabel} · Target: {targetLabel}
-=======
                     Last: {previousLabel} - Target: {targetLabel}
->>>>>>> 81ec5f2 (fix: remove UTF-8 encoding artifacts)
                   </span>
                 </div>
 

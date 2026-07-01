@@ -108,11 +108,7 @@ export default function Coach() {
         {showWhy && (
           <div className="tf-why-list">
             {coach.reasons.map((reason) => (
-<<<<<<< HEAD
-              <p key={reason}>• {reason}</p>
-=======
               <p key={reason}>- {reason}</p>
->>>>>>> 81ec5f2 (fix: remove UTF-8 encoding artifacts)
             ))}
           </div>
         )}
