@@ -22,6 +22,124 @@ function formatVolume(volume) {
   return `${Math.round(volume)}kg`;
 }
 
+function formatDuration(seconds) {
+  const safeSeconds = Number.isFinite(Number(seconds)) ? Math.max(0, Math.floor(Number(seconds))) : 0;
+  const minutes = Math.round(safeSeconds / 60);
+
+  if (minutes < 60) return `${minutes} min`;
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return remainingMinutes === 0 ? `${hours}h` : `${hours}h ${remainingMinutes}m`;
+}
+
+function normaliseDate(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatSessionDate(value) {
+  const date = normaliseDate(value);
+
+  if (!date) return "Recently";
+
+  return new Intl.DateTimeFormat("en-AU", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(date);
+}
+
+function getWorkoutDurationSeconds(workout) {
+  return workout?.durationSeconds ?? workout?.seconds ?? 0;
+}
+
+function getWorkoutCompletedSets(workout) {
+  return workout?.completedSets ?? workout?.doneSets ?? 0;
+}
+
+/**
+ * Builds a compact summary of the most recent completed workout.
+ *
+ * This powers the first truly useful Coach card: "what just happened?".
+ */
+export function getLastSessionSummary(history = readWorkoutHistory()) {
+  const latestWorkout = history[0];
+
+  if (!latestWorkout) {
+    return {
+      hasSession: false,
+      title: "No session logged yet",
+      dateLabel: "Start with one clean workout",
+      durationLabel: "0 min",
+      sets: 0,
+      volumeLabel: "0kg",
+      prs: 0,
+      note: "Complete a workout and TrackFit will summarise your training here.",
+    };
+  }
+
+  return {
+    hasSession: true,
+    title: latestWorkout.title || "Completed workout",
+    dateLabel: formatSessionDate(latestWorkout.completedAt),
+    durationLabel: formatDuration(getWorkoutDurationSeconds(latestWorkout)),
+    sets: getWorkoutCompletedSets(latestWorkout),
+    volumeLabel: formatVolume(latestWorkout.volume || 0),
+    prs: latestWorkout.prs?.length || 0,
+    note:
+      latestWorkout.prs?.length > 0
+        ? `${latestWorkout.prs.length} PR signal${latestWorkout.prs.length === 1 ? "" : "s"} from your last session.`
+        : "Session saved. Keep stacking clean workouts and the coach will get sharper.",
+  };
+}
+
+/**
+ * Creates the top "do this next" recommendation.
+ *
+ * v0.8 stays deterministic and explainable. Later this can become the bridge
+ * into the AI Coach without changing the UI contract.
+ */
+export function getNextBestMove(history = readWorkoutHistory(), goals = DEFAULT_GOALS) {
+  const weeklySummary = getWeeklyTrainingSummary(history);
+  const readiness = calculateTrainingReadiness(history);
+  const latestWorkout = history[0];
+
+  if (!latestWorkout) {
+    return {
+      title: "Log your first session",
+      action: "Start Workout 1",
+      route: "/workouts/workout-1",
+      detail: "One completed session gives TrackFit the baseline it needs for useful targets.",
+    };
+  }
+
+  if (readiness.score < 60) {
+    return {
+      title: "Train around fatigue",
+      action: "Open suggested workout",
+      route: `/workouts/${latestWorkout.workoutId || "workout-1"}`,
+      detail: `${readiness.note} Keep the load sensible today and chase clean reps, not ego numbers.`,
+    };
+  }
+
+  if (weeklySummary.workouts < goals.weeklyWorkouts) {
+    return {
+      title: "Build the weekly streak",
+      action: "Repeat last session",
+      route: `/workouts/${latestWorkout.workoutId || "workout-1"}`,
+      detail: `${weeklySummary.workouts}/${goals.weeklyWorkouts} sessions done this week. Repeat a known workout so TrackFit can compare progress properly.`,
+    };
+  }
+
+  return {
+    title: "Progression check",
+    action: "Review training",
+    route: "/progress",
+    detail: "Weekly target hit. Review volume and PRs before adding more load. Old school rule: earn the weight first.",
+  };
+}
+
 /**
  * Picks the workout the coach should suggest today.
  *
@@ -152,8 +270,11 @@ export function generateDailyCoachBrief(history = readWorkoutHistory(), goals = 
   const benchProgress = bestBench
     ? clampScore((Number(bestBench.e1rm) / goals.benchTargetKg) * 100)
     : 0;
+  const lastSession = getLastSessionSummary(history);
+  const nextBestMove = getNextBestMove(history, goals);
 
   const reasons = [
+    nextBestMove.detail,
     suggestedWorkout.reason,
     readiness.note,
     weeklySummary.workouts >= goals.weeklyWorkouts
@@ -167,6 +288,8 @@ export function generateDailyCoachBrief(history = readWorkoutHistory(), goals = 
     title: readiness.score >= 85 ? "Good day to push" : readiness.score >= 65 ? "Train smart today" : "Recovery-first session",
     readiness,
     suggestedWorkout,
+    nextBestMove,
+    lastSession,
     weeklySummary,
     plateaus,
     prs,
