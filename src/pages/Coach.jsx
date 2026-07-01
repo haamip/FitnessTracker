@@ -23,7 +23,7 @@ export default function Coach() {
 
   return (
     <main className="screen tf-coach-page">
-      {/* Coach hero: the first thing users see should answer â€œwhat should I do today?â€ */}
+      {/* Coach hero: the first thing users see should answer "what should I do today?" */}
       <section className="tf-coach-hero">
         <div>
           <p className="eyebrow">Training Coach</p>
@@ -108,7 +108,7 @@ export default function Coach() {
         {showWhy && (
           <div className="tf-why-list">
             {coach.reasons.map((reason) => (
-              <p key={reason}>â€¢ {reason}</p>
+              <p key={reason}>• {reason}</p>
             ))}
           </div>
         )}
@@ -131,7 +131,9 @@ export default function Coach() {
               <div key={item.muscle}>
                 <span>{item.muscle.replaceAll("_", " ")}</span>
                 <strong>{item.score}%</strong>
-                <div><i style={{ width: `${item.score}%` }} /></div>
+                <div>
+                  <i style={{ width: `${item.score}%` }} />
+                </div>
               </div>
             ))}
           </div>
