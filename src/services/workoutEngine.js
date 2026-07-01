@@ -1,4 +1,4 @@
-import { readJson } from "./storage";
+import { HistoryRepository } from "./trackfitDataLayer";
 
 export const WORKOUT_HISTORY_KEY = "trackfit_workout_history";
 
@@ -46,10 +46,13 @@ export function calculateWorkoutTotals(exercises) {
 }
 
 /**
- * Reads completed workouts newest-first.
+ * Reads completed workouts through the repository layer.
+ *
+ * Kept as a compatibility helper while older service code is migrated away from
+ * direct storage helpers one file at a time.
  */
 export function readWorkoutHistory() {
-  return readJson(WORKOUT_HISTORY_KEY, []);
+  return HistoryRepository.getAll();
 }
 
 /**
