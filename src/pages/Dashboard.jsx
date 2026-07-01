@@ -167,7 +167,7 @@ export default function Dashboard() {
           {allTimePrs.slice(0, 3).map((pr) => (
             <article key={pr.exercise}>
               <strong>{pr.exercise}</strong>
-              <span>{pr.set} â€¢ e1RM {pr.e1rm}kg</span>
+              <span>{pr.set} - e1RM {pr.e1rm}kg</span>
             </article>
           ))}
         </section>
