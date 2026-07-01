@@ -114,7 +114,7 @@ export default function AIWorkoutBuilder() {
       <section className="tf-builder-panel ai-control-panel">
         <label>
           Goal
-          <select value={goal} onChange={(event) => setGoal(event.target.value)}>
+          <select id="builder-goal" name="builderGoal" value={goal} onChange={(event) => setGoal(event.target.value)}>
             <option value="muscle">Build Muscle</option>
             <option value="strength">Strength</option>
             <option value="fatloss">Fat Loss</option>
@@ -123,7 +123,7 @@ export default function AIWorkoutBuilder() {
 
         <label>
           Days Per Week
-          <select value={days} onChange={(event) => setDays(event.target.value)}>
+          <select id="builder-days" name="builderDays" value={days} onChange={(event) => setDays(event.target.value)}>
             <option value="3">3 Days</option>
             <option value="4">4 Days</option>
           </select>
@@ -131,7 +131,7 @@ export default function AIWorkoutBuilder() {
 
         <label>
           Workout Length
-          <select value={time} onChange={(event) => setTime(event.target.value)}>
+          <select id="builder-time" name="builderTime" value={time} onChange={(event) => setTime(event.target.value)}>
             <option value="45">45 mins</option>
             <option value="60">60 mins</option>
             <option value="75">75 mins</option>
@@ -140,7 +140,7 @@ export default function AIWorkoutBuilder() {
 
         <label>
           Experience
-          <select value={level} onChange={(event) => setLevel(event.target.value)}>
+          <select id="builder-level" name="builderLevel" value={level} onChange={(event) => setLevel(event.target.value)}>
             <option value="beginner">Beginner</option>
             <option value="intermediate">Intermediate</option>
             <option value="advanced">Advanced</option>
@@ -149,7 +149,7 @@ export default function AIWorkoutBuilder() {
 
         <label>
           Equipment
-          <select value={equipment} onChange={(event) => setEquipment(event.target.value)}>
+          <select id="builder-equipment" name="builderEquipment" value={equipment} onChange={(event) => setEquipment(event.target.value)}>
             <option value="full gym">Full Gym</option>
             <option value="dumbbells">Dumbbells</option>
             <option value="home">Home / Minimal Kit</option>
@@ -158,7 +158,7 @@ export default function AIWorkoutBuilder() {
 
         <label>
           Protect Area
-          <select value={injuryFocus} onChange={(event) => setInjuryFocus(event.target.value)}>
+          <select id="builder-injury-focus" name="builderInjuryFocus" value={injuryFocus} onChange={(event) => setInjuryFocus(event.target.value)}>
             <option value="none">No injury filter</option>
             <option value="shoulder">Shoulder friendly</option>
             <option value="knee">Knee friendly</option>

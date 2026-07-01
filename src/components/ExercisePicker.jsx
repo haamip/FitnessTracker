@@ -195,6 +195,8 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
           <Search size={20} />
           <input
             autoFocus
+            id="exercise-picker-search"
+            name="exercisePickerSearch"
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search chest, dumbbell, squat..."
             value={query}
