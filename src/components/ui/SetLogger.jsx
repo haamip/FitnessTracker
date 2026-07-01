@@ -35,7 +35,7 @@ export default function SetLogger({
                 <div>
                   <strong>{setLabel}</strong>
                   <span>
-                    Last: {previousLabel} Â· Target: {targetLabel}
+                    Last: {previousLabel} · Target: {targetLabel}
                   </span>
                 </div>
 
