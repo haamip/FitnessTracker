@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Dumbbell } from "lucide-react";
 import { FALLBACK_EXERCISE_IMAGE, resolveExerciseImage } from "../../services/exerciseResolver";
+import "../../styles/TrackFitWorkoutFixes.css";
 
 /**
  * ExerciseImage
