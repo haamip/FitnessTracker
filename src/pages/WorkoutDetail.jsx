@@ -343,12 +343,21 @@ export default function WorkoutDetail() {
   }
 
   function updateSet(exerciseId, setId, field, value) {
-    const targetExercise = exercises.find((exercise) => exercise.id === exerciseId);
+    const targetExerciseIndex = exercises.findIndex((exercise) => exercise.id === exerciseId);
+    const targetExercise = exercises[targetExerciseIndex];
     const targetSet = targetExercise?.sets.find((set) => set.id === setId);
     const isMarkingDone = field === "done" && value && !targetSet?.done;
+
+    const updatedTargetSets =
+      targetExercise?.sets.map((set) => (set.id === setId ? { ...set, [field]: value } : set)) || [];
+
     const willCompleteExercise =
       isMarkingDone &&
-      targetExercise?.sets.every((set) => (set.id === setId ? true : set.done));
+      updatedTargetSets.length > 0 &&
+      updatedTargetSets.every((set) => set.done);
+
+    const upcomingExercise = willCompleteExercise ? exercises[targetExerciseIndex + 1] : null;
+    const willCompleteWorkout = willCompleteExercise && !upcomingExercise;
 
     if (isMarkingDone && targetExercise) {
       startRestTimer(targetExercise);
@@ -356,18 +365,46 @@ export default function WorkoutDetail() {
 
     if (willCompleteExercise && targetExercise) {
       triggerExerciseCompletionFeedback(targetExercise);
+
+      if (upcomingExercise) {
+        window.setTimeout(() => {
+          setOpenExerciseId(upcomingExercise.id);
+        }, 1100);
+      }
     }
 
-    setExercises((currentExercises) =>
-      currentExercises.map((exercise) => {
-        if (exercise.id !== exerciseId) return exercise;
+    const nextExercises = exercises.map((exercise) => {
+      if (exercise.id !== exerciseId) return exercise;
 
-        return {
-          ...exercise,
-          sets: exercise.sets.map((set) => (set.id === setId ? { ...set, [field]: value } : set)),
-        };
-      }),
-    );
+      return {
+        ...exercise,
+        sets: updatedTargetSets,
+      };
+    });
+
+    setExercises(nextExercises);
+
+    if (willCompleteWorkout) {
+      window.setTimeout(() => {
+        const nextTotals = calculateWorkoutTotals(nextExercises);
+        const history = readWorkoutHistory();
+        const prs = detectWorkoutPRs(history, nextExercises);
+
+        const finishedWorkout = buildCompletedWorkout({
+          id,
+          title: aiDay?.name || "Workout 1",
+          seconds,
+          notes,
+          exercises: nextExercises,
+          totals: nextTotals,
+          prs,
+        });
+
+        HistoryRepository.add(finishedWorkout);
+        WorkoutRepository.removeById(id);
+        setFinishedWorkoutSummary(finishedWorkout);
+      }, 1100);
+    }
   }
 
   function addSet(exerciseId) {
