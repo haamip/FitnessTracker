@@ -1,0 +1,132 @@
+/* ============================================================================
+   TrackFit Workout Complete Overlay
+   ----------------------------------------------------------------------------
+   Keeps the saved workout summary in the middle of the screen so finishing a
+   workout feels like a proper reward moment instead of another card in the page.
+============================================================================ */
+
+.tf-workout-complete-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  min-height: 100dvh;
+  padding: 24px 18px max(24px, env(safe-area-inset-bottom));
+  background: rgba(7, 7, 7, 0.58);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  text-align: center;
+}
+
+.tf-workout-complete-screen::before {
+  content: "";
+  position: absolute;
+  width: min(86vw, 360px);
+  height: min(86vw, 360px);
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.32), transparent 68%);
+  transform: translateY(-40px);
+  pointer-events: none;
+}
+
+.tf-workout-complete-screen > * {
+  position: relative;
+  z-index: 1;
+}
+
+.tf-workout-complete-screen .tf-complete-medal {
+  width: 76px;
+  height: 76px;
+  border-radius: 28px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #f59e0b, #facc15);
+  color: #111111;
+  box-shadow: 0 18px 46px rgba(245, 158, 11, 0.34);
+}
+
+.tf-workout-complete-screen .eyebrow {
+  margin: 2px 0 -8px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.tf-workout-complete-screen h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(34px, 10vw, 52px);
+  line-height: 0.94;
+  letter-spacing: -1.8px;
+  font-weight: 950;
+}
+
+.tf-complete-copy {
+  max-width: 320px;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 14px;
+  line-height: 1.42;
+  font-weight: 800;
+}
+
+.tf-complete-stats {
+  width: min(100%, 360px);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.tf-complete-stats article {
+  min-height: 86px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16);
+}
+
+.tf-complete-stats strong {
+  display: block;
+  color: #ffffff;
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 950;
+}
+
+.tf-complete-stats span {
+  display: block;
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tf-workout-complete-screen > button {
+  width: min(100%, 360px);
+  min-height: 58px;
+  border: 0;
+  border-radius: 20px;
+  background: #ffffff;
+  color: #111111;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.tf-workout-complete-screen > button:active {
+  transform: scale(0.985);
+}
+
+@media (max-height: 690px) {
+  .tf-workout-complete-screen {
+    justify-content: flex-start;
+    overflow-y: auto;
+    padding-top: 36px;
+  }
+}
