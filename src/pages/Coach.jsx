@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  Activity,
   Brain,
   ChevronRight,
+  Clock3,
   Dumbbell,
   HelpCircle,
   ShieldCheck,
@@ -37,8 +39,58 @@ export default function Coach() {
         </div>
       </section>
 
-      {/* Suggested workout card: one tap moves the user from coaching into action. */}
-      <section className="tf-coach-action-card">
+      {/* Next best move: one clean recommendation instead of making the user think. */}
+      <section className="tf-coach-action-card tf-next-move-card">
+        <div className="tf-icon-disc">
+          <Sparkles size={23} />
+        </div>
+        <div>
+          <p className="eyebrow">Next best move</p>
+          <h2>{coach.nextBestMove.title}</h2>
+          <p>{coach.nextBestMove.detail}</p>
+        </div>
+        <Link to={coach.nextBestMove.route}>
+          {coach.nextBestMove.action} <ChevronRight size={17} />
+        </Link>
+      </section>
+
+      <section className="tf-coach-card tf-last-session-card">
+        <div className="tf-section-title-row">
+          <div>
+            <p className="eyebrow">Last session</p>
+            <h2>{coach.lastSession.title}</h2>
+          </div>
+          <Dumbbell size={22} />
+        </div>
+
+        <p>{coach.lastSession.note}</p>
+
+        <div className="tf-last-session-grid">
+          <article>
+            <Clock3 size={18} />
+            <strong>{coach.lastSession.durationLabel}</strong>
+            <span>{coach.lastSession.dateLabel}</span>
+          </article>
+          <article>
+            <Activity size={18} />
+            <strong>{coach.lastSession.sets}</strong>
+            <span>sets</span>
+          </article>
+          <article>
+            <TrendingUp size={18} />
+            <strong>{coach.lastSession.volumeLabel}</strong>
+            <span>volume</span>
+          </article>
+          <article>
+            <Trophy size={18} />
+            <strong>{coach.lastSession.prs}</strong>
+            <span>PRs</span>
+          </article>
+        </div>
+      </section>
+
+      {/* Suggested workout card: backup action if the user wants the old direct start flow. */}
+      <section className="tf-coach-action-card compact">
         <div className="tf-icon-disc">
           <Dumbbell size={23} />
         </div>
