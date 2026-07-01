@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link, useSearchParams } from "react-router-dom";
 import { ChevronRight, Clock3, Dumbbell, Flame, History, Plus, Sparkles } from "lucide-react";
+import { AIPlanRepository, HistoryRepository } from "../services/trackfitDataLayer";
 import "./TrackFitScreens.css";
 
 const starterPlans = [
@@ -34,18 +35,6 @@ const starterPlans = [
   },
 ];
 
-function readJson(key, fallback) {
-  const saved = localStorage.getItem(key);
-
-  if (!saved) return fallback;
-
-  try {
-    return JSON.parse(saved);
-  } catch {
-    return fallback;
-  }
-}
-
 function formatDate(value) {
   return new Intl.DateTimeFormat("en-AU", {
     day: "2-digit",
@@ -55,32 +44,48 @@ function formatDate(value) {
   }).format(new Date(value));
 }
 
+function countPlanSets(exercises = []) {
+  return exercises.reduce((total, exercise) => total + Number(exercise.sets || 0), 0);
+}
+
+function mapPlanDayToWorkoutCard(day) {
+  const exercises = day.exercises || [];
+
+  return {
+    id: day.id,
+    name: day.name,
+    detail: `${day.focus || "Training"} - ${day.equipment || "Equipment"}`,
+    exercises: `${exercises.length} exercises`,
+    sets: `${countPlanSets(exercises)} sets`,
+    time: `${day.time || 45} min`,
+    progress: 0,
+    generated: true,
+  };
+}
+
 export default function Workouts() {
   const [searchParams] = useSearchParams();
   const refreshToken = searchParams.get("refresh") || "initial";
-  const [dataSnapshot] = useState(() => ({
-    refreshToken,
-    savedTrainingPlan: readJson("trackfit_ai_workout_plan", []),
-    workoutHistory: readJson("trackfit_workout_history", []).slice(0, 6),
-  }));
+
+  /**
+   * Read workout overview data through repositories only.
+   *
+   * The refresh query is used by developer tools after seeding/clearing demo
+   * data so the screen can rebuild its snapshot without direct storage access.
+   */
+  const dataSnapshot = useMemo(
+    () => ({
+      savedTrainingPlan: AIPlanRepository.getPlan(),
+      workoutHistory: HistoryRepository.getRecent(6),
+    }),
+    [refreshToken],
+  );
 
   const savedTrainingPlan = dataSnapshot.savedTrainingPlan;
   const workoutHistory = dataSnapshot.workoutHistory;
-
   const hasTrainingPlan = savedTrainingPlan.length > 0;
 
-  const visiblePlans = hasTrainingPlan
-    ? savedTrainingPlan.map((day) => ({
-        id: day.id,
-        name: day.name,
-        detail: `${day.focus || "Training"} - ${day.equipment || "Equipment"}`,
-        exercises: `${day.exercises?.length || 0} exercises`,
-        sets: `${(day.exercises || []).reduce((total, exercise) => total + Number(exercise.sets || 0), 0)} sets`,
-        time: `${day.time || 45} min`,
-        progress: 0,
-        generated: true,
-      }))
-    : starterPlans;
+  const visiblePlans = hasTrainingPlan ? savedTrainingPlan.map(mapPlanDayToWorkoutCard) : starterPlans;
 
   return (
     <motion.div
@@ -101,7 +106,6 @@ export default function Workouts() {
           {hasTrainingPlan ? "Plan active" : "Quick start"}
         </span>
       </section>
-
 
       <section className="v4-quick-grid">
         <Link className="v4-quick-card" to="/workouts/builder">
