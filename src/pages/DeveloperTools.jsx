@@ -1,9 +1,20 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Brain, Database, Dumbbell, RefreshCw, Trash2, UserRound } from "lucide-react";
+import {
+  ArrowLeft,
+  Brain,
+  Database,
+  Dumbbell,
+  RefreshCw,
+  Trash2,
+  UserRound,
+} from "lucide-react";
 import { generateDailyCoachBrief } from "../services/aiCoachEngine";
 import { buildCoachDashboard } from "../services/coachIntelligenceEngine";
-import { DEMO_ATHLETE_PROFILES, generateDemoAthlete } from "../services/demoAthleteGenerator";
+import {
+  DEMO_ATHLETE_PROFILES,
+  generateDemoAthlete,
+} from "../services/demoAthleteGenerator";
 import { clearDemoData, seedDemoData } from "../services/demoSeedData";
 import { calculateWorkoutTotals, formatClock } from "../services/workoutEngine";
 import {
@@ -16,6 +27,7 @@ import {
 import "./TrackFitScreens.css";
 import "./DeveloperTools.css";
 import { buildWorkoutAnalytics } from "../services/workoutAnalyticsEngine";
+import { buildPrEngine } from "../services/prEngineV2";
 
 function readDeveloperSnapshot(action = "Ready") {
   const plan = AIPlanRepository.getPlan();
@@ -26,6 +38,7 @@ function readDeveloperSnapshot(action = "Ready") {
   const coach = generateDailyCoachBrief(history);
   const coachIntelligence = buildCoachDashboard();
   const workoutAnalytics = buildWorkoutAnalytics(history);
+  const prEngine = buildPrEngine(history);
   const activeTotals = calculateWorkoutTotals(activeWorkout);
   const latestWorkout = history[0] || null;
 
@@ -41,6 +54,7 @@ function readDeveloperSnapshot(action = "Ready") {
     coachIntelligence,
     latestWorkout,
     workoutAnalytics,
+    prEngine,
     checkedAt: new Date().toLocaleTimeString(),
   };
 }
@@ -138,11 +152,18 @@ export default function DeveloperTools() {
       <section className="tf-history-card">
         <p className="eyebrow">Demo athlete generator</p>
         <strong>Seed a full athlete profile</strong>
-        <p>Use these profiles to test readiness, fatigue, progression and plateau logic.</p>
+        <p>
+          Use these profiles to test readiness, fatigue, progression and plateau
+          logic.
+        </p>
 
         <section className="tf-dev-athlete-grid">
           {DEMO_ATHLETE_PROFILES.map((profile) => (
-            <button key={profile.id} onClick={() => handleSeedDemoAthlete(profile.id)} type="button">
+            <button
+              key={profile.id}
+              onClick={() => handleSeedDemoAthlete(profile.id)}
+              type="button"
+            >
               <UserRound size={20} />
               <div>
                 <strong>{profile.label}</strong>
@@ -166,7 +187,9 @@ export default function DeveloperTools() {
       <section className="tf-history-card tf-dev-status-card">
         <strong>{snapshot.action}</strong>
         {repositoryRows.map(([label, value]) => (
-          <p key={label}>{label}: {value}</p>
+          <p key={label}>
+            {label}: {value}
+          </p>
         ))}
         <span>Checked {snapshot.checkedAt}</span>
       </section>
@@ -175,7 +198,9 @@ export default function DeveloperTools() {
         <article>
           <Brain size={20} />
           <strong>{snapshot.coachIntelligence.readiness.score}%</strong>
-          <span>Real readiness - {snapshot.coachIntelligence.readiness.status}</span>
+          <span>
+            Real readiness - {snapshot.coachIntelligence.readiness.status}
+          </span>
         </article>
         <article>
           <Dumbbell size={20} />
@@ -196,14 +221,39 @@ export default function DeveloperTools() {
         <p>Route: {snapshot.coachIntelligence.recommendation.route}</p>
       </section>
       <section className="tf-history-card">
-  <p className="eyebrow">Workout Analytics</p>
-  <strong>{snapshot.workoutAnalytics.totalWorkouts} workouts</strong>
-  <p>Weekly volume: {snapshot.workoutAnalytics.weeklyVolume.toLocaleString()}kg</p>
-  <p>Monthly volume: {snapshot.workoutAnalytics.monthlyVolume.toLocaleString()}kg</p>
-  <p>Current streak: {snapshot.workoutAnalytics.currentStreak}</p>
-  <p>Favourite exercise: {snapshot.workoutAnalytics.favouriteExercise}</p>
-  <p>Most trained muscle: {snapshot.workoutAnalytics.mostTrainedMuscle}</p>
-</section>
+        <p className="eyebrow">Workout Analytics</p>
+        <strong>{snapshot.workoutAnalytics.totalWorkouts} workouts</strong>
+        <p>
+          Weekly volume:{" "}
+          {snapshot.workoutAnalytics.weeklyVolume.toLocaleString()}kg
+        </p>
+        <p>
+          Monthly volume:{" "}
+          {snapshot.workoutAnalytics.monthlyVolume.toLocaleString()}kg
+        </p>
+        <p>Current streak: {snapshot.workoutAnalytics.currentStreak}</p>
+        <p>Favourite exercise: {snapshot.workoutAnalytics.favouriteExercise}</p>
+        <p>
+          Most trained muscle: {snapshot.workoutAnalytics.mostTrainedMuscle}
+        </p>
+      </section>
+      <section className="tf-history-card">
+        <p className="eyebrow">PR Engine v2</p>
+        <strong>{snapshot.prEngine.totalExercisesTracked} exercises</strong>
+        <p>Sets analysed: {snapshot.prEngine.totalCompletedSetsAnalysed}</p>
+        <p>
+          Heaviest set:{" "}
+          {snapshot.prEngine.heaviestSet
+            ? `${snapshot.prEngine.heaviestSet.exercise} ${snapshot.prEngine.heaviestSet.weight}kg x ${snapshot.prEngine.heaviestSet.reps}`
+            : "No data yet"}
+        </p>
+        <p>
+          Best e1RM:{" "}
+          {snapshot.prEngine.bestOverallEstimatedOneRepMax
+            ? `${snapshot.prEngine.bestOverallEstimatedOneRepMax.exercise} ${Math.round(snapshot.prEngine.bestOverallEstimatedOneRepMax.estimatedOneRepMax)}kg`
+            : "No data yet"}
+        </p>
+      </section>
 
       <section className="tf-history-card">
         <p className="eyebrow">Fatigue + Plateau</p>
@@ -233,17 +283,37 @@ export default function DeveloperTools() {
       <section className="tf-history-card">
         <p className="eyebrow">Active Workout</p>
         <strong>{snapshot.activeWorkout.length} exercises</strong>
-        <p>{snapshot.activeTotals.doneSets}/{snapshot.activeTotals.totalSets} sets complete</p>
+        <p>
+          {snapshot.activeTotals.doneSets}/{snapshot.activeTotals.totalSets}{" "}
+          sets complete
+        </p>
         <p>{Math.round(snapshot.activeTotals.volume)}kg active volume</p>
-        <p>{formatClock(snapshot.latestWorkout?.seconds || snapshot.latestWorkout?.durationSeconds || 0)} latest saved duration</p>
+        <p>
+          {formatClock(
+            snapshot.latestWorkout?.seconds ||
+              snapshot.latestWorkout?.durationSeconds ||
+              0,
+          )}{" "}
+          latest saved duration
+        </p>
       </section>
 
-      <JsonPanel title="Coach Intelligence output" data={snapshot.coachIntelligence} />
+      <JsonPanel
+        title="Coach Intelligence output"
+        data={snapshot.coachIntelligence}
+      />
       <JsonPanel title="Legacy Coach output" data={snapshot.coach} />
       <JsonPanel title="History repository" data={snapshot.history} />
-      <JsonPanel title="Active workout repository" data={snapshot.activeWorkout} />
+      <JsonPanel
+        title="Active workout repository"
+        data={snapshot.activeWorkout}
+      />
       <JsonPanel title="AI plan repository" data={snapshot.plan} />
-      <JsonPanel title="Workout Analytics output" data={snapshot.workoutAnalytics} />
+      <JsonPanel
+        title="Workout Analytics output"
+        data={snapshot.workoutAnalytics}
+      />
+      <JsonPanel title="PR Engine output" data={snapshot.prEngine} />
 
       <Link className="tf-save-plan-btn" to="/workouts?refresh=manual">
         Open workouts

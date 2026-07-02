@@ -130,20 +130,28 @@ export default function DailyCheckIn() {
           <p className="eyebrow">Coach note</p>
           <h2>Protein is close.</h2>
           <p>
-            Hit another small protein meal before bed and keep water moving.
-            You are close enough that today still counts as a win.
+            Hit another small protein meal before bed and keep water moving. You
+            are close enough that today still counts as a win.
           </p>
         </div>
       </section>
 
-      <Button className="v4-save-checkin" onClick={() => { completeDailyCheckIn(); window.location.reload(); }}>
+      <Button
+        className="v4-save-checkin"
+        onClick={() => {
+          completeDailyCheckIn();
+          window.location.reload();
+        }}
+      >
         <Save size={18} />
         Save check-in
       </Button>
 
       <section className="v4-mini-summary">
         <Moon size={18} />
-        <span>Track the simple stuff daily. That is how the app gets smart.</span>
+        <span>
+          Track the simple stuff daily. That is how the app gets smart.
+        </span>
         <Flame size={18} />
       </section>
     </motion.div>

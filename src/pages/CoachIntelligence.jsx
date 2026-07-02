@@ -2,31 +2,6 @@
  * ============================================================================
  * TrackFit Coach Intelligence Page
  * ============================================================================
- *
- * PURPOSE
- * -------
- * Displays the real Coach Intelligence engine output.
- *
- * Difficulty
- * ----------
- * ⭐⭐☆☆☆
- *
- * Why this exists
- * ---------------
- * The engine does the thinking.
- * This page only lays out the result.
- *
- * Data flow:
- *
- * Repositories
- * ↓
- * coachIntelligenceEngine.js
- * ↓
- * Reusable Coach cards
- * ↓
- * This page
- *
- * ============================================================================
  */
 
 import {
