@@ -1,0 +1,236 @@
+/* ==========================================================================
+   TrackFit Coach Intelligence
+   --------------------------------------------------------------------------
+   This stylesheet ONLY styles the Coach Intelligence page.
+
+   Nothing in here should affect Dashboard, Workout, Progress etc.
+
+   Keeping CSS separated like this makes future redesigns much easier.
+========================================================================== */
+
+.coach-intelligence-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+/* --------------------------------------------------------------------------
+   Hero
+-------------------------------------------------------------------------- */
+
+.coach-hero {
+  padding: 32px;
+  border-radius: 28px;
+
+  background: linear-gradient(
+    135deg,
+    #111827,
+    #1f2937
+  );
+
+  color: white;
+
+  margin-bottom: 30px;
+
+  box-shadow: 0 18px 40px rgba(0,0,0,.18);
+}
+
+.coach-hero h1 {
+
+  margin: 8px 0;
+
+  font-size: clamp(36px,4vw,54px);
+
+  line-height: .95;
+
+  font-weight: 900;
+}
+
+.coach-hero span{
+
+    color:rgba(255,255,255,.75);
+
+    max-width:650px;
+
+    display:block;
+
+    line-height:1.6;
+}
+
+/* --------------------------------------------------------------------------
+   Grid
+-------------------------------------------------------------------------- */
+
+.coach-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(290px,1fr));
+
+    gap:22px;
+}
+
+/* --------------------------------------------------------------------------
+   Card
+-------------------------------------------------------------------------- */
+
+.coach-card{
+
+    background:white;
+
+    border-radius:24px;
+
+    padding:24px;
+
+    border:1px solid rgba(0,0,0,.06);
+
+    box-shadow:0 12px 28px rgba(0,0,0,.06);
+
+    transition:.25s;
+}
+
+.coach-card:hover{
+
+    transform:translateY(-4px);
+
+    box-shadow:0 18px 34px rgba(0,0,0,.10);
+}
+
+.coach-card svg{
+
+    color:#f59e0b;
+
+    margin-bottom:18px;
+}
+
+.coach-card strong{
+
+    display:block;
+
+    margin:10px 0;
+
+    font-size:42px;
+
+    line-height:1;
+
+    font-weight:900;
+}
+
+.coach-card h2{
+
+    margin:8px 0;
+
+    font-size:24px;
+
+    font-weight:800;
+}
+
+.coach-card span{
+
+    color:#6b7280;
+
+    line-height:1.6;
+
+    display:block;
+}
+
+/* --------------------------------------------------------------------------
+   Hero card
+-------------------------------------------------------------------------- */
+
+.hero-card{
+
+    background:linear-gradient(
+        135deg,
+        #f59e0b,
+        #fbbf24
+    );
+
+    color:white;
+}
+
+.hero-card span{
+
+    color:white;
+}
+
+.hero-card svg{
+
+    color:white;
+}
+
+/* --------------------------------------------------------------------------
+   Eyebrow text
+-------------------------------------------------------------------------- */
+
+.eyebrow{
+
+    text-transform:uppercase;
+
+    letter-spacing:.15em;
+
+    font-size:12px;
+
+    font-weight:800;
+
+    opacity:.75;
+}
+
+/* --------------------------------------------------------------------------
+   Mobile
+-------------------------------------------------------------------------- */
+
+@media(max-width:768px){
+
+    .coach-intelligence-page{
+
+        padding:18px;
+    }
+
+    .coach-card{
+
+        padding:20px;
+    }
+
+    .coach-card strong{
+
+        font-size:34px;
+    }
+/* --------------------------------------------------------------------------
+   Coach Card Link
+-------------------------------------------------------------------------- */
+
+.coach-card-link {
+  width: fit-content;
+  margin-top: 16px;
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #111827;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 950;
+}
+}/* --------------------------------------------------------------------------
+   Coach Big Number
+-------------------------------------------------------------------------- */
+
+.coach-big-number strong {
+  display: block;
+  color: #111827;
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 950;
+}
+
+.coach-big-number span {
+  display: block;
+  margin: 6px 0 14px;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 850;
+}

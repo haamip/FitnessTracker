@@ -1,0 +1,61 @@
+/**
+ * ============================================================================
+ * TrackFitCard.css
+ * ============================================================================
+ *
+ * Reusable card styling for the whole app.
+ * One card style. Many pages.
+ * ============================================================================
+ */
+
+.trackfit-card {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 24px;
+  background: #ffffff;
+  padding: 18px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.07);
+}
+
+.trackfit-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.trackfit-card__eyebrow {
+  margin: 0 0 5px;
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.trackfit-card h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 22px;
+  line-height: 1.05;
+  font-weight: 950;
+  letter-spacing: -0.4px;
+}
+
+.trackfit-card__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 16px;
+  background: rgba(245, 158, 11, 0.14);
+  color: #f59e0b;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.trackfit-card__body {
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 1.45;
+  font-weight: 750;
+}

@@ -2,6 +2,7 @@ import { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route, useParams } from "react-router-dom";
 import MobileShell from "./components/layout/MobileShell";
 import "./pages/WorkoutCompleteOverlay.css";
+import "./components/common/TrackFitCard.css";
 
 /**
  * TrackFit route-level code splitting.
@@ -23,6 +24,7 @@ const Coach = lazy(() => import("./pages/Coach"));
 const Workouts = lazy(() => import("./pages/Workouts"));
 const AIWorkoutBuilder = lazy(() => import("./pages/AIWorkoutBuilder"));
 const WorkoutDetail = lazy(() => import("./pages/WorkoutDetail"));
+const CoachIntelligence = lazy(() => import("./pages/CoachIntelligence"));
 
 function WorkoutDetailRoute() {
   const { id = "workout-1" } = useParams();
@@ -62,6 +64,7 @@ function App() {
             <Route path="/cardio" element={<CardioLog />} />
             <Route path="/progress" element={<Progress />} />
             <Route path="/coach" element={<Coach />} />
+            <Route path="/coach/intelligence" element={<CoachIntelligence />} />
             <Route path="/workouts" element={<Workouts />} />
             <Route path="/workouts/builder" element={<AIWorkoutBuilder />} />
             <Route path="/dev-tools" element={<DeveloperTools />} />
