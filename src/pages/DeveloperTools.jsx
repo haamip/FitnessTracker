@@ -12,6 +12,7 @@ import {
   WorkoutRepository,
 } from "../services/trackfitDataLayer";
 import "./TrackFitScreens.css";
+import "./DeveloperTools.css";
 
 function readDeveloperSnapshot(action = "Ready") {
   const plan = AIPlanRepository.getPlan();
