@@ -30,7 +30,7 @@ export const exerciseLibrary = [
       "Lie down on the floor and secure your feet. Your legs should be bent at the knees.",
       "Place your hands behind or to the side of your head. You will begin with your back on the ground. This will be your starting position.",
       "Flex your hips and spine to raise your torso toward your knees.",
-      "At the top of the contraction your torso should be perpendicular to the ground. Reverse the motion, going only Ã‚Â¾ of the way down.",
+      "At the top of the contraction your torso should be perpendicular to the ground. Reverse the motion, going only Ãƒâ€šÃ‚Â¾ of the way down.",
       "Repeat for the recommended amount of repetitions.",
     ],
     tips: [],
@@ -4126,7 +4126,7 @@ export const exerciseLibrary = [
     defaultRestSeconds: 90,
     instructions: [
       "Sit next to a low pulley sideways (with legs stretched in front of you or crossed) and grasp the single hand cable attachment with the arm nearest to the cable. Tip: If you can adjust the pulley's height, you can use a flat bench to sit on instead.",
-      "Position the elbow against your side with the elbow bent at 90Ã‚Â° and the arm pointing towards the pulley. This will be your starting position.",
+      "Position the elbow against your side with the elbow bent at 90Ãƒâ€šÃ‚Â° and the arm pointing towards the pulley. This will be your starting position.",
       "Pull the single hand cable attachment toward your body by internally rotating your shoulder until your forearm is across your abs. You will be creating an imaginary semi-circle. Tip: The forearm should be perpendicular to your torso at all times.",
       "Slowly go back to the initial position.",
       "Repeat for the recommended amount of repetitions and then repeat the movement with the next arm.",
@@ -18331,7 +18331,7 @@ export const exerciseLibrary = [
     defaultReps: "8-12",
     defaultRestSeconds: 90,
     instructions: [
-      "Connect a standard handle to a tower, andÃ¢â‚¬â€if possibleÃ¢â‚¬â€position the cable to shoulder height. If not, a low pulley will suffice.",
+      "Connect a standard handle to a tower, andÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Âif possibleÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Âposition the cable to shoulder height. If not, a low pulley will suffice.",
       "With your side to the cable, grab the handle with both hands and step away from the tower. You should be approximately arm's length away from the pulley, with the tension of the weight on the cable.",
       "With your feet positioned hip-width apart and knees slightly bent, hold the cable to the middle of your chest. This will be your starting position.",
       "Press the cable away from your chest, fully extending both arms. You core should be tight and engaged.",
@@ -23959,7 +23959,7 @@ export const exerciseLibrary = [
     defaultRestSeconds: 60,
     instructions: [
       "Roller skating is a fun activity which can be effective in improving cardiorespiratory fitness and muscular endurance. It requires relatively good balance and coordination. It is necessary to learn the basics of skating including turning and stopping and to wear protective gear to avoid possible injury.",
-      "You can skate at a comfortable pace for 30 minutes straight. If you want a cardio challenge, do interval skating Ã¢â‚¬â€ speed skate two minutes of every five minutes, using the remaining three minutes to recover. A 150 lb person will typically burn about 175 calories in 30 minutes skating at a comfortable pace, similar to brisk walking.",
+      "You can skate at a comfortable pace for 30 minutes straight. If you want a cardio challenge, do interval skating ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â speed skate two minutes of every five minutes, using the remaining three minutes to recover. A 150 lb person will typically burn about 175 calories in 30 minutes skating at a comfortable pace, similar to brisk walking.",
     ],
     tips: [],
     image: "/exercise-images/skating.svg",

@@ -14,8 +14,8 @@ import { buildCoachDashboard } from "../services/engines/coachIntelligenceEngine
 import {
   DEMO_ATHLETE_PROFILES,
   generateDemoAthlete,
-} from "../services/demoAthleteGenerator";
-import { clearDemoData, seedDemoData } from "../services/demoSeedData";
+} from "../services/generators/demoAthleteGenerator";
+import { clearDemoData, seedDemoData } from "../services/generators/demoSeedData";
 import { calculateWorkoutTotals, formatClock } from "../services/workoutEngine";
 import {
   AIPlanRepository,

@@ -12,7 +12,7 @@ export default function WorkoutCard({ to, name, detail, tag, time }) {
         <div>
           <h3>{name}</h3>
           <p>
-            {detail} Ã‚Â· {time}
+            {detail} Ãƒâ€šÃ‚Â· {time}
           </p>
         </div>
       </div>

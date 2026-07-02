@@ -292,12 +292,12 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
             <div>
               <strong>{preview.name}</strong>
               <span>
-                {(preview.primaryMuscles || []).join(", ") || "General"} Ã¢â‚¬Â¢{" "}
+                {(preview.primaryMuscles || []).join(", ") || "General"} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢{" "}
                 {preview.movementPattern || "movement"}
               </span>
               <small>
-                {(preview.equipment || []).join(", ") || "Bodyweight"} Ã¢â‚¬Â¢{" "}
-                {preview.defaultSets || 3} sets Ã¢â‚¬Â¢{" "}
+                {(preview.equipment || []).join(", ") || "Bodyweight"} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢{" "}
+                {preview.defaultSets || 3} sets ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢{" "}
                 {preview.defaultReps || "8-12"}
               </small>
             </div>
@@ -335,7 +335,7 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
                   <strong>{exercise.name}</strong>
                   <small>
                     {(exercise.primaryMuscles || []).join(", ") || "General"}{" "}
-                    Ã¢â‚¬Â¢{" "}
+                    ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢{" "}
                     {(exercise.equipment || []).join(", ") || "Bodyweight"}
                   </small>
                 </span>

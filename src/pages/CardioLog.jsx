@@ -134,7 +134,7 @@ export default function CardioLog() {
             <div>
               <strong>{session.type}</strong>
               <p>
-                {session.distance} Ã‚Â· {session.time} Ã‚Â· {session.pace}
+                {session.distance} Ãƒâ€šÃ‚Â· {session.time} Ãƒâ€šÃ‚Â· {session.pace}
               </p>
             </div>
 

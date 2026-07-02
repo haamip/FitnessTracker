@@ -33,7 +33,7 @@ import {
   CardioRepository,
   CheckInRepository,
   HistoryRepository,
-} from "./trackfitDataLayer";
+} from "../trackfitDataLayer";
 
 const PROFILE_SETTINGS = {
   beginner: {
