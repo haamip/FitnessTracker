@@ -4,8 +4,8 @@
  * ============================================================================
  *
  * Difficulty
- * ⭐⭐☆☆☆
- *
+ * ----------
+ * 3/5
  * PURPOSE
  * -------
  * Shows whether the user may be carrying too much training fatigue.

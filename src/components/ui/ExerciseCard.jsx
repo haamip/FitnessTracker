@@ -27,7 +27,11 @@ export default function ExerciseCard({
 
   return (
     <section className="tf-compact-exercise-card">
-      <button className="tf-compact-exercise-card__button" onClick={onClick} type="button">
+      <button
+        className="tf-compact-exercise-card__button"
+        onClick={onClick}
+        type="button"
+      >
         <ExerciseImage
           className="tf-compact-exercise-card__image"
           exercise={cardExercise}

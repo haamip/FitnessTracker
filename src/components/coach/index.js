@@ -4,8 +4,8 @@
  * ============================================================================
  *
  * Difficulty
- * ⭐☆☆☆☆
- *
+ * ----------
+ * 3/5
  * PURPOSE
  * -------
  * This file lets us import all Coach cards from one place.

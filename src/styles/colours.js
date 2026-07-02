@@ -1,4 +1,4 @@
-﻿export const colours = {
+export const colours = {
   primary: "#1478ff",
   background: "#f6f8fb",
   surface: "#ffffff",
@@ -8,4 +8,3 @@
   warning: "#f59e0b",
   danger: "#dc2626",
 };
-

@@ -18,7 +18,7 @@ import {
   getCommonMistakes,
   getExerciseAlternatives,
   getExerciseHistoryStats,
-} from "../services/exerciseInsightEngine";
+} from "../services/engines/exerciseInsightEngine";
 import { readWorkoutHistory } from "../services/workoutEngine";
 import "./TrackFitScreens.css";
 
@@ -49,8 +49,14 @@ export default function ExerciseDetail() {
   const navigate = useNavigate();
   const exercise = findExerciseById(id);
   const history = useMemo(() => readWorkoutHistory(), []);
-  const stats = useMemo(() => getExerciseHistoryStats(history, exercise), [exercise, history]);
-  const alternatives = useMemo(() => getExerciseAlternatives(exercise), [exercise]);
+  const stats = useMemo(
+    () => getExerciseHistoryStats(history, exercise),
+    [exercise, history],
+  );
+  const alternatives = useMemo(
+    () => getExerciseAlternatives(exercise),
+    [exercise],
+  );
   const coachTips = useMemo(() => getCoachTips(exercise), [exercise]);
   const mistakes = useMemo(() => getCommonMistakes(exercise), [exercise]);
 
@@ -99,24 +105,33 @@ export default function ExerciseDetail() {
         <div>
           <p>Exercise Detail</p>
           <h1>{exercise.name}</h1>
-          <span>{pretty(exercise.movementPattern)} • {pretty(exercise.difficulty)}</span>
+          <span>
+            {pretty(exercise.movementPattern)} Ã¢â‚¬Â¢{" "}
+            {pretty(exercise.difficulty)}
+          </span>
         </div>
       </section>
 
       <section className="tf-detail-chip-grid">
         <article>
           <Dumbbell size={18} />
-          <strong>{(exercise.equipment || []).join(", ") || "Bodyweight"}</strong>
+          <strong>
+            {(exercise.equipment || []).join(", ") || "Bodyweight"}
+          </strong>
           <span>Equipment</span>
         </article>
         <article>
           <Sparkles size={18} />
-          <strong>{(exercise.primaryMuscles || []).join(", ") || "General"}</strong>
+          <strong>
+            {(exercise.primaryMuscles || []).join(", ") || "General"}
+          </strong>
           <span>Primary</span>
         </article>
         <article>
           <BarChart3 size={18} />
-          <strong>{exercise.defaultSets || 3} x {exercise.defaultReps || "8-12"}</strong>
+          <strong>
+            {exercise.defaultSets || 3} x {exercise.defaultReps || "8-12"}
+          </strong>
           <span>Default</span>
         </article>
       </section>
@@ -141,7 +156,9 @@ export default function ExerciseDetail() {
             <span>Total volume</span>
           </article>
           <article>
-            <strong>{stats.bestE1rm ? `${stats.bestE1rm}kg` : "—"}</strong>
+            <strong>
+              {stats.bestE1rm ? `${stats.bestE1rm}kg` : "Ã¢â‚¬â€"}
+            </strong>
             <span>Best e1RM</span>
           </article>
         </div>
@@ -149,7 +166,9 @@ export default function ExerciseDetail() {
         {stats.bestSet && (
           <div className="tf-best-set-card">
             <strong>Best Set</strong>
-            <span>{stats.bestSet.weight}kg x {stats.bestSet.reps} reps</span>
+            <span>
+              {stats.bestSet.weight}kg x {stats.bestSet.reps} reps
+            </span>
           </div>
         )}
       </section>
@@ -179,7 +198,9 @@ export default function ExerciseDetail() {
           <Lightbulb size={22} />
         </div>
         <ul>
-          {coachTips.map((tip) => <li key={tip}>{tip}</li>)}
+          {coachTips.map((tip) => (
+            <li key={tip}>{tip}</li>
+          ))}
         </ul>
       </section>
 
@@ -192,7 +213,9 @@ export default function ExerciseDetail() {
           <ShieldAlert size={22} />
         </div>
         <ul>
-          {mistakes.map((mistake) => <li key={mistake}>{mistake}</li>)}
+          {mistakes.map((mistake) => (
+            <li key={mistake}>{mistake}</li>
+          ))}
         </ul>
       </section>
 
@@ -206,7 +229,11 @@ export default function ExerciseDetail() {
         </div>
         <div className="tf-alternative-list">
           {alternatives.map((alternative) => (
-            <Link to={`/exercises/${alternative.id}`} key={alternative.id} state={location.state}>
+            <Link
+              to={`/exercises/${alternative.id}`}
+              key={alternative.id}
+              state={location.state}
+            >
               <strong>{alternative.name}</strong>
               <span>{pretty(alternative.movementPattern)}</span>
             </Link>

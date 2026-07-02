@@ -1,2 +1,1 @@
-﻿export { default } from "./DailyCheckIn";
-
+export { default } from "./DailyCheckIn";

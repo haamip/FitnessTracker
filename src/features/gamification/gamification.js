@@ -1,4 +1,4 @@
-﻿const STORAGE_KEY = "trackfit_gamification_v1";
+const STORAGE_KEY = "trackfit_gamification_v1";
 
 const defaultState = {
   xp: 420,
@@ -13,28 +13,28 @@ export const achievements = [
     id: "first-checkin",
     title: "First Check-In",
     detail: "Logged your first daily check-in.",
-    icon: "✅",
+    icon: "âœ…",
     xp: 25,
   },
   {
     id: "seven-day-streak",
     title: "7 Day Streak",
     detail: "Showed up for 7 days straight.",
-    icon: "🔥",
+    icon: "ðŸ”¥",
     xp: 150,
   },
   {
     id: "night-shift-warrior",
     title: "Night Shift Warrior",
     detail: "Trained or checked in while grinding nights.",
-    icon: "🌙",
+    icon: "ðŸŒ™",
     xp: 100,
   },
   {
     id: "protein-hitter",
     title: "Protein Hitter",
     detail: "Hit your protein target.",
-    icon: "🥩",
+    icon: "ðŸ¥©",
     xp: 75,
   },
 ];
@@ -95,7 +95,9 @@ export function unlockAchievement(id) {
 
   saveGamificationState(withAchievement);
 
-  return achievement ? addXp(achievement.xp, achievement.title) : withAchievement;
+  return achievement
+    ? addXp(achievement.xp, achievement.title)
+    : withAchievement;
 }
 
 export function completeDailyCheckIn() {
@@ -112,9 +114,7 @@ export function completeDailyCheckIn() {
 
   saveGamificationState(next);
 
-  const afterXp = alreadyCheckedIn
-    ? next
-    : addXp(25, "Daily check-in");
+  const afterXp = alreadyCheckedIn ? next : addXp(25, "Daily check-in");
 
   if (afterXp.streak >= 7) {
     return unlockAchievement("seven-day-streak");

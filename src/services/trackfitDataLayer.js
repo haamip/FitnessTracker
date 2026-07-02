@@ -17,7 +17,10 @@ function removeJson(key) {
 }
 
 function newestFirst(left, right) {
-  return new Date(right.completedAt || right.date || 0) - new Date(left.completedAt || left.date || 0);
+  return (
+    new Date(right.completedAt || right.date || 0) -
+    new Date(left.completedAt || left.date || 0)
+  );
 }
 
 export const WorkoutRepository = {

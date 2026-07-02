@@ -20,7 +20,9 @@ export function getWorkoutStorageKey(workoutId) {
 }
 
 function sortByNewest(items, dateKey) {
-  return [...items].sort((a, b) => new Date(b[dateKey] || 0) - new Date(a[dateKey] || 0));
+  return [...items].sort(
+    (a, b) => new Date(b[dateKey] || 0) - new Date(a[dateKey] || 0),
+  );
 }
 
 export const AIPlanRepository = {
@@ -53,13 +55,18 @@ export const WorkoutRepository = {
   },
 
   getWorkoutFromPlan(workoutId) {
-    return AIPlanRepository.getPlan().find((day) => day.id === workoutId) || null;
+    return (
+      AIPlanRepository.getPlan().find((day) => day.id === workoutId) || null
+    );
   },
 };
 
 export const HistoryRepository = {
   getHistory() {
-    return sortByNewest(readJson(TRACKFIT_KEYS.workoutHistory, []), "completedAt");
+    return sortByNewest(
+      readJson(TRACKFIT_KEYS.workoutHistory, []),
+      "completedAt",
+    );
   },
 
   getRecent(limit = 6) {
@@ -77,7 +84,9 @@ export const HistoryRepository = {
   },
 
   findById(historyId) {
-    return this.getHistory().find((workout) => workout.id === historyId) || null;
+    return (
+      this.getHistory().find((workout) => workout.id === historyId) || null
+    );
   },
 
   clearHistory() {

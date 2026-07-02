@@ -21,7 +21,10 @@ export function calculateSetVolume(set) {
  * React page needing to know the maths behind the workout.
  */
 export function calculateWorkoutTotals(exercises) {
-  const totalSets = exercises.reduce((sum, exercise) => sum + exercise.sets.length, 0);
+  const totalSets = exercises.reduce(
+    (sum, exercise) => sum + exercise.sets.length,
+    0,
+  );
   const doneSets = exercises.reduce(
     (sum, exercise) => sum + exercise.sets.filter((set) => set.done).length,
     0,
@@ -66,7 +69,8 @@ export function findPreviousExercise(history, exercise) {
 
   for (const workout of history) {
     const match = (workout.exercises || []).find(
-      (item) => (item.libraryId || item.id) === key || item.name === exercise.name,
+      (item) =>
+        (item.libraryId || item.id) === key || item.name === exercise.name,
     );
 
     if (match) return match;
@@ -94,8 +98,18 @@ export function getPreviousSetLabel(previousExercise, setIndex) {
  * This is the data contract the Intelligence Engine expects. Future cloud sync
  * can use this same shape rather than reverse-engineering the UI state.
  */
-export function buildCompletedWorkout({ id, title, seconds, notes, exercises, totals, prs = [] }) {
-  const safeSeconds = Number.isFinite(Number(seconds)) ? Math.max(0, Math.floor(Number(seconds))) : 0;
+export function buildCompletedWorkout({
+  id,
+  title,
+  seconds,
+  notes,
+  exercises,
+  totals,
+  prs = [],
+}) {
+  const safeSeconds = Number.isFinite(Number(seconds))
+    ? Math.max(0, Math.floor(Number(seconds)))
+    : 0;
 
   return {
     id: crypto.randomUUID(),
@@ -147,8 +161,12 @@ export function generateWarmUpSets(exercise, createSet) {
  * Converts seconds into a gym-friendly clock.
  */
 export function formatClock(totalSeconds) {
-  const safeSeconds = Number.isFinite(Number(totalSeconds)) ? Math.max(0, Math.floor(Number(totalSeconds))) : 0;
-  const minutes = Math.floor(safeSeconds / 60).toString().padStart(2, "0");
+  const safeSeconds = Number.isFinite(Number(totalSeconds))
+    ? Math.max(0, Math.floor(Number(totalSeconds)))
+    : 0;
+  const minutes = Math.floor(safeSeconds / 60)
+    .toString()
+    .padStart(2, "0");
   const seconds = (safeSeconds % 60).toString().padStart(2, "0");
   return `${minutes}:${seconds}`;
 }

@@ -50,7 +50,9 @@ export default function CompletedWorkoutDetail() {
         </article>
         <article>
           <Dumbbell size={18} />
-          <strong>{workout.completedSets || 0}/{workout.totalSets || 0}</strong>
+          <strong>
+            {workout.completedSets || 0}/{workout.totalSets || 0}
+          </strong>
           <span>Sets</span>
         </article>
         <article>

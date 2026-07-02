@@ -18,7 +18,7 @@ import {
 
 import LineChartCard from "../components/LineChartCard";
 import GamificationPanel from "../components/ui/GamificationPanel";
-import { generateDailyCoachBrief } from "../services/aiCoachEngine";
+import { generateDailyCoachBrief } from "../services/engines/aiCoachEngine";
 import { getAllTimePRs } from "../services/prEngine";
 import { HistoryRepository } from "../services/trackfitDataLayer";
 import { getWeeklyTrainingSummary } from "../services/workoutSummaryEngine";
@@ -47,9 +47,18 @@ const achievements = [
 
 export default function Dashboard() {
   const workoutHistory = useMemo(() => HistoryRepository.getAll(), []);
-  const weeklySummary = useMemo(() => getWeeklyTrainingSummary(workoutHistory), [workoutHistory]);
-  const coachBrief = useMemo(() => generateDailyCoachBrief(workoutHistory), [workoutHistory]);
-  const allTimePrs = useMemo(() => getAllTimePRs(workoutHistory), [workoutHistory]);
+  const weeklySummary = useMemo(
+    () => getWeeklyTrainingSummary(workoutHistory),
+    [workoutHistory],
+  );
+  const coachBrief = useMemo(
+    () => generateDailyCoachBrief(workoutHistory),
+    [workoutHistory],
+  );
+  const allTimePrs = useMemo(
+    () => getAllTimePRs(workoutHistory),
+    [workoutHistory],
+  );
 
   return (
     <motion.div
@@ -107,7 +116,9 @@ export default function Dashboard() {
         </article>
         <article>
           <Activity size={20} />
-          <strong>{Math.round(weeklySummary.totalVolume).toLocaleString()}</strong>
+          <strong>
+            {Math.round(weeklySummary.totalVolume).toLocaleString()}
+          </strong>
           <span>kg lifted this week</span>
         </article>
         <article>
@@ -153,7 +164,12 @@ export default function Dashboard() {
         ))}
       </section>
 
-      <LineChartCard title="Weight Trend" data={weightData} dataKey="weight" unit="kg" />
+      <LineChartCard
+        title="Weight Trend"
+        data={weightData}
+        dataKey="weight"
+        unit="kg"
+      />
 
       {allTimePrs.length > 0 && (
         <section className="tf-pr-strip">
@@ -167,7 +183,9 @@ export default function Dashboard() {
           {allTimePrs.slice(0, 3).map((pr) => (
             <article key={pr.exercise}>
               <strong>{pr.exercise}</strong>
-              <span>{pr.set} - e1RM {pr.e1rm}kg</span>
+              <span>
+                {pr.set} - e1RM {pr.e1rm}kg
+              </span>
             </article>
           ))}
         </section>

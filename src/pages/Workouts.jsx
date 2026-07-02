@@ -1,7 +1,15 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link, useSearchParams } from "react-router-dom";
-import { ChevronRight, Clock3, Dumbbell, Flame, History, Plus, Sparkles } from "lucide-react";
+import {
+  ChevronRight,
+  Clock3,
+  Dumbbell,
+  Flame,
+  History,
+  Plus,
+  Sparkles,
+} from "lucide-react";
 import {
   AIPlanRepository,
   CardioRepository,
@@ -53,7 +61,10 @@ function formatDate(value) {
 }
 
 function countPlanSets(exercises = []) {
-  return exercises.reduce((total, exercise) => total + Number(exercise.sets || 0), 0);
+  return exercises.reduce(
+    (total, exercise) => total + Number(exercise.sets || 0),
+    0,
+  );
 }
 
 function mapPlanDayToWorkoutCard(day) {
@@ -81,31 +92,30 @@ export default function Workouts() {
    * Referencing the refresh token inside the memo makes deliberate refresh query
    * updates rebuild this snapshot without the page touching storage directly.
    */
-  const dataSnapshot = useMemo(
-    () => {
-      void refreshToken;
+  const dataSnapshot = useMemo(() => {
+    void refreshToken;
 
-      return {
-        savedTrainingPlan: AIPlanRepository.getPlan(),
-        workoutHistory: HistoryRepository.getRecent(6),
-        debug: {
-          planCount: AIPlanRepository.getPlan().length,
-          historyCount: HistoryRepository.getAll().length,
-          checkInCount: CheckInRepository.getAll().length,
-          cardioCount: CardioRepository.getAll().length,
-          refreshToken,
-          checkedAt: new Date().toLocaleTimeString(),
-        },
-      };
-    },
-    [refreshToken],
-  );
+    return {
+      savedTrainingPlan: AIPlanRepository.getPlan(),
+      workoutHistory: HistoryRepository.getRecent(6),
+      debug: {
+        planCount: AIPlanRepository.getPlan().length,
+        historyCount: HistoryRepository.getAll().length,
+        checkInCount: CheckInRepository.getAll().length,
+        cardioCount: CardioRepository.getAll().length,
+        refreshToken,
+        checkedAt: new Date().toLocaleTimeString(),
+      },
+    };
+  }, [refreshToken]);
 
   const savedTrainingPlan = dataSnapshot.savedTrainingPlan;
   const workoutHistory = dataSnapshot.workoutHistory;
   const hasTrainingPlan = savedTrainingPlan.length > 0;
 
-  const visiblePlans = hasTrainingPlan ? savedTrainingPlan.map(mapPlanDayToWorkoutCard) : starterPlans;
+  const visiblePlans = hasTrainingPlan
+    ? savedTrainingPlan.map(mapPlanDayToWorkoutCard)
+    : starterPlans;
 
   return (
     <motion.div
@@ -118,7 +128,9 @@ export default function Workouts() {
         <div>
           <p className="eyebrow">Training</p>
           <h1>Workouts</h1>
-          <p>Build, save and log clean training sessions without the clutter.</p>
+          <p>
+            Build, save and log clean training sessions without the clutter.
+          </p>
         </div>
 
         <span className="v4-hero-badge">
@@ -128,7 +140,10 @@ export default function Workouts() {
       </section>
 
       {SHOW_WORKOUTS_DEBUG && (
-        <section className="tf-history-card" style={{ border: "2px dashed #f59e0b" }}>
+        <section
+          className="tf-history-card"
+          style={{ border: "2px dashed #f59e0b" }}
+        >
           <strong>Temporary Workouts debug</strong>
           <p>Plan days: {dataSnapshot.debug.planCount}</p>
           <p>Workout history: {dataSnapshot.debug.historyCount}</p>
@@ -143,7 +158,9 @@ export default function Workouts() {
         <Link className="v4-quick-card" to="/workouts/builder">
           <Sparkles size={24} />
           <strong>Workout Builder</strong>
-          <span>{hasTrainingPlan ? "Edit or rebuild plan" : "Create a smart plan"}</span>
+          <span>
+            {hasTrainingPlan ? "Edit or rebuild plan" : "Create a smart plan"}
+          </span>
         </Link>
 
         <Link className="v4-quick-card" to="/workouts/workout-1">
@@ -156,22 +173,36 @@ export default function Workouts() {
       <section className="v4-workout-list">
         <div className="v4-section-heading">
           <div>
-            <p className="eyebrow">{hasTrainingPlan ? "Smart Plan" : "Starter Templates"}</p>
-            <h2>{hasTrainingPlan ? "Your training plan" : "Choose a workout"}</h2>
+            <p className="eyebrow">
+              {hasTrainingPlan ? "Smart Plan" : "Starter Templates"}
+            </p>
+            <h2>
+              {hasTrainingPlan ? "Your training plan" : "Choose a workout"}
+            </h2>
           </div>
           <span>{visiblePlans.length} options</span>
         </div>
 
         {visiblePlans.map((plan) => (
-          <Link className="v4-workout-card" to={`/workouts/${plan.id}`} key={plan.id}>
+          <Link
+            className="v4-workout-card"
+            to={`/workouts/${plan.id}`}
+            key={plan.id}
+          >
             <div className="v4-workout-card__top">
-              <span className="v4-chip">{plan.generated ? "Smart Plan" : "Template"}</span>
+              <span className="v4-chip">
+                {plan.generated ? "Smart Plan" : "Template"}
+              </span>
               <span className="v4-time">{plan.time}</span>
             </div>
 
             <div className="v4-workout-card__body">
               <div className="v4-workout-icon">
-                {plan.generated ? <Sparkles size={22} /> : <Dumbbell size={22} />}
+                {plan.generated ? (
+                  <Sparkles size={22} />
+                ) : (
+                  <Dumbbell size={22} />
+                )}
               </div>
 
               <div>
@@ -219,14 +250,19 @@ export default function Workouts() {
 
                 <div>
                   <h3>{workout.title || "Completed workout"}</h3>
-                  <p>{workout.completedAt ? formatDate(workout.completedAt) : "No timestamp"}</p>
+                  <p>
+                    {workout.completedAt
+                      ? formatDate(workout.completedAt)
+                      : "No timestamp"}
+                  </p>
                 </div>
               </div>
 
               <div className="v4-workout-card__footer">
                 <span>
                   <Clock3 size={15} />
-                  {workout.completedSets || 0}/{workout.totalSets || 0} sets - {Math.round(workout.volume || 0)} kg
+                  {workout.completedSets || 0}/{workout.totalSets || 0} sets -{" "}
+                  {Math.round(workout.volume || 0)} kg
                 </span>
 
                 <span>{workout.prs?.length || 0} PRs</span>

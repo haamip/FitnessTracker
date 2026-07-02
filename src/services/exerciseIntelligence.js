@@ -8,7 +8,11 @@
 // ============================================================================
 
 import { exerciseLibrary } from "../data/exerciseLibrary";
-import { resolveExercise, slugifyExercise, normaliseExerciseText } from "./exerciseResolver";
+import {
+  resolveExercise,
+  slugifyExercise,
+  normaliseExerciseText,
+} from "./exerciseResolver";
 
 /**
  * Movement families used by TrackFit's training logic.
@@ -126,12 +130,19 @@ export function normaliseEquipment(value) {
  */
 export function getExerciseProfile(exercise) {
   const resolved = resolveExercise(exercise);
-  const movement = MOVEMENT_FAMILIES[resolved.movementPattern] || MOVEMENT_FAMILIES.unknown;
-  const muscles = [...new Set([...(resolved.primaryMuscles || []), ...(resolved.secondaryMuscles || [])])];
+  const movement =
+    MOVEMENT_FAMILIES[resolved.movementPattern] || MOVEMENT_FAMILIES.unknown;
+  const muscles = [
+    ...new Set([
+      ...(resolved.primaryMuscles || []),
+      ...(resolved.secondaryMuscles || []),
+    ]),
+  ];
 
   return {
     id: resolved.canonicalId,
-    sourceId: resolved.libraryExercise?.id || exercise?.id || resolved.canonicalId,
+    sourceId:
+      resolved.libraryExercise?.id || exercise?.id || resolved.canonicalId,
     displayName: resolved.displayName,
     image: resolved.image,
     imageKey: resolved.imageKey,
@@ -163,7 +174,8 @@ export function getResolvedExerciseLibrary() {
  * Returns the best display label for a movement pattern.
  */
 export function getMovementLabel(movementPattern) {
-  return (MOVEMENT_FAMILIES[movementPattern] || MOVEMENT_FAMILIES.unknown).label;
+  return (MOVEMENT_FAMILIES[movementPattern] || MOVEMENT_FAMILIES.unknown)
+    .label;
 }
 
 /**
@@ -181,7 +193,11 @@ export function exerciseMatchesEquipment(exercise, equipmentMode = "full gym") {
   }
 
   if (equipmentMode === "home") {
-    return equipment.includes("body only") || equipment.includes("dumbbell") || equipment.includes("band");
+    return (
+      equipment.includes("body only") ||
+      equipment.includes("dumbbell") ||
+      equipment.includes("band")
+    );
   }
 
   return true;
@@ -200,15 +216,26 @@ export function exerciseMatchesInjuryFocus(exercise, injuryFocus = "none") {
   const name = normaliseExerciseText(exercise?.name || profile.displayName);
 
   if (injuryFocus === "shoulder") {
-    return profile.movementPattern !== "vertical_push" && !name.includes("behind neck");
+    return (
+      profile.movementPattern !== "vertical_push" &&
+      !name.includes("behind neck")
+    );
   }
 
   if (injuryFocus === "knee") {
-    return profile.movementPattern !== "squat" || name.includes("bodyweight") || name.includes("box");
+    return (
+      profile.movementPattern !== "squat" ||
+      name.includes("bodyweight") ||
+      name.includes("box")
+    );
   }
 
   if (injuryFocus === "lower_back") {
-    return profile.movementPattern !== "hinge" || name.includes("glute") || name.includes("dumbbell");
+    return (
+      profile.movementPattern !== "hinge" ||
+      name.includes("glute") ||
+      name.includes("dumbbell")
+    );
   }
 
   return true;
@@ -222,7 +249,12 @@ export function exerciseMatchesInjuryFocus(exercise, injuryFocus = "none") {
  * updates.
  */
 export function scoreExerciseForSlot(exercise, slot, options = {}) {
-  const { equipment = "full gym", injuryFocus = "none", usedCanonicalIds = new Set(), usedSourceIds = new Set() } = options;
+  const {
+    equipment = "full gym",
+    injuryFocus = "none",
+    usedCanonicalIds = new Set(),
+    usedSourceIds = new Set(),
+  } = options;
   const profile = getExerciseProfile(exercise);
 
   let score = 0;

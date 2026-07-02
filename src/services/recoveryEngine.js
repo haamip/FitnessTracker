@@ -32,7 +32,10 @@ export function calculateMuscleRecovery(history = readWorkoutHistory()) {
     (workout.exercises || []).forEach((exercise) => {
       (exercise.primaryMuscles || []).forEach((muscle) => {
         const neededHours = muscleRecoveryHours[muscle] || 48;
-        const score = Math.min(100, Math.round((hoursSince / neededHours) * 100));
+        const score = Math.min(
+          100,
+          Math.round((hoursSince / neededHours) * 100),
+        );
         const existing = recovery.get(muscle);
 
         if (!existing || completedAt > existing.completedAt) {

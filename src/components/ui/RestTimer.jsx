@@ -17,7 +17,8 @@ export default function RestTimer({
   onSkip,
   onToggle,
 }) {
-  const isActive = restRunning || restSeconds > 0 || Boolean(restCompletedMessage);
+  const isActive =
+    restRunning || restSeconds > 0 || Boolean(restCompletedMessage);
 
   return (
     <section className={isActive ? "tf-rest-sheet active" : "tf-rest-sheet"}>
@@ -36,11 +37,18 @@ export default function RestTimer({
 
       <div className="tf-rest-sheet__time">{formatClock(restSeconds)}</div>
 
-      <p>{restCompletedMessage || "Complete a set and TrackFit will start your rest automatically."}</p>
+      <p>
+        {restCompletedMessage ||
+          "Complete a set and TrackFit will start your rest automatically."}
+      </p>
 
       <div className="tf-rest-sheet__actions">
         <button className="primary" onClick={onToggle} type="button">
-          {restRunning ? <Pause size={19} fill="currentColor" /> : <Play size={19} fill="currentColor" />}
+          {restRunning ? (
+            <Pause size={19} fill="currentColor" />
+          ) : (
+            <Play size={19} fill="currentColor" />
+          )}
           {restRunning ? "Pause" : "Resume"}
         </button>
 

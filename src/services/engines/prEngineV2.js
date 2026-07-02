@@ -9,8 +9,6 @@
  *
  * Difficulty
  * ----------
- * ⭐⭐⭐☆☆
- *
  * Why this exists
  * ---------------
  * The Coach and Progress pages need to know when the user is improving.
@@ -26,7 +24,7 @@
  * ============================================================================
  */
 
-import { HistoryRepository } from "./trackfitDataLayer";
+import { HistoryRepository } from "../trackfitDataLayer";
 
 function getNumber(value) {
   return Number.parseFloat(value) || 0;
@@ -103,7 +101,13 @@ export function buildPrEngine(history = HistoryRepository.getAll()) {
           record.heaviestWeight = entry;
         }
 
-        if (isBetterNumberEntry(entry, record.bestEstimatedOneRepMax, "estimatedOneRepMax")) {
+        if (
+          isBetterNumberEntry(
+            entry,
+            record.bestEstimatedOneRepMax,
+            "estimatedOneRepMax",
+          )
+        ) {
           record.bestEstimatedOneRepMax = entry;
         }
 
@@ -132,7 +136,8 @@ export function buildPrEngine(history = HistoryRepository.getAll()) {
 
       if (
         !record.bestExerciseVolume ||
-        exerciseVolumeEntry.exerciseVolume > record.bestExerciseVolume.exerciseVolume
+        exerciseVolumeEntry.exerciseVolume >
+          record.bestExerciseVolume.exerciseVolume
       ) {
         record.bestExerciseVolume = exerciseVolumeEntry;
       }
@@ -143,17 +148,16 @@ export function buildPrEngine(history = HistoryRepository.getAll()) {
 
   const exerciseRecords = [...records.values()];
 
-  const bestOverallEstimatedOneRepMax = allSetEntries
-    .slice()
-    .sort((a, b) => b.estimatedOneRepMax - a.estimatedOneRepMax)[0] || null;
+  const bestOverallEstimatedOneRepMax =
+    allSetEntries
+      .slice()
+      .sort((a, b) => b.estimatedOneRepMax - a.estimatedOneRepMax)[0] || null;
 
-  const heaviestSet = allSetEntries
-    .slice()
-    .sort((a, b) => b.weight - a.weight)[0] || null;
+  const heaviestSet =
+    allSetEntries.slice().sort((a, b) => b.weight - a.weight)[0] || null;
 
-  const biggestSetVolume = allSetEntries
-    .slice()
-    .sort((a, b) => b.setVolume - a.setVolume)[0] || null;
+  const biggestSetVolume =
+    allSetEntries.slice().sort((a, b) => b.setVolume - a.setVolume)[0] || null;
 
   return {
     exerciseRecords,

@@ -17,12 +17,16 @@ export default function MobileShell({ children }) {
   const isDeveloperTools = location.pathname === "/dev-tools";
 
   return (
-    <div className={isDeveloperTools ? "mobile-frame dev-frame" : "mobile-frame"}>
+    <div
+      className={isDeveloperTools ? "mobile-frame dev-frame" : "mobile-frame"}
+    >
       <header className="app-topbar">
         <img src={logo} alt="TrackFit" className="topbar-logo" />
         <div>
           <strong>TrackFit</strong>
-          <span>{isDeveloperTools ? "Developer cockpit" : "Built to move"}</span>
+          <span>
+            {isDeveloperTools ? "Developer cockpit" : "Built to move"}
+          </span>
         </div>
       </header>
 

@@ -9,7 +9,10 @@ import { formatClock } from "../../services/workoutEngine";
  * completed sets, and remaining work while the user trains.
  */
 export default function WorkoutSummary({ seconds, totals }) {
-  const setsLeft = Math.max((totals?.totalSets || 0) - (totals?.doneSets || 0), 0);
+  const setsLeft = Math.max(
+    (totals?.totalSets || 0) - (totals?.doneSets || 0),
+    0,
+  );
 
   return (
     <div className="tf-workout-summary">

@@ -41,7 +41,10 @@ const fallbackPrs = [
 
 export default function Progress() {
   const workoutHistory = useMemo(() => readWorkoutHistory(), []);
-  const weeklySummary = useMemo(() => getWeeklyTrainingSummary(workoutHistory), [workoutHistory]);
+  const weeklySummary = useMemo(
+    () => getWeeklyTrainingSummary(workoutHistory),
+    [workoutHistory],
+  );
   const prData = useMemo(() => getAllTimePRs(workoutHistory), [workoutHistory]);
   const displayedPrs = prData.length > 0 ? prData : fallbackPrs;
 
@@ -56,7 +59,10 @@ export default function Progress() {
         <div>
           <p className="eyebrow">Progress</p>
           <h1>104.2kg</h1>
-          <p>Down 2.6kg from your starting point. Still moving in the right direction.</p>
+          <p>
+            Down 2.6kg from your starting point. Still moving in the right
+            direction.
+          </p>
         </div>
 
         <div className="v4-progress-ring" style={{ "--progress": "62%" }}>
@@ -88,7 +94,12 @@ export default function Progress() {
         </article>
       </section>
 
-      <LineChartCard title="Weight Trend" data={weightData} dataKey="weight" unit="kg" />
+      <LineChartCard
+        title="Weight Trend"
+        data={weightData}
+        dataKey="weight"
+        unit="kg"
+      />
 
       <div className="v4-section-heading">
         <div>
@@ -139,7 +150,11 @@ export default function Progress() {
 
         <div>
           <p className="eyebrow">Coach insight</p>
-          <h2>{weeklySummary.totalPrs > 0 ? "Strength is moving." : "Build the data trail."}</h2>
+          <h2>
+            {weeklySummary.totalPrs > 0
+              ? "Strength is moving."
+              : "Build the data trail."}
+          </h2>
           <p>
             {weeklySummary.totalPrs > 0
               ? `${weeklySummary.totalPrs} PR signals this week. Keep logging clean sets so the coach can progress you properly.`

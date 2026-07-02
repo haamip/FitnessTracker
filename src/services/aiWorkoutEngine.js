@@ -17,22 +17,91 @@ export const equipmentLabels = {
 
 const splitTemplates = {
   muscle: [
-    { name: "Upper A", slots: ["horizontal_push", "horizontal_pull", "vertical_push", "vertical_pull", "elbow_flexion", "elbow_extension"] },
-    { name: "Lower A", slots: ["squat", "hinge", "lunge", "calf_raise", "core"] },
-    { name: "Upper B", slots: ["horizontal_push", "horizontal_pull", "vertical_push", "vertical_pull", "elbow_flexion", "elbow_extension"] },
-    { name: "Lower B", slots: ["hinge", "squat", "lunge", "core", "conditioning"] },
+    {
+      name: "Upper A",
+      slots: [
+        "horizontal_push",
+        "horizontal_pull",
+        "vertical_push",
+        "vertical_pull",
+        "elbow_flexion",
+        "elbow_extension",
+      ],
+    },
+    {
+      name: "Lower A",
+      slots: ["squat", "hinge", "lunge", "calf_raise", "core"],
+    },
+    {
+      name: "Upper B",
+      slots: [
+        "horizontal_push",
+        "horizontal_pull",
+        "vertical_push",
+        "vertical_pull",
+        "elbow_flexion",
+        "elbow_extension",
+      ],
+    },
+    {
+      name: "Lower B",
+      slots: ["hinge", "squat", "lunge", "core", "conditioning"],
+    },
   ],
   strength: [
-    { name: "Heavy Upper", slots: ["horizontal_push", "horizontal_pull", "vertical_push", "vertical_pull"] },
+    {
+      name: "Heavy Upper",
+      slots: [
+        "horizontal_push",
+        "horizontal_pull",
+        "vertical_push",
+        "vertical_pull",
+      ],
+    },
     { name: "Heavy Lower", slots: ["squat", "hinge", "squat", "core"] },
-    { name: "Bench Focus", slots: ["horizontal_push", "horizontal_push", "horizontal_pull", "elbow_extension"] },
-    { name: "Deadlift Focus", slots: ["hinge", "squat", "horizontal_pull", "core"] },
+    {
+      name: "Bench Focus",
+      slots: [
+        "horizontal_push",
+        "horizontal_push",
+        "horizontal_pull",
+        "elbow_extension",
+      ],
+    },
+    {
+      name: "Deadlift Focus",
+      slots: ["hinge", "squat", "horizontal_pull", "core"],
+    },
   ],
   fatloss: [
-    { name: "Full Body Strength", slots: ["squat", "horizontal_push", "horizontal_pull", "hinge", "conditioning"] },
-    { name: "Conditioning Circuit", slots: ["conditioning", "squat", "horizontal_push", "core"] },
-    { name: "Upper Circuit", slots: ["horizontal_push", "horizontal_pull", "vertical_push", "vertical_pull", "core"] },
-    { name: "Lower Circuit", slots: ["squat", "hinge", "lunge", "core", "conditioning"] },
+    {
+      name: "Full Body Strength",
+      slots: [
+        "squat",
+        "horizontal_push",
+        "horizontal_pull",
+        "hinge",
+        "conditioning",
+      ],
+    },
+    {
+      name: "Conditioning Circuit",
+      slots: ["conditioning", "squat", "horizontal_push", "core"],
+    },
+    {
+      name: "Upper Circuit",
+      slots: [
+        "horizontal_push",
+        "horizontal_pull",
+        "vertical_push",
+        "vertical_pull",
+        "core",
+      ],
+    },
+    {
+      name: "Lower Circuit",
+      slots: ["squat", "hinge", "lunge", "core", "conditioning"],
+    },
   ],
 };
 
@@ -78,7 +147,10 @@ function equipmentMatches(exercise, equipmentMode) {
     .join(" ");
 
   if (equipmentMode === "dumbbells") {
-    return exerciseEquipment.includes("dumbbell") || exerciseEquipment.includes("body only");
+    return (
+      exerciseEquipment.includes("dumbbell") ||
+      exerciseEquipment.includes("body only")
+    );
   }
 
   if (equipmentMode === "home") {
@@ -99,15 +171,26 @@ function injurySafe(exercise, injuryFocus) {
   const movementPattern = exercise.movementPattern || "unknown";
 
   if (injuryFocus === "shoulder") {
-    return movementPattern !== "vertical_push" && !exerciseName.includes("behind the neck");
+    return (
+      movementPattern !== "vertical_push" &&
+      !exerciseName.includes("behind the neck")
+    );
   }
 
   if (injuryFocus === "knee") {
-    return movementPattern !== "squat" || exerciseName.includes("bodyweight") || exerciseName.includes("box");
+    return (
+      movementPattern !== "squat" ||
+      exerciseName.includes("bodyweight") ||
+      exerciseName.includes("box")
+    );
   }
 
   if (injuryFocus === "lower_back") {
-    return movementPattern !== "hinge" || exerciseName.includes("dumbbell") || exerciseName.includes("glute");
+    return (
+      movementPattern !== "hinge" ||
+      exerciseName.includes("dumbbell") ||
+      exerciseName.includes("glute")
+    );
   }
 
   return true;
@@ -163,11 +246,14 @@ function pickExercise(slot, exerciseLibrary, options) {
 
   const bestScore = rankedExercises[0].score;
 
-  const strongMatches = rankedExercises.filter((item) => item.score >= bestScore - 18);
+  const strongMatches = rankedExercises.filter(
+    (item) => item.score >= bestScore - 18,
+  );
   const shortlist = strongMatches.slice(0, 8);
 
   const rotationIndex =
-    (options.planVersion + options.dayIndex + options.slotIndex) % Math.max(shortlist.length, 1);
+    (options.planVersion + options.dayIndex + options.slotIndex) %
+    Math.max(shortlist.length, 1);
 
   return shortlist[rotationIndex]?.exercise || rankedExercises[0].exercise;
 }

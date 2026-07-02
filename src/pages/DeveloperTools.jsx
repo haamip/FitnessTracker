@@ -9,8 +9,8 @@ import {
   Trash2,
   UserRound,
 } from "lucide-react";
-import { generateDailyCoachBrief } from "../services/aiCoachEngine";
-import { buildCoachDashboard } from "../services/coachIntelligenceEngine";
+import { generateDailyCoachBrief } from "../services/engines/aiCoachEngine";
+import { buildCoachDashboard } from "../services/engines/coachIntelligenceEngine";
 import {
   DEMO_ATHLETE_PROFILES,
   generateDemoAthlete,
@@ -26,9 +26,9 @@ import {
 } from "../services/trackfitDataLayer";
 import "./TrackFitScreens.css";
 import "./DeveloperTools.css";
-import { buildWorkoutAnalytics } from "../services/workoutAnalyticsEngine";
-import { buildProgressionEngine } from "../services/progressionEngine";
-import { buildPrEngine } from "../services/prEngineV2";
+import { buildWorkoutAnalytics } from "../services/engines/workoutAnalyticsEngine";
+import { buildProgressionEngine } from "../services/engines/progressionEngine";
+import { buildPrEngine } from "../services/engines/prEngineV2";
 
 function readDeveloperSnapshot(action = "Ready") {
   const plan = AIPlanRepository.getPlan();

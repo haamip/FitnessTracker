@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getExerciseRecommendation } from "../progressionEngine";
+import { getExerciseRecommendation } from "../engines/progressionEngine";
 
 const exercise = {
   id: "bench-press-runtime",

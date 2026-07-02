@@ -1,11 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { calculateTrainingReadiness, detectPlateaus, generateDailyCoachBrief } from "../aiCoachEngine";
+import {
+  calculateTrainingReadiness,
+  detectPlateaus,
+  generateDailyCoachBrief,
+} from "../engines/aiCoachEngine";
 
-function workout(daysAgo, exerciseName = "Bench Press", weight = "80", reps = "8") {
+function workout(
+  daysAgo,
+  exerciseName = "Bench Press",
+  weight = "80",
+  reps = "8",
+) {
   return {
     title: "Upper A",
     workoutId: "upper-a",
-    completedAt: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString(),
+    completedAt: new Date(
+      Date.now() - daysAgo * 24 * 60 * 60 * 1000,
+    ).toISOString(),
     durationSeconds: 3600,
     completedSets: 3,
     totalSets: 3,

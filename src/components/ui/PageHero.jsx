@@ -1,4 +1,10 @@
-export default function PageHero({ eyebrow, title, children, premium = false, right }) {
+export default function PageHero({
+  eyebrow,
+  title,
+  children,
+  premium = false,
+  right,
+}) {
   return (
     <section className={premium ? "screen-hero hero-premium" : "screen-hero"}>
       <div>

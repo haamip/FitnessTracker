@@ -28,7 +28,15 @@ const CANONICAL_EXERCISES = [
     primaryMuscles: ["chest"],
     secondaryMuscles: ["triceps", "shoulders"],
     equipment: ["barbell", "dumbbell", "machine", "smith"],
-    aliases: ["bench press", "barbell bench press", "board press", "chest press", "close grip bench press", "wide grip bench press", "floor press"],
+    aliases: [
+      "bench press",
+      "barbell bench press",
+      "board press",
+      "chest press",
+      "close grip bench press",
+      "wide grip bench press",
+      "floor press",
+    ],
   },
   {
     id: "incline_press",
@@ -38,7 +46,12 @@ const CANONICAL_EXERCISES = [
     primaryMuscles: ["upper chest"],
     secondaryMuscles: ["front delts", "triceps"],
     equipment: ["barbell", "dumbbell", "machine", "smith"],
-    aliases: ["incline bench press", "incline dumbbell bench press", "incline chest press", "incline press"],
+    aliases: [
+      "incline bench press",
+      "incline dumbbell bench press",
+      "incline chest press",
+      "incline press",
+    ],
   },
   {
     id: "shoulder_press",
@@ -48,7 +61,14 @@ const CANONICAL_EXERCISES = [
     primaryMuscles: ["shoulders"],
     secondaryMuscles: ["triceps"],
     equipment: ["barbell", "dumbbell", "machine", "cable"],
-    aliases: ["shoulder press", "overhead press", "military press", "arnold press", "one arm shoulder press", "cable shoulder press"],
+    aliases: [
+      "shoulder press",
+      "overhead press",
+      "military press",
+      "arnold press",
+      "one arm shoulder press",
+      "cable shoulder press",
+    ],
   },
   {
     id: "push_up",
@@ -58,7 +78,13 @@ const CANONICAL_EXERCISES = [
     primaryMuscles: ["chest"],
     secondaryMuscles: ["triceps", "shoulders", "core"],
     equipment: ["body only"],
-    aliases: ["push up", "push ups", "body up", "close grip push up", "one armed push up"],
+    aliases: [
+      "push up",
+      "push ups",
+      "body up",
+      "close grip push up",
+      "one armed push up",
+    ],
   },
   {
     id: "squat",
@@ -68,7 +94,15 @@ const CANONICAL_EXERCISES = [
     primaryMuscles: ["quadriceps", "glutes"],
     secondaryMuscles: ["hamstrings", "core"],
     equipment: ["barbell", "body only", "smith", "machine"],
-    aliases: ["squat", "barbell squat", "back squat", "full squat", "bodyweight squat", "box squat", "hack squat"],
+    aliases: [
+      "squat",
+      "barbell squat",
+      "back squat",
+      "full squat",
+      "bodyweight squat",
+      "box squat",
+      "hack squat",
+    ],
   },
   {
     id: "front_squat",
@@ -98,7 +132,15 @@ const CANONICAL_EXERCISES = [
     primaryMuscles: ["quadriceps", "glutes"],
     secondaryMuscles: ["hamstrings", "calves"],
     equipment: ["barbell", "dumbbell", "body only"],
-    aliases: ["lunge", "lunges", "rear lunge", "reverse lunge", "walking lunge", "bodyweight walking lunge", "barbell lunge"],
+    aliases: [
+      "lunge",
+      "lunges",
+      "rear lunge",
+      "reverse lunge",
+      "walking lunge",
+      "bodyweight walking lunge",
+      "barbell lunge",
+    ],
   },
   {
     id: "step_up",
@@ -118,7 +160,14 @@ const CANONICAL_EXERCISES = [
     primaryMuscles: ["hamstrings", "glutes", "back"],
     secondaryMuscles: ["traps", "core"],
     equipment: ["barbell", "dumbbell", "cable"],
-    aliases: ["deadlift", "dead lift", "dead lifts", "barbell deadlift", "axle deadlift", "cable deadlift"],
+    aliases: [
+      "deadlift",
+      "dead lift",
+      "dead lifts",
+      "barbell deadlift",
+      "axle deadlift",
+      "cable deadlift",
+    ],
   },
   {
     id: "good_morning",
@@ -138,7 +187,17 @@ const CANONICAL_EXERCISES = [
     primaryMuscles: ["back", "lats"],
     secondaryMuscles: ["biceps", "rear delts"],
     equipment: ["barbell", "dumbbell", "cable", "machine"],
-    aliases: ["row", "barbell row", "bent over row", "dumbbell row", "rear delt row", "body row", "t bar row", "long bar row", "seated row"],
+    aliases: [
+      "row",
+      "barbell row",
+      "bent over row",
+      "dumbbell row",
+      "rear delt row",
+      "body row",
+      "t bar row",
+      "long bar row",
+      "seated row",
+    ],
   },
   {
     id: "pull_up",
@@ -148,7 +207,13 @@ const CANONICAL_EXERCISES = [
     primaryMuscles: ["lats", "back"],
     secondaryMuscles: ["biceps"],
     equipment: ["body only"],
-    aliases: ["pull up", "pull ups", "chin up", "chin ups", "band assisted pull up"],
+    aliases: [
+      "pull up",
+      "pull ups",
+      "chin up",
+      "chin ups",
+      "band assisted pull up",
+    ],
   },
   {
     id: "lat_pulldown",
@@ -158,7 +223,13 @@ const CANONICAL_EXERCISES = [
     primaryMuscles: ["lats"],
     secondaryMuscles: ["biceps", "back"],
     equipment: ["cable", "machine"],
-    aliases: ["lat pulldown", "pull down", "pulldown", "underhand pull down", "v bar pull down"],
+    aliases: [
+      "lat pulldown",
+      "pull down",
+      "pulldown",
+      "underhand pull down",
+      "v bar pull down",
+    ],
   },
   {
     id: "biceps_curl",
@@ -168,7 +239,16 @@ const CANONICAL_EXERCISES = [
     primaryMuscles: ["biceps"],
     secondaryMuscles: ["forearms"],
     equipment: ["barbell", "dumbbell", "cable"],
-    aliases: ["curl", "bicep curl", "biceps curl", "barbell curl", "dumbbell curl", "preacher curl", "concentration curl", "spider curl"],
+    aliases: [
+      "curl",
+      "bicep curl",
+      "biceps curl",
+      "barbell curl",
+      "dumbbell curl",
+      "preacher curl",
+      "concentration curl",
+      "spider curl",
+    ],
   },
   {
     id: "hammer_curl",
@@ -188,7 +268,14 @@ const CANONICAL_EXERCISES = [
     primaryMuscles: ["triceps"],
     secondaryMuscles: [],
     equipment: ["dumbbell", "cable", "barbell"],
-    aliases: ["triceps extension", "tricep extension", "skull crusher", "kickback", "triceps press", "low triceps extension"],
+    aliases: [
+      "triceps extension",
+      "tricep extension",
+      "skull crusher",
+      "kickback",
+      "triceps press",
+      "low triceps extension",
+    ],
   },
   {
     id: "dip",
@@ -208,7 +295,14 @@ const CANONICAL_EXERCISES = [
     primaryMuscles: ["shoulders"],
     secondaryMuscles: [],
     equipment: ["dumbbell", "cable"],
-    aliases: ["lateral raise", "side lateral", "deltoid raise", "front raise", "rear lateral raise", "cable lateral raise"],
+    aliases: [
+      "lateral raise",
+      "side lateral",
+      "deltoid raise",
+      "front raise",
+      "rear lateral raise",
+      "cable lateral raise",
+    ],
   },
   {
     id: "shrug",
@@ -218,7 +312,14 @@ const CANONICAL_EXERCISES = [
     primaryMuscles: ["traps"],
     secondaryMuscles: [],
     equipment: ["barbell", "dumbbell", "cable", "smith"],
-    aliases: ["shrug", "shrugs", "barbell shrug", "dumbbell shrug", "cable shrug", "smith machine shrug"],
+    aliases: [
+      "shrug",
+      "shrugs",
+      "barbell shrug",
+      "dumbbell shrug",
+      "cable shrug",
+      "smith machine shrug",
+    ],
   },
   {
     id: "crunch",
@@ -228,7 +329,14 @@ const CANONICAL_EXERCISES = [
     primaryMuscles: ["abdominals"],
     secondaryMuscles: [],
     equipment: ["body only", "machine", "cable"],
-    aliases: ["crunch", "crunches", "ab crunch", "cable crunch", "decline crunch", "stability ball crunch"],
+    aliases: [
+      "crunch",
+      "crunches",
+      "ab crunch",
+      "cable crunch",
+      "decline crunch",
+      "stability ball crunch",
+    ],
   },
   {
     id: "leg_raise",
@@ -238,7 +346,13 @@ const CANONICAL_EXERCISES = [
     primaryMuscles: ["abdominals", "hip flexors"],
     secondaryMuscles: [],
     equipment: ["body only"],
-    aliases: ["leg raise", "leg raises", "leg lift", "bent knee hip raise", "flutter kicks"],
+    aliases: [
+      "leg raise",
+      "leg raises",
+      "leg lift",
+      "bent knee hip raise",
+      "flutter kicks",
+    ],
   },
   {
     id: "plank",
@@ -262,7 +376,9 @@ const CANONICAL_EXERCISES = [
   },
 ];
 
-const FAMILY_BY_ID = new Map(CANONICAL_EXERCISES.map((family) => [family.id, family]));
+const FAMILY_BY_ID = new Map(
+  CANONICAL_EXERCISES.map((family) => [family.id, family]),
+);
 const IMAGE_KEY_ALIASES = new Map([
   ["bench-press", "bench-pres"],
   ["incline-bench-press", "incline-bench-pres"],
@@ -293,16 +409,27 @@ export function slugifyExercise(value) {
 }
 
 function resolveLibraryExercise(exercise) {
-  const candidates = [exercise?.libraryId, exercise?.id, exercise?.slug, exercise?.name]
+  const candidates = [
+    exercise?.libraryId,
+    exercise?.id,
+    exercise?.slug,
+    exercise?.name,
+  ]
     .filter(Boolean)
     .map(normaliseExerciseText);
 
   return exerciseLibrary.find((libraryExercise) => {
-    const libraryCandidates = [libraryExercise.id, libraryExercise.slug, libraryExercise.name]
+    const libraryCandidates = [
+      libraryExercise.id,
+      libraryExercise.slug,
+      libraryExercise.name,
+    ]
       .filter(Boolean)
       .map(normaliseExerciseText);
 
-    return candidates.some((candidate) => libraryCandidates.includes(candidate));
+    return candidates.some((candidate) =>
+      libraryCandidates.includes(candidate),
+    );
   });
 }
 
@@ -322,8 +449,12 @@ function scoreFamily(exerciseName, family) {
 
     const exerciseWords = new Set(exerciseText.split(" "));
     const aliasWords = new Set(aliasText.split(" "));
-    const overlap = [...exerciseWords].filter((word) => aliasWords.has(word)).length;
-    const score = Math.round((overlap / Math.max(exerciseWords.size, aliasWords.size)) * 100);
+    const overlap = [...exerciseWords].filter((word) =>
+      aliasWords.has(word),
+    ).length;
+    const score = Math.round(
+      (overlap / Math.max(exerciseWords.size, aliasWords.size)) * 100,
+    );
 
     return Math.max(bestScore, score);
   }, 0);
@@ -331,11 +462,13 @@ function scoreFamily(exerciseName, family) {
 
 function findBestFamily(exercise) {
   const libraryExercise = resolveLibraryExercise(exercise);
-  const exerciseName = libraryExercise?.name || exercise?.name || exercise?.id || "";
+  const exerciseName =
+    libraryExercise?.name || exercise?.name || exercise?.id || "";
 
-  const rankedFamilies = CANONICAL_EXERCISES
-    .map((family) => ({ family, score: scoreFamily(exerciseName, family) }))
-    .sort((a, b) => b.score - a.score);
+  const rankedFamilies = CANONICAL_EXERCISES.map((family) => ({
+    family,
+    score: scoreFamily(exerciseName, family),
+  })).sort((a, b) => b.score - a.score);
 
   const bestMatch = rankedFamilies[0];
   return bestMatch?.score >= 50 ? bestMatch.family : null;
@@ -345,7 +478,11 @@ function getMappedImage(imageKey) {
   const key = slugifyExercise(imageKey);
   const aliasKey = IMAGE_KEY_ALIASES.get(key);
 
-  return exerciseImageMap[key] || (aliasKey ? exerciseImageMap[aliasKey] : null) || null;
+  return (
+    exerciseImageMap[key] ||
+    (aliasKey ? exerciseImageMap[aliasKey] : null) ||
+    null
+  );
 }
 
 /**
@@ -353,20 +490,51 @@ function getMappedImage(imageKey) {
  */
 export function resolveExercise(exercise) {
   const libraryExercise = resolveLibraryExercise(exercise);
-  const family = FAMILY_BY_ID.get(exercise?.canonicalId) || findBestFamily(exercise);
-  const fallbackKey = slugifyExercise(libraryExercise?.name || exercise?.name || exercise?.id || "exercise");
-  const imageKey = family?.imageKey || libraryExercise?.slug || exercise?.imageKey || fallbackKey;
+  const family =
+    FAMILY_BY_ID.get(exercise?.canonicalId) || findBestFamily(exercise);
+  const fallbackKey = slugifyExercise(
+    libraryExercise?.name || exercise?.name || exercise?.id || "exercise",
+  );
+  const imageKey =
+    family?.imageKey ||
+    libraryExercise?.slug ||
+    exercise?.imageKey ||
+    fallbackKey;
   const mappedImage = getMappedImage(imageKey) || getMappedImage(fallbackKey);
 
   return {
     canonicalId: family?.id || fallbackKey,
-    displayName: family?.displayName || libraryExercise?.name || exercise?.name || "Exercise",
+    displayName:
+      family?.displayName ||
+      libraryExercise?.name ||
+      exercise?.name ||
+      "Exercise",
     imageKey,
-    image: mappedImage || exercise?.image || libraryExercise?.image || FALLBACK_EXERCISE_IMAGE,
-    movementPattern: family?.movementPattern || libraryExercise?.movementPattern || exercise?.movementPattern || "unknown",
-    primaryMuscles: family?.primaryMuscles || libraryExercise?.primaryMuscles || exercise?.primaryMuscles || [],
-    secondaryMuscles: family?.secondaryMuscles || libraryExercise?.secondaryMuscles || exercise?.secondaryMuscles || [],
-    equipment: family?.equipment || libraryExercise?.equipment || exercise?.equipment || [],
+    image:
+      mappedImage ||
+      exercise?.image ||
+      libraryExercise?.image ||
+      FALLBACK_EXERCISE_IMAGE,
+    movementPattern:
+      family?.movementPattern ||
+      libraryExercise?.movementPattern ||
+      exercise?.movementPattern ||
+      "unknown",
+    primaryMuscles:
+      family?.primaryMuscles ||
+      libraryExercise?.primaryMuscles ||
+      exercise?.primaryMuscles ||
+      [],
+    secondaryMuscles:
+      family?.secondaryMuscles ||
+      libraryExercise?.secondaryMuscles ||
+      exercise?.secondaryMuscles ||
+      [],
+    equipment:
+      family?.equipment ||
+      libraryExercise?.equipment ||
+      exercise?.equipment ||
+      [],
     libraryExercise,
     family,
   };

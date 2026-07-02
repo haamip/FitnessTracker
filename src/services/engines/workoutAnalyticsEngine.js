@@ -9,7 +9,7 @@
  *
  * Difficulty
  * ----------
- * ⭐⭐⭐☆☆
+ *
  *
  * Why this exists
  * ---------------
@@ -21,15 +21,15 @@
  * Data flow:
  *
  * HistoryRepository
- * ↓
+ *
  * workoutAnalyticsEngine.js
- * ↓
+ *
  * Dashboard / Coach / Progress / Developer Tools
  *
  * ============================================================================
  */
 
-import { HistoryRepository } from "./trackfitDataLayer";
+import { HistoryRepository } from "../trackfitDataLayer";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -110,7 +110,9 @@ function getAllExercises(history) {
 }
 
 function getAllMuscles(history) {
-  return getAllExercises(history).flatMap((exercise) => exercise.primaryMuscles || []);
+  return getAllExercises(history).flatMap(
+    (exercise) => exercise.primaryMuscles || [],
+  );
 }
 
 function getWorkoutDayKeys(history) {
@@ -175,24 +177,50 @@ function readableLabel(value, fallback = "Not enough data yet") {
 }
 
 export function buildWorkoutAnalytics(history = HistoryRepository.getAll()) {
-  const week = history.filter((workout) => isWithinDays(workout.completedAt, 7));
-  const month = history.filter((workout) => isWithinDays(workout.completedAt, 30));
+  const week = history.filter((workout) =>
+    isWithinDays(workout.completedAt, 7),
+  );
+  const month = history.filter((workout) =>
+    isWithinDays(workout.completedAt, 30),
+  );
 
   const totalWorkouts = history.length;
-  const totalVolume = history.reduce((sum, workout) => sum + getWorkoutVolume(workout), 0);
-  const weeklyVolume = week.reduce((sum, workout) => sum + getWorkoutVolume(workout), 0);
-  const monthlyVolume = month.reduce((sum, workout) => sum + getWorkoutVolume(workout), 0);
+  const totalVolume = history.reduce(
+    (sum, workout) => sum + getWorkoutVolume(workout),
+    0,
+  );
+  const weeklyVolume = week.reduce(
+    (sum, workout) => sum + getWorkoutVolume(workout),
+    0,
+  );
+  const monthlyVolume = month.reduce(
+    (sum, workout) => sum + getWorkoutVolume(workout),
+    0,
+  );
 
-  const totalSets = history.reduce((sum, workout) => sum + getCompletedSets(workout), 0);
-  const totalReps = history.reduce((sum, workout) => sum + getCompletedReps(workout), 0);
-  const totalDurationSeconds = history.reduce((sum, workout) => sum + getDurationSeconds(workout), 0);
+  const totalSets = history.reduce(
+    (sum, workout) => sum + getCompletedSets(workout),
+    0,
+  );
+  const totalReps = history.reduce(
+    (sum, workout) => sum + getCompletedReps(workout),
+    0,
+  );
+  const totalDurationSeconds = history.reduce(
+    (sum, workout) => sum + getDurationSeconds(workout),
+    0,
+  );
 
-  const exerciseCounts = countBy(getAllExercises(history).map((exercise) => exercise.name));
+  const exerciseCounts = countBy(
+    getAllExercises(history).map((exercise) => exercise.name),
+  );
   const muscleCounts = countBy(getAllMuscles(history));
   const workoutTitleCounts = countBy(history.map((workout) => workout.title));
 
   const averageDurationMinutes =
-    totalWorkouts === 0 ? 0 : Math.round(totalDurationSeconds / totalWorkouts / 60);
+    totalWorkouts === 0
+      ? 0
+      : Math.round(totalDurationSeconds / totalWorkouts / 60);
 
   const averageVolumePerWorkout =
     totalWorkouts === 0 ? 0 : Math.round(totalVolume / totalWorkouts);
@@ -250,9 +278,9 @@ export function buildWorkoutAnalytics(history = HistoryRepository.getAll()) {
  * If a number looks wrong, check:
  *
  * HistoryRepository
- * ↓
+ *
  * this analytics engine
- * ↓
+ *
  * the page/card displaying the value
  *
  * ============================================================================

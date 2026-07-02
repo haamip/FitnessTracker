@@ -4,8 +4,8 @@
  * ============================================================================
  *
  * Difficulty
- * ⭐⭐☆☆☆
- *
+ * ----------
+ * 3/5
  * PURPOSE
  * -------
  * Shows whether TrackFit thinks progress may be stalling.

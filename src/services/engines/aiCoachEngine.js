@@ -1,8 +1,8 @@
-import { getAllTimePRs } from "./prEngine";
+import { getAllTimePRs } from "../prEngine";
 import { getExerciseRecommendation } from "./progressionEngine";
-import { calculateMuscleRecovery } from "./recoveryEngine";
-import { readWorkoutHistory } from "./workoutEngine";
-import { getWeeklyTrainingSummary } from "./workoutSummaryEngine";
+import { calculateMuscleRecovery } from "../recoveryEngine";
+import { readWorkoutHistory } from "../workoutEngine";
+import { getWeeklyTrainingSummary } from "../workoutSummaryEngine";
 
 const DEFAULT_GOALS = {
   weeklyWorkouts: 4,
@@ -23,14 +23,18 @@ function formatVolume(volume) {
 }
 
 function formatDuration(seconds) {
-  const safeSeconds = Number.isFinite(Number(seconds)) ? Math.max(0, Math.floor(Number(seconds))) : 0;
+  const safeSeconds = Number.isFinite(Number(seconds))
+    ? Math.max(0, Math.floor(Number(seconds)))
+    : 0;
   const minutes = Math.round(safeSeconds / 60);
 
   if (minutes < 60) return `${minutes} min`;
 
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
-  return remainingMinutes === 0 ? `${hours}h` : `${hours}h ${remainingMinutes}m`;
+  return remainingMinutes === 0
+    ? `${hours}h`
+    : `${hours}h ${remainingMinutes}m`;
 }
 
 function normaliseDate(value) {
@@ -100,7 +104,10 @@ export function getLastSessionSummary(history = readWorkoutHistory()) {
  * v0.8 stays deterministic and explainable. Later this can become the bridge
  * into the AI Coach without changing the UI contract.
  */
-export function getNextBestMove(history = readWorkoutHistory(), goals = DEFAULT_GOALS) {
+export function getNextBestMove(
+  history = readWorkoutHistory(),
+  goals = DEFAULT_GOALS,
+) {
   const weeklySummary = getWeeklyTrainingSummary(history);
   const readiness = calculateTrainingReadiness(history);
   const latestWorkout = history[0];
@@ -110,7 +117,8 @@ export function getNextBestMove(history = readWorkoutHistory(), goals = DEFAULT_
       title: "Log your first session",
       action: "Start Workout 1",
       route: "/workouts/workout-1",
-      detail: "One completed session gives TrackFit the baseline it needs for useful targets.",
+      detail:
+        "One completed session gives TrackFit the baseline it needs for useful targets.",
     };
   }
 
@@ -136,7 +144,8 @@ export function getNextBestMove(history = readWorkoutHistory(), goals = DEFAULT_
     title: "Progression check",
     action: "Review training",
     route: "/progress",
-    detail: "Weekly target hit. Review volume and PRs before adding more load. Old school rule: earn the weight first.",
+    detail:
+      "Weekly target hit. Review volume and PRs before adding more load. Old school rule: earn the weight first.",
   };
 }
 
@@ -154,14 +163,16 @@ export function getSuggestedWorkout(history = readWorkoutHistory()) {
     return {
       title: "Start Workout 1",
       route: "/workouts/workout-1",
-      reason: "No completed workout history yet. Log one clean session to unlock personalised targets.",
+      reason:
+        "No completed workout history yet. Log one clean session to unlock personalised targets.",
     };
   }
 
   return {
     title: `Repeat ${latestWorkout.title || "last session"}`,
     route: `/workouts/${latestWorkout.workoutId || "workout-1"}`,
-    reason: "Repeating a known session gives TrackFit enough data to progress weight, reps and volume safely.",
+    reason:
+      "Repeating a known session gives TrackFit enough data to progress weight, reps and volume safely.",
   };
 }
 
@@ -183,13 +194,15 @@ export function calculateTrainingReadiness(history = readWorkoutHistory()) {
     };
   }
 
-  const average = recovery.reduce((sum, item) => sum + item.score, 0) / recovery.length;
+  const average =
+    recovery.reduce((sum, item) => sum + item.score, 0) / recovery.length;
   const mostFatigued = recovery[0];
   const readyMuscles = recovery.filter((item) => item.score >= 85).slice(0, 3);
 
   return {
     score: clampScore(average),
-    label: average >= 85 ? "Ready" : average >= 65 ? "Controlled" : "Recovering",
+    label:
+      average >= 85 ? "Ready" : average >= 65 ? "Controlled" : "Recovering",
     note:
       mostFatigued.score < 60
         ? `${readableMuscle(mostFatigued.muscle)} is still recovering. Keep volume sensible or train around it.`
@@ -207,7 +220,10 @@ export function calculateTrainingReadiness(history = readWorkoutHistory()) {
  * for an exercise has not improved across several appearances, the coach flags
  * it for attention rather than pretending to know the perfect fix.
  */
-export function detectPlateaus(history = readWorkoutHistory(), minimumAppearances = 3) {
+export function detectPlateaus(
+  history = readWorkoutHistory(),
+  minimumAppearances = 3,
+) {
   const byExercise = new Map();
 
   history.forEach((workout) => {
@@ -224,7 +240,10 @@ export function detectPlateaus(history = readWorkoutHistory(), minimumAppearance
       if (!bestSet) return;
 
       const entries = byExercise.get(exercise.name) || [];
-      entries.push({ completedAt: workout.completedAt, score: Math.round(bestSet * 10) / 10 });
+      entries.push({
+        completedAt: workout.completedAt,
+        score: Math.round(bestSet * 10) / 10,
+      });
       byExercise.set(exercise.name, entries);
     });
   });
@@ -232,7 +251,9 @@ export function detectPlateaus(history = readWorkoutHistory(), minimumAppearance
   return [...byExercise.entries()]
     .map(([exercise, entries]) => ({
       exercise,
-      entries: entries.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt)),
+      entries: entries.sort(
+        (a, b) => new Date(b.completedAt) - new Date(a.completedAt),
+      ),
     }))
     .filter(({ entries }) => entries.length >= minimumAppearances)
     .map(({ exercise, entries }) => {
@@ -260,13 +281,18 @@ export function detectPlateaus(history = readWorkoutHistory(), minimumAppearance
  * The coach uses deterministic local data first. That gives users a clear,
  * explainable recommendation before we add any external AI calls later.
  */
-export function generateDailyCoachBrief(history = readWorkoutHistory(), goals = DEFAULT_GOALS) {
+export function generateDailyCoachBrief(
+  history = readWorkoutHistory(),
+  goals = DEFAULT_GOALS,
+) {
   const weeklySummary = getWeeklyTrainingSummary(history);
   const readiness = calculateTrainingReadiness(history);
   const suggestedWorkout = getSuggestedWorkout(history);
   const plateaus = detectPlateaus(history);
   const prs = getAllTimePRs(history);
-  const bestBench = prs.find((pr) => pr.exercise.toLowerCase().includes("bench"));
+  const bestBench = prs.find((pr) =>
+    pr.exercise.toLowerCase().includes("bench"),
+  );
   const benchProgress = bestBench
     ? clampScore((Number(bestBench.e1rm) / goals.benchTargetKg) * 100)
     : 0;
@@ -285,7 +311,12 @@ export function generateDailyCoachBrief(history = readWorkoutHistory(), goals = 
   if (plateaus[0]) reasons.push(plateaus[0].message);
 
   return {
-    title: readiness.score >= 85 ? "Good day to push" : readiness.score >= 65 ? "Train smart today" : "Recovery-first session",
+    title:
+      readiness.score >= 85
+        ? "Good day to push"
+        : readiness.score >= 65
+          ? "Train smart today"
+          : "Recovery-first session",
     readiness,
     suggestedWorkout,
     nextBestMove,
@@ -299,7 +330,10 @@ export function generateDailyCoachBrief(history = readWorkoutHistory(), goals = 
       percent: benchProgress,
     },
     reasons,
-    primaryAction: history.length === 0 ? "Log your first workout" : "Open suggested workout",
+    primaryAction:
+      history.length === 0
+        ? "Log your first workout"
+        : "Open suggested workout",
     weeklySummaryText:
       weeklySummary.workouts === 0
         ? "No completed workouts this week yet. First session gets the engine moving."
@@ -310,10 +344,13 @@ export function generateDailyCoachBrief(history = readWorkoutHistory(), goals = 
 /**
  * Explains the next set recommendation for an exercise.
  *
- * This is used by future “Why?” buttons so TrackFit does not become a black-box
+ * This is used by future ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“Why?ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â buttons so TrackFit does not become a black-box
  * coach. Users should be able to see the reasoning behind every suggestion.
  */
-export function explainExerciseProgression(exercise, history = readWorkoutHistory()) {
+export function explainExerciseProgression(
+  exercise,
+  history = readWorkoutHistory(),
+) {
   const recommendation = getExerciseRecommendation(exercise, history);
 
   return {

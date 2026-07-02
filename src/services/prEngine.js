@@ -46,12 +46,18 @@ export function detectWorkoutPRs(history, exercises) {
 
   exercises.forEach((exercise) => {
     const previousSets = collectExerciseRecords(history, exercise);
-    const previousBestWeight = Math.max(0, ...previousSets.map((set) => Number.parseFloat(set.weight) || 0));
+    const previousBestWeight = Math.max(
+      0,
+      ...previousSets.map((set) => Number.parseFloat(set.weight) || 0),
+    );
     const previousBestE1rm = Math.max(
       0,
       ...previousSets.map((set) => estimateOneRepMax(set.weight, set.reps)),
     );
-    const previousBestVolume = Math.max(0, ...previousSets.map(calculateSetVolume));
+    const previousBestVolume = Math.max(
+      0,
+      ...previousSets.map(calculateSetVolume),
+    );
 
     (exercise.sets || []).forEach((set) => {
       if (!set.done) return;
@@ -62,15 +68,27 @@ export function detectWorkoutPRs(history, exercises) {
       const volume = calculateSetVolume(set);
 
       if (weight > previousBestWeight && previousBestWeight > 0) {
-        prs.push({ type: "Heaviest Set", exercise: exercise.name, value: `${weight}kg x ${reps}` });
+        prs.push({
+          type: "Heaviest Set",
+          exercise: exercise.name,
+          value: `${weight}kg x ${reps}`,
+        });
       }
 
       if (e1rm > previousBestE1rm && previousBestE1rm > 0) {
-        prs.push({ type: "Estimated 1RM", exercise: exercise.name, value: `${e1rm}kg` });
+        prs.push({
+          type: "Estimated 1RM",
+          exercise: exercise.name,
+          value: `${e1rm}kg`,
+        });
       }
 
       if (volume > previousBestVolume && previousBestVolume > 0) {
-        prs.push({ type: "Set Volume", exercise: exercise.name, value: `${Math.round(volume)}kg` });
+        prs.push({
+          type: "Set Volume",
+          exercise: exercise.name,
+          value: `${Math.round(volume)}kg`,
+        });
       }
     });
   });
@@ -103,5 +121,7 @@ export function getAllTimePRs(history) {
     });
   });
 
-  return [...bestByExercise.values()].sort((a, b) => b.e1rm - a.e1rm).slice(0, 6);
+  return [...bestByExercise.values()]
+    .sort((a, b) => b.e1rm - a.e1rm)
+    .slice(0, 6);
 }

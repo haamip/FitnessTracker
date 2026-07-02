@@ -5,7 +5,7 @@
  *
  * Difficulty
  * ----------
- * ⭐⭐☆☆☆
+ * 3/5
  *
  * PURPOSE
  * -------
@@ -28,7 +28,8 @@ export default function WeeklySummaryCard({ weeklySummary }) {
   const sets = weeklySummary?.sets ?? 0;
   const durationMinutes = weeklySummary?.durationMinutes ?? 0;
   const prs = weeklySummary?.prs ?? 0;
-  const mostTrainedMuscle = weeklySummary?.mostTrainedMuscle ?? "Not enough data yet";
+  const mostTrainedMuscle =
+    weeklySummary?.mostTrainedMuscle ?? "Not enough data yet";
   const message = weeklySummary?.message ?? "No weekly training data yet.";
 
   return (

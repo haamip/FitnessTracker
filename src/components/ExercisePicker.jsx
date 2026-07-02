@@ -102,8 +102,12 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
   const [selectedEquipment, setSelectedEquipment] = useState("all");
   const [viewMode, setViewMode] = useState("all");
   const [previewExercise, setPreviewExercise] = useState(null);
-  const [favouriteIds, setFavouriteIds] = useState(() => readStoredList("trackfit_favourite_exercises"));
-  const [recentIds, setRecentIds] = useState(() => readStoredList("trackfit_recent_exercises"));
+  const [favouriteIds, setFavouriteIds] = useState(() =>
+    readStoredList("trackfit_favourite_exercises"),
+  );
+  const [recentIds, setRecentIds] = useState(() =>
+    readStoredList("trackfit_recent_exercises"),
+  );
 
   const favouriteIdSet = useMemo(() => new Set(favouriteIds), [favouriteIds]);
   const recentIdSet = useMemo(() => new Set(recentIds), [recentIds]);
@@ -113,7 +117,10 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
 
     return exerciseLibrary
       .filter((exercise) => {
-        const muscles = [...(exercise.primaryMuscles || []), ...(exercise.secondaryMuscles || [])]
+        const muscles = [
+          ...(exercise.primaryMuscles || []),
+          ...(exercise.secondaryMuscles || []),
+        ]
           .join(" ")
           .toLowerCase();
         const equipment = (exercise.equipment || []).join(" ").toLowerCase();
@@ -126,15 +133,26 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
 
         const matchesSearch =
           !search ||
-          [exercise.name, muscles, equipment, tags, exercise.movementPattern, exercise.category]
+          [
+            exercise.name,
+            muscles,
+            equipment,
+            tags,
+            exercise.movementPattern,
+            exercise.category,
+          ]
             .join(" ")
             .toLowerCase()
             .includes(search);
 
-        const matchesMuscle = selectedMuscle === "all" || muscles.includes(selectedMuscle);
-        const matchesEquipment = selectedEquipment === "all" || equipment.includes(selectedEquipment);
+        const matchesMuscle =
+          selectedMuscle === "all" || muscles.includes(selectedMuscle);
+        const matchesEquipment =
+          selectedEquipment === "all" || equipment.includes(selectedEquipment);
 
-        return matchesMode && matchesSearch && matchesMuscle && matchesEquipment;
+        return (
+          matchesMode && matchesSearch && matchesMuscle && matchesEquipment
+        );
       })
       .sort((a, b) => {
         const aRecentIndex = recentIds.indexOf(a.id);
@@ -147,7 +165,15 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
         return a.name.localeCompare(b.name);
       })
       .slice(0, 80);
-  }, [favouriteIdSet, query, recentIdSet, recentIds, selectedEquipment, selectedMuscle, viewMode]);
+  }, [
+    favouriteIdSet,
+    query,
+    recentIdSet,
+    recentIds,
+    selectedEquipment,
+    selectedMuscle,
+    viewMode,
+  ]);
 
   function toggleFavourite(exerciseId) {
     setFavouriteIds((currentIds) => {
@@ -161,7 +187,10 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
   }
 
   function selectExercise(exercise) {
-    const nextRecentIds = [exercise.id, ...recentIds.filter((id) => id !== exercise.id)].slice(0, 20);
+    const nextRecentIds = [
+      exercise.id,
+      ...recentIds.filter((id) => id !== exercise.id),
+    ].slice(0, 20);
 
     setRecentIds(nextRecentIds);
     saveStoredList("trackfit_recent_exercises", nextRecentIds);
@@ -186,7 +215,11 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
             <h2>Exercise Library</h2>
           </div>
 
-          <button aria-label="Close exercise picker" onClick={onClose} type="button">
+          <button
+            aria-label="Close exercise picker"
+            onClick={onClose}
+            type="button"
+          >
             <X size={24} />
           </button>
         </header>
@@ -204,7 +237,11 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
         </label>
 
         <div className="tf-filter-row" aria-label="Library views">
-          <button className={viewMode === "all" ? "active" : ""} onClick={() => setViewMode("all")} type="button">
+          <button
+            className={viewMode === "all" ? "active" : ""}
+            onClick={() => setViewMode("all")}
+            type="button"
+          >
             All
           </button>
           <button
@@ -214,7 +251,11 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
           >
             <Star size={14} /> Favourites
           </button>
-          <button className={viewMode === "recent" ? "active" : ""} onClick={() => setViewMode("recent")} type="button">
+          <button
+            className={viewMode === "recent" ? "active" : ""}
+            onClick={() => setViewMode("recent")}
+            type="button"
+          >
             <Clock3 size={14} /> Recent
           </button>
         </div>
@@ -251,10 +292,13 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
             <div>
               <strong>{preview.name}</strong>
               <span>
-                {(preview.primaryMuscles || []).join(", ") || "General"} • {preview.movementPattern || "movement"}
+                {(preview.primaryMuscles || []).join(", ") || "General"} Ã¢â‚¬Â¢{" "}
+                {preview.movementPattern || "movement"}
               </span>
               <small>
-                {(preview.equipment || []).join(", ") || "Bodyweight"} • {preview.defaultSets || 3} sets • {preview.defaultReps || "8-12"}
+                {(preview.equipment || []).join(", ") || "Bodyweight"} Ã¢â‚¬Â¢{" "}
+                {preview.defaultSets || 3} sets Ã¢â‚¬Â¢{" "}
+                {preview.defaultReps || "8-12"}
               </small>
             </div>
             <div className="tf-picker-preview-actions">
@@ -268,7 +312,9 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
           </article>
         )}
 
-        <div className="tf-picker-count">{filteredExercises.length} exercises found</div>
+        <div className="tf-picker-count">
+          {filteredExercises.length} exercises found
+        </div>
 
         <div className="tf-picker-list">
           {filteredExercises.map((exercise) => {
@@ -277,7 +323,9 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
 
             return (
               <article
-                className={isSelected ? "tf-picker-item selected" : "tf-picker-item"}
+                className={
+                  isSelected ? "tf-picker-item selected" : "tf-picker-item"
+                }
                 key={exercise.id}
                 onClick={() => setPreviewExercise(exercise)}
               >
@@ -286,14 +334,17 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
                 <span>
                   <strong>{exercise.name}</strong>
                   <small>
-                    {(exercise.primaryMuscles || []).join(", ") || "General"} •{" "}
+                    {(exercise.primaryMuscles || []).join(", ") || "General"}{" "}
+                    Ã¢â‚¬Â¢{" "}
                     {(exercise.equipment || []).join(", ") || "Bodyweight"}
                   </small>
                 </span>
 
                 <span className="tf-picker-actions">
                   <button
-                    aria-label={isFavourite ? "Remove favourite" : "Favourite exercise"}
+                    aria-label={
+                      isFavourite ? "Remove favourite" : "Favourite exercise"
+                    }
                     className={isFavourite ? "active" : ""}
                     onClick={(event) => {
                       event.stopPropagation();
@@ -301,7 +352,10 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
                     }}
                     type="button"
                   >
-                    <Star size={17} fill={isFavourite ? "currentColor" : "none"} />
+                    <Star
+                      size={17}
+                      fill={isFavourite ? "currentColor" : "none"}
+                    />
                   </button>
                   <button
                     onClick={(event) => {

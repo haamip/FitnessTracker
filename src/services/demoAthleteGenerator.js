@@ -9,7 +9,7 @@
  *
  * Difficulty
  * ----------
- * ⭐⭐☆☆☆
+ * 3/5
  *
  * Why this exists
  * ---------------
@@ -113,7 +113,15 @@ function createSet(id, weight, reps) {
   };
 }
 
-function createExercise(id, name, libraryId, movementPattern, weight, reps, setCount) {
+function createExercise(
+  id,
+  name,
+  libraryId,
+  movementPattern,
+  weight,
+  reps,
+  setCount,
+) {
   return {
     id,
     libraryId,
@@ -145,7 +153,10 @@ function calculateWorkoutVolume(exercises) {
 }
 
 function createWorkout(id, daysBack, title, exercises, prs = []) {
-  const completedSets = exercises.reduce((sum, exercise) => sum + exercise.sets.length, 0);
+  const completedSets = exercises.reduce(
+    (sum, exercise) => sum + exercise.sets.length,
+    0,
+  );
   const volume = calculateWorkoutVolume(exercises);
 
   return {
@@ -171,7 +182,10 @@ function createWorkout(id, daysBack, title, exercises, prs = []) {
 }
 
 function adjustedWeight(baseWeight, weekIndex, settings) {
-  const progress = settings.plateau && weekIndex >= 2 ? settings.progressStep : settings.progressStep * weekIndex;
+  const progress =
+    settings.plateau && weekIndex >= 2
+      ? settings.progressStep
+      : settings.progressStep * weekIndex;
   const adjusted = (baseWeight + progress) * settings.volumeMultiplier;
 
   return Math.round(adjusted * 2) / 2;
@@ -179,43 +193,175 @@ function adjustedWeight(baseWeight, weekIndex, settings) {
 
 function createWeekWorkouts(weekIndex, settings) {
   const weekOffset = weekIndex * 7;
-  const prs = weekIndex === 3 && !settings.plateau
-    ? [{ type: "Estimated 1RM", exercise: "Barbell Bench Press", value: "New demo PR" }]
-    : [];
+  const prs =
+    weekIndex === 3 && !settings.plateau
+      ? [
+          {
+            type: "Estimated 1RM",
+            exercise: "Barbell Bench Press",
+            value: "New demo PR",
+          },
+        ]
+      : [];
 
   return [
-    createWorkout(`athlete-upper-${weekIndex}`, weekOffset, "Upper Strength", [
-      createExercise(`athlete-bench-${weekIndex}`, "Barbell Bench Press", "barbell-bench-press-medium-grip", "horizontal_push", adjustedWeight(75, weekIndex, settings), 6, 4),
-      createExercise(`athlete-row-${weekIndex}`, "Barbell Rear Delt Row", "barbell-rear-delt-row", "horizontal_pull", adjustedWeight(50, weekIndex, settings), 10, 3),
-      createExercise(`athlete-press-${weekIndex}`, "Barbell Shoulder Press", "barbell-shoulder-pres", "vertical_push", adjustedWeight(40, weekIndex, settings), 8, 3),
-    ], prs),
-    createWorkout(`athlete-lower-${weekIndex}`, weekOffset + 2, "Lower Strength", [
-      createExercise(`athlete-lunge-${weekIndex}`, "Barbell Lunge", "barbell-lunge", "squat", adjustedWeight(50, weekIndex, settings), 8, 4),
-      createExercise(`athlete-bridge-${weekIndex}`, "Barbell Glute Bridge", "barbell-glute-bridge", "hinge", adjustedWeight(95, weekIndex, settings), 10, 4),
-      createExercise(`athlete-shrug-${weekIndex}`, "Barbell Shrug", "barbell-shrug", "carry", adjustedWeight(85, weekIndex, settings), 12, 3),
-    ]),
+    createWorkout(
+      `athlete-upper-${weekIndex}`,
+      weekOffset,
+      "Upper Strength",
+      [
+        createExercise(
+          `athlete-bench-${weekIndex}`,
+          "Barbell Bench Press",
+          "barbell-bench-press-medium-grip",
+          "horizontal_push",
+          adjustedWeight(75, weekIndex, settings),
+          6,
+          4,
+        ),
+        createExercise(
+          `athlete-row-${weekIndex}`,
+          "Barbell Rear Delt Row",
+          "barbell-rear-delt-row",
+          "horizontal_pull",
+          adjustedWeight(50, weekIndex, settings),
+          10,
+          3,
+        ),
+        createExercise(
+          `athlete-press-${weekIndex}`,
+          "Barbell Shoulder Press",
+          "barbell-shoulder-pres",
+          "vertical_push",
+          adjustedWeight(40, weekIndex, settings),
+          8,
+          3,
+        ),
+      ],
+      prs,
+    ),
+    createWorkout(
+      `athlete-lower-${weekIndex}`,
+      weekOffset + 2,
+      "Lower Strength",
+      [
+        createExercise(
+          `athlete-lunge-${weekIndex}`,
+          "Barbell Lunge",
+          "barbell-lunge",
+          "squat",
+          adjustedWeight(50, weekIndex, settings),
+          8,
+          4,
+        ),
+        createExercise(
+          `athlete-bridge-${weekIndex}`,
+          "Barbell Glute Bridge",
+          "barbell-glute-bridge",
+          "hinge",
+          adjustedWeight(95, weekIndex, settings),
+          10,
+          4,
+        ),
+        createExercise(
+          `athlete-shrug-${weekIndex}`,
+          "Barbell Shrug",
+          "barbell-shrug",
+          "carry",
+          adjustedWeight(85, weekIndex, settings),
+          12,
+          3,
+        ),
+      ],
+    ),
     createWorkout(`athlete-push-${weekIndex}`, weekOffset + 4, "Push Volume", [
-      createExercise(`athlete-incline-${weekIndex}`, "Incline Bench Press", "barbell-incline-bench-press-medium-grip", "horizontal_push", adjustedWeight(57.5, weekIndex, settings), 10, 3),
-      createExercise(`athlete-guillotine-${weekIndex}`, "Guillotine Bench Press", "barbell-guillotine-bench-press", "horizontal_push", adjustedWeight(47.5, weekIndex, settings), 10, 3),
-      createExercise(`athlete-press-volume-${weekIndex}`, "Barbell Shoulder Press", "barbell-shoulder-pres", "vertical_push", adjustedWeight(37.5, weekIndex, settings), 9, 3),
+      createExercise(
+        `athlete-incline-${weekIndex}`,
+        "Incline Bench Press",
+        "barbell-incline-bench-press-medium-grip",
+        "horizontal_push",
+        adjustedWeight(57.5, weekIndex, settings),
+        10,
+        3,
+      ),
+      createExercise(
+        `athlete-guillotine-${weekIndex}`,
+        "Guillotine Bench Press",
+        "barbell-guillotine-bench-press",
+        "horizontal_push",
+        adjustedWeight(47.5, weekIndex, settings),
+        10,
+        3,
+      ),
+      createExercise(
+        `athlete-press-volume-${weekIndex}`,
+        "Barbell Shoulder Press",
+        "barbell-shoulder-pres",
+        "vertical_push",
+        adjustedWeight(37.5, weekIndex, settings),
+        9,
+        3,
+      ),
     ]),
     createWorkout(`athlete-pull-${weekIndex}`, weekOffset + 6, "Pull Volume", [
-      createExercise(`athlete-row-volume-${weekIndex}`, "Barbell Rear Delt Row", "barbell-rear-delt-row", "horizontal_pull", adjustedWeight(50, weekIndex, settings), 12, 4),
-      createExercise(`athlete-band-fly-${weekIndex}`, "Back Flyes With Bands", "back-flyes-with-bands", "rear_delt", adjustedWeight(12.5, weekIndex, settings), 12, 3),
-      createExercise(`athlete-curl-${weekIndex}`, "Barbell Curl", "barbell-curl", "elbow_flexion", adjustedWeight(32.5, weekIndex, settings), 10, 3),
+      createExercise(
+        `athlete-row-volume-${weekIndex}`,
+        "Barbell Rear Delt Row",
+        "barbell-rear-delt-row",
+        "horizontal_pull",
+        adjustedWeight(50, weekIndex, settings),
+        12,
+        4,
+      ),
+      createExercise(
+        `athlete-band-fly-${weekIndex}`,
+        "Back Flyes With Bands",
+        "back-flyes-with-bands",
+        "rear_delt",
+        adjustedWeight(12.5, weekIndex, settings),
+        12,
+        3,
+      ),
+      createExercise(
+        `athlete-curl-${weekIndex}`,
+        "Barbell Curl",
+        "barbell-curl",
+        "elbow_flexion",
+        adjustedWeight(32.5, weekIndex, settings),
+        10,
+        3,
+      ),
     ]),
   ];
 }
 
 function createHistory(settings) {
-  const workouts = Array.from({ length: 6 }, (_, weekIndex) => createWeekWorkouts(weekIndex, settings)).flat();
+  const workouts = Array.from({ length: 6 }, (_, weekIndex) =>
+    createWeekWorkouts(weekIndex, settings),
+  ).flat();
 
   if (settings.fatiguePattern !== "heavy") return workouts;
 
   return [
     createWorkout("athlete-extra-fatigue-1", 1, "Extra Conditioning", [
-      createExercise("athlete-fatigue-row", "Barbell Rear Delt Row", "barbell-rear-delt-row", "horizontal_pull", adjustedWeight(52.5, 5, settings), 12, 4),
-      createExercise("athlete-fatigue-curl", "Barbell Curl", "barbell-curl", "elbow_flexion", adjustedWeight(35, 5, settings), 10, 3),
+      createExercise(
+        "athlete-fatigue-row",
+        "Barbell Rear Delt Row",
+        "barbell-rear-delt-row",
+        "horizontal_pull",
+        adjustedWeight(52.5, 5, settings),
+        12,
+        4,
+      ),
+      createExercise(
+        "athlete-fatigue-curl",
+        "Barbell Curl",
+        "barbell-curl",
+        "elbow_flexion",
+        adjustedWeight(35, 5, settings),
+        10,
+        3,
+      ),
     ]),
     ...workouts,
   ];
@@ -228,7 +374,9 @@ function createCheckIns(settings) {
     protein: Math.round(settings.proteinBase + (index % 5) * 4),
     water: Math.round((settings.waterBase + (index % 4) * 0.15) * 10) / 10,
     sleep: Math.round((settings.sleepBase + (index % 5) * 0.2) * 10) / 10,
-    trained: [0, 1, 2, 4, 6, 8, 11, 14, 16, 18, 21, 23, 25, 28, 30, 32, 35, 37, 39].includes(index),
+    trained: [
+      0, 1, 2, 4, 6, 8, 11, 14, 16, 18, 21, 23, 25, 28, 30, 32, 35, 37, 39,
+    ].includes(index),
     weight: Math.round((settings.weightStart - index * 0.05) * 10) / 10,
   }));
 }
@@ -237,12 +385,48 @@ function createCardio(settings) {
   const hardMode = settings.fatiguePattern === "heavy";
 
   return [
-    { id: "athlete-cardio-1", date: daysAgo(0), type: "Incline Walk", distance: 3.4, duration: 28 },
-    { id: "athlete-cardio-2", date: daysAgo(2), type: hardMode ? "Rower" : "Bike", distance: hardMode ? 2.4 : 8.8, duration: hardMode ? 14 : 24 },
-    { id: "athlete-cardio-3", date: daysAgo(4), type: "Walk", distance: 4.2, duration: 39 },
-    { id: "athlete-cardio-4", date: daysAgo(7), type: "Incline Walk", distance: 3.1, duration: 26 },
-    { id: "athlete-cardio-5", date: daysAgo(14), type: "Incline Walk", distance: 3.8, duration: 32 },
-    { id: "athlete-cardio-6", date: daysAgo(21), type: "Walk", distance: 4.6, duration: 42 },
+    {
+      id: "athlete-cardio-1",
+      date: daysAgo(0),
+      type: "Incline Walk",
+      distance: 3.4,
+      duration: 28,
+    },
+    {
+      id: "athlete-cardio-2",
+      date: daysAgo(2),
+      type: hardMode ? "Rower" : "Bike",
+      distance: hardMode ? 2.4 : 8.8,
+      duration: hardMode ? 14 : 24,
+    },
+    {
+      id: "athlete-cardio-3",
+      date: daysAgo(4),
+      type: "Walk",
+      distance: 4.2,
+      duration: 39,
+    },
+    {
+      id: "athlete-cardio-4",
+      date: daysAgo(7),
+      type: "Incline Walk",
+      distance: 3.1,
+      duration: 26,
+    },
+    {
+      id: "athlete-cardio-5",
+      date: daysAgo(14),
+      type: "Incline Walk",
+      distance: 3.8,
+      duration: 32,
+    },
+    {
+      id: "athlete-cardio-6",
+      date: daysAgo(21),
+      type: "Walk",
+      distance: 4.6,
+      duration: 42,
+    },
   ];
 }
 

@@ -22,7 +22,7 @@ import SetLogger from "../components/ui/SetLogger";
 import WorkoutSummary from "../components/ui/WorkoutSummary";
 import { exerciseLibrary } from "../data/exerciseLibrary";
 import { detectWorkoutPRs } from "../services/prEngine";
-import { getExerciseRecommendation } from "../services/progressionEngine";
+import { getExerciseRecommendation } from "../services/engines/progressionEngine";
 import {
   buildCompletedWorkout,
   calculateWorkoutTotals,
@@ -47,8 +47,12 @@ function findLibraryExerciseById(id) {
 }
 
 function findLibraryExerciseByName(name) {
-  const normalisedName = String(name || "").trim().toLowerCase();
-  return exerciseLibrary.find((exercise) => exercise.name.toLowerCase() === normalisedName);
+  const normalisedName = String(name || "")
+    .trim()
+    .toLowerCase();
+  return exerciseLibrary.find(
+    (exercise) => exercise.name.toLowerCase() === normalisedName,
+  );
 }
 
 function resolveExerciseImage(exercise) {
@@ -57,7 +61,8 @@ function resolveExerciseImage(exercise) {
   }
 
   const libraryExercise =
-    findLibraryExerciseById(exercise?.libraryId || exercise?.id) || findLibraryExerciseByName(exercise?.name);
+    findLibraryExerciseById(exercise?.libraryId || exercise?.id) ||
+    findLibraryExerciseByName(exercise?.name);
 
   return libraryExercise?.image || FALLBACK_EXERCISE_IMAGE;
 }
@@ -99,7 +104,10 @@ function createDefaultExercises() {
       id: "rdl",
       name: "Dumbbell Romanian Deadlift",
       target: "2 sets - 10 reps",
-      image: resolveExerciseImage({ id: "rdl", name: "Dumbbell Romanian Deadlift" }),
+      image: resolveExerciseImage({
+        id: "rdl",
+        name: "Dumbbell Romanian Deadlift",
+      }),
       primaryMuscles: ["hamstrings"],
       equipment: ["dumbbell"],
       movementPattern: "hinge",
@@ -110,7 +118,10 @@ function createDefaultExercises() {
       id: "calf",
       name: "Dumbbell Standing Calf Raise",
       target: "2 sets - 12 reps",
-      image: resolveExerciseImage({ id: "calf", name: "Dumbbell Standing Calf Raise" }),
+      image: resolveExerciseImage({
+        id: "calf",
+        name: "Dumbbell Standing Calf Raise",
+      }),
       primaryMuscles: ["calves"],
       equipment: ["dumbbell"],
       movementPattern: "calf_raise",
@@ -121,7 +132,10 @@ function createDefaultExercises() {
       id: "press",
       name: "Dumbbell Shoulder Press",
       target: "2 sets - 10 reps",
-      image: resolveExerciseImage({ id: "press", name: "Dumbbell Shoulder Press" }),
+      image: resolveExerciseImage({
+        id: "press",
+        name: "Dumbbell Shoulder Press",
+      }),
       primaryMuscles: ["shoulders"],
       equipment: ["dumbbell"],
       movementPattern: "vertical_push",
@@ -171,7 +185,11 @@ function convertAiDayToWorkout(day) {
     defaultRestSeconds: parseRestSeconds(exercise.rest),
     exerciseNote: "",
     sets: Array.from({ length: exercise.sets }, () =>
-      createSet(exercise.demoWeight || exercise.defaultWeight || "", exercise.reps, "S")
+      createSet(
+        exercise.demoWeight || exercise.defaultWeight || "",
+        exercise.reps,
+        "S",
+      ),
     ),
   }));
 }
@@ -211,7 +229,9 @@ export default function WorkoutDetail() {
     return createDefaultExercises();
   });
 
-  const [openExerciseId, setOpenExerciseId] = useState(() => exercises[0]?.id || "");
+  const [openExerciseId, setOpenExerciseId] = useState(
+    () => exercises[0]?.id || "",
+  );
   const workoutHistory = useMemo(() => readWorkoutHistory(), []);
 
   const currentExerciseIndex = Math.max(
@@ -222,10 +242,13 @@ export default function WorkoutDetail() {
   const nextExercise = exercises[currentExerciseIndex + 1];
   const previousExerciseInWorkout = exercises[currentExerciseIndex - 1];
 
-  const currentExerciseDoneSets = currentExercise?.sets.filter((set) => set.done).length || 0;
+  const currentExerciseDoneSets =
+    currentExercise?.sets.filter((set) => set.done).length || 0;
   const currentExerciseTotalSets = currentExercise?.sets.length || 0;
   const currentExercisePercent =
-    currentExerciseTotalSets > 0 ? Math.round((currentExerciseDoneSets / currentExerciseTotalSets) * 100) : 0;
+    currentExerciseTotalSets > 0
+      ? Math.round((currentExerciseDoneSets / currentExerciseTotalSets) * 100)
+      : 0;
 
   /**
    * Guided Exercise Flow
@@ -235,9 +258,11 @@ export default function WorkoutDetail() {
    * flowing without forcing the user to scan the exercise strip manually.
    */
   const isCurrentExerciseComplete =
-    currentExerciseTotalSets > 0 && currentExerciseDoneSets === currentExerciseTotalSets;
+    currentExerciseTotalSets > 0 &&
+    currentExerciseDoneSets === currentExerciseTotalSets;
 
-  const isCurrentExerciseCelebrating = completedExerciseId === currentExercise?.id;
+  const isCurrentExerciseCelebrating =
+    completedExerciseId === currentExercise?.id;
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -277,7 +302,8 @@ export default function WorkoutDetail() {
   }, []);
 
   function requestNotificationPermission() {
-    if (!("Notification" in window) || Notification.permission !== "default") return;
+    if (!("Notification" in window) || Notification.permission !== "default")
+      return;
 
     Notification.requestPermission().catch(() => {
       // Browser may block notification permission. In-app timer still works.
@@ -285,7 +311,9 @@ export default function WorkoutDetail() {
   }
 
   function getExerciseRestSeconds(exercise) {
-    return parseRestSeconds(exercise.defaultRestSeconds || exercise.rest || DEFAULT_REST_SECONDS);
+    return parseRestSeconds(
+      exercise.defaultRestSeconds || exercise.rest || DEFAULT_REST_SECONDS,
+    );
   }
 
   function startRestTimer(exercise) {
@@ -343,20 +371,26 @@ export default function WorkoutDetail() {
   }
 
   function updateSet(exerciseId, setId, field, value) {
-    const targetExerciseIndex = exercises.findIndex((exercise) => exercise.id === exerciseId);
+    const targetExerciseIndex = exercises.findIndex(
+      (exercise) => exercise.id === exerciseId,
+    );
     const targetExercise = exercises[targetExerciseIndex];
     const targetSet = targetExercise?.sets.find((set) => set.id === setId);
     const isMarkingDone = field === "done" && value && !targetSet?.done;
 
     const updatedTargetSets =
-      targetExercise?.sets.map((set) => (set.id === setId ? { ...set, [field]: value } : set)) || [];
+      targetExercise?.sets.map((set) =>
+        set.id === setId ? { ...set, [field]: value } : set,
+      ) || [];
 
     const willCompleteExercise =
       isMarkingDone &&
       updatedTargetSets.length > 0 &&
       updatedTargetSets.every((set) => set.done);
 
-    const upcomingExercise = willCompleteExercise ? exercises[targetExerciseIndex + 1] : null;
+    const upcomingExercise = willCompleteExercise
+      ? exercises[targetExerciseIndex + 1]
+      : null;
     const willCompleteWorkout = willCompleteExercise && !upcomingExercise;
 
     if (isMarkingDone && targetExercise) {
@@ -420,7 +454,10 @@ export default function WorkoutDetail() {
 
         return {
           ...exercise,
-          sets: [...exercise.sets, createSet(previousSet.weight, previousSet.reps, previousSet.type)],
+          sets: [
+            ...exercise.sets,
+            createSet(previousSet.weight, previousSet.reps, previousSet.type),
+          ],
         };
       }),
     );
@@ -429,7 +466,8 @@ export default function WorkoutDetail() {
   function removeSet(exerciseId, setId) {
     setExercises((currentExercises) =>
       currentExercises.map((exercise) => {
-        if (exercise.id !== exerciseId || exercise.sets.length === 1) return exercise;
+        if (exercise.id !== exerciseId || exercise.sets.length === 1)
+          return exercise;
 
         return {
           ...exercise,
@@ -441,10 +479,17 @@ export default function WorkoutDetail() {
 
   function moveExercise(exerciseId, direction) {
     setExercises((currentExercises) => {
-      const currentIndex = currentExercises.findIndex((exercise) => exercise.id === exerciseId);
+      const currentIndex = currentExercises.findIndex(
+        (exercise) => exercise.id === exerciseId,
+      );
       const nextIndex = currentIndex + direction;
 
-      if (currentIndex < 0 || nextIndex < 0 || nextIndex >= currentExercises.length) return currentExercises;
+      if (
+        currentIndex < 0 ||
+        nextIndex < 0 ||
+        nextIndex >= currentExercises.length
+      )
+        return currentExercises;
 
       const reorderedExercises = [...currentExercises];
       const [movedExercise] = reorderedExercises.splice(currentIndex, 1);
@@ -455,7 +500,9 @@ export default function WorkoutDetail() {
 
   function removeExercise(exerciseId) {
     setExercises((currentExercises) => {
-      const nextExercises = currentExercises.filter((exercise) => exercise.id !== exerciseId);
+      const nextExercises = currentExercises.filter(
+        (exercise) => exercise.id !== exerciseId,
+      );
 
       if (openExerciseId === exerciseId) {
         setOpenExerciseId(nextExercises[0]?.id || "");
@@ -469,7 +516,9 @@ export default function WorkoutDetail() {
     const duplicatedExercise = duplicateWorkoutExercise(exercise);
 
     setExercises((currentExercises) => {
-      const currentIndex = currentExercises.findIndex((item) => item.id === exercise.id);
+      const currentIndex = currentExercises.findIndex(
+        (item) => item.id === exercise.id,
+      );
       const nextExercises = [...currentExercises];
       nextExercises.splice(currentIndex + 1, 0, duplicatedExercise);
       return nextExercises;
@@ -491,7 +540,8 @@ export default function WorkoutDetail() {
       primaryMuscles: libraryExercise.primaryMuscles || [],
       equipment: libraryExercise.equipment || [],
       movementPattern: libraryExercise.movementPattern || "unknown",
-      defaultRestSeconds: libraryExercise.defaultRestSeconds || DEFAULT_REST_SECONDS,
+      defaultRestSeconds:
+        libraryExercise.defaultRestSeconds || DEFAULT_REST_SECONDS,
       instructions: libraryExercise.instructions || [],
       exerciseNote: "",
       sets: Array.from({ length: setCount }, () => createSet("", reps, "S")),
@@ -503,7 +553,9 @@ export default function WorkoutDetail() {
 
   function updateExerciseField(exerciseId, field, value) {
     setExercises((currentExercises) =>
-      currentExercises.map((exercise) => (exercise.id === exerciseId ? { ...exercise, [field]: value } : exercise)),
+      currentExercises.map((exercise) =>
+        exercise.id === exerciseId ? { ...exercise, [field]: value } : exercise,
+      ),
     );
   }
 
@@ -511,13 +563,17 @@ export default function WorkoutDetail() {
     const warmUpSets = generateWarmUpSets(exercise, createSet);
 
     if (warmUpSets.length === 0) {
-      setRestCompletedMessage("Add a working weight first, then TrackFit can generate warm-ups.");
+      setRestCompletedMessage(
+        "Add a working weight first, then TrackFit can generate warm-ups.",
+      );
       return;
     }
 
     setExercises((currentExercises) =>
       currentExercises.map((item) =>
-        item.id === exercise.id ? { ...item, sets: [...warmUpSets, ...item.sets] } : item,
+        item.id === exercise.id
+          ? { ...item, sets: [...warmUpSets, ...item.sets] }
+          : item,
       ),
     );
   }
@@ -572,10 +628,14 @@ export default function WorkoutDetail() {
 
   const workoutTitle = aiDay?.name || "Workout 1";
   const canFinish = totals.doneSets > 0;
-  const isWorkoutComplete = totals.totalSets > 0 && totals.doneSets === totals.totalSets;
-  const recommendation = currentExercise ? getExerciseRecommendation(currentExercise, workoutHistory) : null;
+  const isWorkoutComplete =
+    totals.totalSets > 0 && totals.doneSets === totals.totalSets;
+  const recommendation = currentExercise
+    ? getExerciseRecommendation(currentExercise, workoutHistory)
+    : null;
   const previousExercise = currentExercise
-    ? recommendation?.previousExercise || findPreviousExercise(workoutHistory, currentExercise)
+    ? recommendation?.previousExercise ||
+      findPreviousExercise(workoutHistory, currentExercise)
     : null;
 
   return (
@@ -602,7 +662,8 @@ export default function WorkoutDetail() {
         <div className="tf-progress-meta">
           <span>{totals.percent}% COMPLETE</span>
           <span>
-            {totals.doneSets}/{totals.totalSets} SETS - {Math.round(totals.volume)} KG
+            {totals.doneSets}/{totals.totalSets} SETS -{" "}
+            {Math.round(totals.volume)} KG
           </span>
         </div>
 
@@ -621,7 +682,11 @@ export default function WorkoutDetail() {
 
       {currentExercise && (
         <section
-          className={isCurrentExerciseCelebrating ? "gym-focus-card just-completed" : "gym-focus-card"}
+          className={
+            isCurrentExerciseCelebrating
+              ? "gym-focus-card just-completed"
+              : "gym-focus-card"
+          }
           onPointerCancel={() => {
             swipeStartX.current = null;
           }}
@@ -629,7 +694,11 @@ export default function WorkoutDetail() {
           onPointerUp={handleExerciseSwipeEnd}
         >
           <div className="gym-focus-card__top">
-            <button disabled={!previousExerciseInWorkout} onClick={() => goToExercise(-1)} type="button">
+            <button
+              disabled={!previousExerciseInWorkout}
+              onClick={() => goToExercise(-1)}
+              type="button"
+            >
               <ChevronLeft size={20} />
             </button>
 
@@ -638,7 +707,11 @@ export default function WorkoutDetail() {
               <small>Swipe to change</small>
             </span>
 
-            <button disabled={!nextExercise} onClick={() => goToExercise(1)} type="button">
+            <button
+              disabled={!nextExercise}
+              onClick={() => goToExercise(1)}
+              type="button"
+            >
               <ChevronRight size={20} />
             </button>
           </div>
@@ -651,8 +724,13 @@ export default function WorkoutDetail() {
             <p>{currentExercise.target}</p>
             <h2>{currentExercise.name}</h2>
             <span>
-              {(currentExercise.primaryMuscles || []).slice(0, 3).join(" - ") || "Strength"} -{" "}
-              {String(currentExercise.movementPattern || "training").replaceAll("_", " ")}
+              {(currentExercise.primaryMuscles || []).slice(0, 3).join(" - ") ||
+                "Strength"}{" "}
+              -{" "}
+              {String(currentExercise.movementPattern || "training").replaceAll(
+                "_",
+                " ",
+              )}
             </span>
           </div>
 
@@ -677,22 +755,42 @@ export default function WorkoutDetail() {
           </div>
 
           <div className="tf-exercise-tools gym-tools">
-            <button onClick={() => moveExercise(currentExercise.id, -1)} type="button">
+            <button
+              onClick={() => moveExercise(currentExercise.id, -1)}
+              type="button"
+            >
               <ArrowUp size={16} /> Up
             </button>
-            <button onClick={() => moveExercise(currentExercise.id, 1)} type="button">
+            <button
+              onClick={() => moveExercise(currentExercise.id, 1)}
+              type="button"
+            >
               <ArrowDown size={16} /> Down
             </button>
-            <button onClick={() => addWarmUpSets(currentExercise)} type="button">
+            <button
+              onClick={() => addWarmUpSets(currentExercise)}
+              type="button"
+            >
               <Plus size={16} /> Warm-up
             </button>
-            <button onClick={() => duplicateExercise(currentExercise)} type="button">
+            <button
+              onClick={() => duplicateExercise(currentExercise)}
+              type="button"
+            >
               <Copy size={16} /> Duplicate
             </button>
-            <Link className="tf-detail-link" state={{ returnTo: `/workouts/${id}` }} to={`/exercises/${currentExercise.libraryId || currentExercise.id}`}>
+            <Link
+              className="tf-detail-link"
+              state={{ returnTo: `/workouts/${id}` }}
+              to={`/exercises/${currentExercise.libraryId || currentExercise.id}`}
+            >
               <Info size={16} /> Details
             </Link>
-            <button className="danger" onClick={() => removeExercise(currentExercise.id)} type="button">
+            <button
+              className="danger"
+              onClick={() => removeExercise(currentExercise.id)}
+              type="button"
+            >
               <Trash2 size={16} /> Delete
             </button>
           </div>
@@ -734,7 +832,13 @@ export default function WorkoutDetail() {
 
           <textarea
             className="tf-notes-input"
-            onChange={(event) => updateExerciseField(currentExercise.id, "exerciseNote", event.target.value)}
+            onChange={(event) =>
+              updateExerciseField(
+                currentExercise.id,
+                "exerciseNote",
+                event.target.value,
+              )
+            }
             placeholder="Exercise notes, pain, form cues, setup reminders..."
             value={currentExercise.exerciseNote || ""}
           />
@@ -760,7 +864,12 @@ export default function WorkoutDetail() {
                   Start next exercise <ArrowRight size={16} />
                 </button>
               ) : (
-                <button className={canFinish ? "ready" : ""} disabled={!canFinish} onClick={finishWorkout} type="button">
+                <button
+                  className={canFinish ? "ready" : ""}
+                  disabled={!canFinish}
+                  onClick={finishWorkout}
+                  type="button"
+                >
                   Save workout
                 </button>
               )}
@@ -790,7 +899,11 @@ export default function WorkoutDetail() {
           );
         })}
 
-        <button className="gym-strip-item add" onClick={() => setIsPickerOpen(true)} type="button">
+        <button
+          className="gym-strip-item add"
+          onClick={() => setIsPickerOpen(true)}
+          type="button"
+        >
           <span>+</span>
           <strong>Add Exercise</strong>
           <small>Library</small>
@@ -826,7 +939,8 @@ export default function WorkoutDetail() {
           <p className="eyebrow">Workout saved</p>
           <h2>Strong mahi.</h2>
           <span className="tf-complete-copy">
-            Session locked in. Review the numbers, then head back to your training plan.
+            Session locked in. Review the numbers, then head back to your
+            training plan.
           </span>
 
           <div className="tf-complete-stats">
@@ -835,11 +949,17 @@ export default function WorkoutDetail() {
               <span>Time</span>
             </article>
             <article>
-              <strong>{finishedWorkoutSummary.completedSets || finishedWorkoutSummary.doneSets || 0}</strong>
+              <strong>
+                {finishedWorkoutSummary.completedSets ||
+                  finishedWorkoutSummary.doneSets ||
+                  0}
+              </strong>
               <span>Sets</span>
             </article>
             <article>
-              <strong>{Math.round(finishedWorkoutSummary.volume || 0)}kg</strong>
+              <strong>
+                {Math.round(finishedWorkoutSummary.volume || 0)}kg
+              </strong>
               <span>Volume</span>
             </article>
             <article>
@@ -856,7 +976,12 @@ export default function WorkoutDetail() {
 
       <footer className="tf-workout-actions">
         <Link to="/workouts">Cancel Workout</Link>
-        <button className={canFinish ? "ready" : ""} disabled={!canFinish} onClick={finishWorkout} type="button">
+        <button
+          className={canFinish ? "ready" : ""}
+          disabled={!canFinish}
+          onClick={finishWorkout}
+          type="button"
+        >
           Save Workout
         </button>
       </footer>

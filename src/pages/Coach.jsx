@@ -14,14 +14,17 @@ import {
   Trophy,
 } from "lucide-react";
 
-import { generateDailyCoachBrief } from "../services/aiCoachEngine";
+import { generateDailyCoachBrief } from "../services/engines/aiCoachEngine";
 import { readWorkoutHistory } from "../services/workoutEngine";
 import "./TrackFitScreens.css";
 
 export default function Coach() {
   const [showWhy, setShowWhy] = useState(false);
   const workoutHistory = useMemo(() => readWorkoutHistory(), []);
-  const coach = useMemo(() => generateDailyCoachBrief(workoutHistory), [workoutHistory]);
+  const coach = useMemo(
+    () => generateDailyCoachBrief(workoutHistory),
+    [workoutHistory],
+  );
 
   return (
     <main className="screen tf-coach-page">
@@ -33,7 +36,10 @@ export default function Coach() {
           <p>{coach.readiness.note}</p>
         </div>
 
-        <div className="tf-coach-score" style={{ "--score": `${coach.readiness.score}%` }}>
+        <div
+          className="tf-coach-score"
+          style={{ "--score": `${coach.readiness.score}%` }}
+        >
           <strong>{coach.readiness.score}</strong>
           <span>{coach.readiness.label}</span>
         </div>
@@ -152,7 +158,11 @@ export default function Coach() {
       )}
 
       <section className="tf-coach-card">
-        <button className="tf-why-button" onClick={() => setShowWhy((current) => !current)} type="button">
+        <button
+          className="tf-why-button"
+          onClick={() => setShowWhy((current) => !current)}
+          type="button"
+        >
           <HelpCircle size={20} />
           {showWhy ? "Hide reasoning" : "Why this recommendation?"}
         </button>
@@ -176,7 +186,10 @@ export default function Coach() {
         </div>
 
         {coach.readiness.muscles.length === 0 ? (
-          <p>Log workouts with exercises from the library and TrackFit will build your recovery map.</p>
+          <p>
+            Log workouts with exercises from the library and TrackFit will build
+            your recovery map.
+          </p>
         ) : (
           <div className="tf-recovery-list">
             {coach.readiness.muscles.map((item) => (

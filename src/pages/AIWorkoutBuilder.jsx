@@ -1,12 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Brain, Dumbbell, RefreshCcw, Save, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  Brain,
+  Dumbbell,
+  RefreshCcw,
+  Save,
+  Sparkles,
+} from "lucide-react";
 import {
   equipmentLabels,
   generateWorkoutPlan,
   goalPrescription,
 } from "../services/aiWorkoutEngine";
-import { AIPlanRepository, WorkoutRepository } from "../services/trackfitDataLayer";
+import {
+  AIPlanRepository,
+  WorkoutRepository,
+} from "../services/trackfitDataLayer";
 import "./TrackFitScreens.css";
 
 function convertDayToWorkout(day) {
@@ -65,7 +75,10 @@ export default function AIWorkoutBuilder() {
     };
   }, []);
 
-  const prescription = useMemo(() => goalPrescription(goal, level), [goal, level]);
+  const prescription = useMemo(
+    () => goalPrescription(goal, level),
+    [goal, level],
+  );
 
   const plan = useMemo(
     () =>
@@ -79,7 +92,16 @@ export default function AIWorkoutBuilder() {
         injuryFocus,
         planVersion,
       }),
-    [days, equipment, exerciseLibrary, goal, injuryFocus, level, planVersion, time],
+    [
+      days,
+      equipment,
+      exerciseLibrary,
+      goal,
+      injuryFocus,
+      level,
+      planVersion,
+      time,
+    ],
   );
 
   function savePlan() {
@@ -114,7 +136,12 @@ export default function AIWorkoutBuilder() {
       <section className="tf-builder-panel ai-control-panel">
         <label>
           Goal
-          <select id="builder-goal" name="builderGoal" value={goal} onChange={(event) => setGoal(event.target.value)}>
+          <select
+            id="builder-goal"
+            name="builderGoal"
+            value={goal}
+            onChange={(event) => setGoal(event.target.value)}
+          >
             <option value="muscle">Build Muscle</option>
             <option value="strength">Strength</option>
             <option value="fatloss">Fat Loss</option>
@@ -123,7 +150,12 @@ export default function AIWorkoutBuilder() {
 
         <label>
           Days Per Week
-          <select id="builder-days" name="builderDays" value={days} onChange={(event) => setDays(event.target.value)}>
+          <select
+            id="builder-days"
+            name="builderDays"
+            value={days}
+            onChange={(event) => setDays(event.target.value)}
+          >
             <option value="3">3 Days</option>
             <option value="4">4 Days</option>
           </select>
@@ -131,7 +163,12 @@ export default function AIWorkoutBuilder() {
 
         <label>
           Workout Length
-          <select id="builder-time" name="builderTime" value={time} onChange={(event) => setTime(event.target.value)}>
+          <select
+            id="builder-time"
+            name="builderTime"
+            value={time}
+            onChange={(event) => setTime(event.target.value)}
+          >
             <option value="45">45 mins</option>
             <option value="60">60 mins</option>
             <option value="75">75 mins</option>
@@ -140,7 +177,12 @@ export default function AIWorkoutBuilder() {
 
         <label>
           Experience
-          <select id="builder-level" name="builderLevel" value={level} onChange={(event) => setLevel(event.target.value)}>
+          <select
+            id="builder-level"
+            name="builderLevel"
+            value={level}
+            onChange={(event) => setLevel(event.target.value)}
+          >
             <option value="beginner">Beginner</option>
             <option value="intermediate">Intermediate</option>
             <option value="advanced">Advanced</option>
@@ -149,7 +191,12 @@ export default function AIWorkoutBuilder() {
 
         <label>
           Equipment
-          <select id="builder-equipment" name="builderEquipment" value={equipment} onChange={(event) => setEquipment(event.target.value)}>
+          <select
+            id="builder-equipment"
+            name="builderEquipment"
+            value={equipment}
+            onChange={(event) => setEquipment(event.target.value)}
+          >
             <option value="full gym">Full Gym</option>
             <option value="dumbbells">Dumbbells</option>
             <option value="home">Home / Minimal Kit</option>
@@ -158,7 +205,12 @@ export default function AIWorkoutBuilder() {
 
         <label>
           Protect Area
-          <select id="builder-injury-focus" name="builderInjuryFocus" value={injuryFocus} onChange={(event) => setInjuryFocus(event.target.value)}>
+          <select
+            id="builder-injury-focus"
+            name="builderInjuryFocus"
+            value={injuryFocus}
+            onChange={(event) => setInjuryFocus(event.target.value)}
+          >
             <option value="none">No injury filter</option>
             <option value="shoulder">Shoulder friendly</option>
             <option value="knee">Knee friendly</option>
@@ -172,8 +224,9 @@ export default function AIWorkoutBuilder() {
         <div>
           <strong>How this plan was built</strong>
           <p>
-            TrackFit chooses movement patterns first, then picks matching exercises from the library based on your goal,
-            equipment, level and protect-area setting.
+            TrackFit chooses movement patterns first, then picks matching
+            exercises from the library based on your goal, equipment, level and
+            protect-area setting.
           </p>
         </div>
       </section>
@@ -181,7 +234,11 @@ export default function AIWorkoutBuilder() {
       <section className="tf-generated-plan">
         <div className="tf-generated-head">
           <div>
-            <p>{libraryLoading ? "Loading Exercise Library" : "Generated From Exercise Library"}</p>
+            <p>
+              {libraryLoading
+                ? "Loading Exercise Library"
+                : "Generated From Exercise Library"}
+            </p>
             <h2>{days} Day Training Plan</h2>
           </div>
           <Sparkles size={24} />
@@ -210,15 +267,25 @@ export default function AIWorkoutBuilder() {
               <div className="ai-day-head">
                 <Dumbbell size={22} />
                 <h3>{day.name}</h3>
-                <span>{day.time} mins - {day.equipment}</span>
+                <span>
+                  {day.time} mins - {day.equipment}
+                </span>
               </div>
 
               <div className="ai-exercise-list">
                 {day.exercises.map((exercise) => (
-                  <div className="ai-exercise-row" key={`${day.id}-${exercise.id}`}>
+                  <div
+                    className="ai-exercise-row"
+                    key={`${day.id}-${exercise.id}`}
+                  >
                     <strong>{exercise.name}</strong>
-                    <span>{exercise.movementPattern?.replaceAll("_", " ") || "movement"}</span>
-                    <small>{exercise.sets} sets x {exercise.reps} - {exercise.rest}</small>
+                    <span>
+                      {exercise.movementPattern?.replaceAll("_", " ") ||
+                        "movement"}
+                    </span>
+                    <small>
+                      {exercise.sets} sets x {exercise.reps} - {exercise.rest}
+                    </small>
                   </div>
                 ))}
               </div>
@@ -227,14 +294,26 @@ export default function AIWorkoutBuilder() {
       </section>
 
       <div className="ai-builder-actions">
-        <button className="ai-secondary-btn" disabled={libraryLoading} onClick={regeneratePlan} type="button">
+        <button
+          className="ai-secondary-btn"
+          disabled={libraryLoading}
+          onClick={regeneratePlan}
+          type="button"
+        >
           <RefreshCcw size={18} />
           Regenerate
         </button>
 
-        <button className="tf-save-plan-btn" disabled={libraryLoading || plan.length === 0} onClick={savePlan} type="button">
+        <button
+          className="tf-save-plan-btn"
+          disabled={libraryLoading || plan.length === 0}
+          onClick={savePlan}
+          type="button"
+        >
           <Save size={20} />
-          {saved ? "Training Plan Saved - go to Workouts" : "Save Training Plan"}
+          {saved
+            ? "Training Plan Saved - go to Workouts"
+            : "Save Training Plan"}
         </button>
       </div>
     </main>

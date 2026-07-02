@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
 import { Dumbbell } from "lucide-react";
-import { FALLBACK_EXERCISE_IMAGE, resolveExerciseImage } from "../../services/exerciseResolver";
+import {
+  FALLBACK_EXERCISE_IMAGE,
+  resolveExerciseImage,
+} from "../../services/exerciseResolver";
 import "../../styles/TrackFitWorkoutFixes.css";
 
 /**
@@ -19,7 +22,9 @@ export default function ExerciseImage({
   const [failedSources, setFailedSources] = useState(() => new Set());
 
   const shouldUseFallbackImage = failedSources.has(imageSource);
-  const activeSource = shouldUseFallbackImage ? FALLBACK_EXERCISE_IMAGE : imageSource;
+  const activeSource = shouldUseFallbackImage
+    ? FALLBACK_EXERCISE_IMAGE
+    : imageSource;
   const showFallbackIcon = failedSources.has(FALLBACK_EXERCISE_IMAGE);
 
   function handleImageError() {
@@ -46,7 +51,13 @@ export default function ExerciseImage({
           <small>{fallbackLabel}</small>
         </span>
       ) : (
-        <img alt="" key={activeSource} loading="lazy" src={activeSource} onError={handleImageError} />
+        <img
+          alt=""
+          key={activeSource}
+          loading="lazy"
+          src={activeSource}
+          onError={handleImageError}
+        />
       )}
     </span>
   );

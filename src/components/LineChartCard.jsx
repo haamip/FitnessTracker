@@ -18,9 +18,21 @@ export default function LineChartCard({ title, data, dataKey, unit = "" }) {
 
       <div className="chart-card__body">
         <ResponsiveContainer width="100%" height={220}>
-          <LineChart data={data} margin={{ top: 10, right: 8, left: -18, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(15, 23, 42, 0.08)" />
-            <XAxis dataKey="date" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+          <LineChart
+            data={data}
+            margin={{ top: 10, right: 8, left: -18, bottom: 0 }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              vertical={false}
+              stroke="rgba(15, 23, 42, 0.08)"
+            />
+            <XAxis
+              dataKey="date"
+              tick={{ fontSize: 11 }}
+              axisLine={false}
+              tickLine={false}
+            />
             <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
             <Tooltip formatter={(value) => [`${value}${unit}`, title]} />
             <Line

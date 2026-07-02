@@ -9,8 +9,6 @@
  *
  * Difficulty
  * ----------
- * ⭐⭐⭐☆☆
- *
  * Why this exists
  * ---------------
  * PR Engine tells us the user's best records.
@@ -27,8 +25,8 @@
  * ============================================================================
  */
 
-import { HistoryRepository } from "./trackfitDataLayer";
-import { findPreviousExercise } from "./workoutEngine";
+import { HistoryRepository } from "../trackfitDataLayer";
+import { findPreviousExercise } from "../workoutEngine";
 function getNumber(value) {
   return Number.parseFloat(value) || 0;
 }

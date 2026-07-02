@@ -1,6 +1,6 @@
 import { CheckCircle2, Circle, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { getPreviousSetLabel } from "../../services/workoutEngine";
-import { getTargetSetLabel } from "../../services/progressionEngine";
+import { getTargetSetLabel } from "../../services/engines/progressionEngine";
 import "./SetLogger.css";
 
 /**
@@ -81,7 +81,12 @@ export default function SetLogger({
                   <span>
                     {set.weight || "-"} kg x {set.reps || "-"} reps
                   </span>
-                  <button onClick={() => onUpdateSet(exercise.id, set.id, "done", false)} type="button">
+                  <button
+                    onClick={() =>
+                      onUpdateSet(exercise.id, set.id, "done", false)
+                    }
+                    type="button"
+                  >
                     <RotateCcw size={15} /> Undo
                   </button>
                 </div>
@@ -95,9 +100,20 @@ export default function SetLogger({
                         <input
                           aria-label={`${exercise.name} ${setLabel} weight`}
                           inputMode="decimal"
-                          onChange={(event) => onUpdateSet(exercise.id, set.id, "weight", event.target.value)}
+                          onChange={(event) =>
+                            onUpdateSet(
+                              exercise.id,
+                              set.id,
+                              "weight",
+                              event.target.value,
+                            )
+                          }
                           placeholder="Weight"
-                          value={set.weight === "0" || set.weight === 0 ? "" : set.weight}
+                          value={
+                            set.weight === "0" || set.weight === 0
+                              ? ""
+                              : set.weight
+                          }
                         />
                         <span>kg</span>
                       </div>
@@ -108,7 +124,14 @@ export default function SetLogger({
                       <input
                         aria-label={`${exercise.name} ${setLabel} reps`}
                         inputMode="numeric"
-                        onChange={(event) => onUpdateSet(exercise.id, set.id, "reps", event.target.value)}
+                        onChange={(event) =>
+                          onUpdateSet(
+                            exercise.id,
+                            set.id,
+                            "reps",
+                            event.target.value,
+                          )
+                        }
                         placeholder="Reps"
                         value={set.reps === "8-12" ? "" : set.reps}
                       />
@@ -116,11 +139,21 @@ export default function SetLogger({
                   </div>
 
                   <button
-                    className={set.done ? "tf-simple-complete done" : "tf-simple-complete"}
-                    onClick={() => onUpdateSet(exercise.id, set.id, "done", !set.done)}
+                    className={
+                      set.done
+                        ? "tf-simple-complete done"
+                        : "tf-simple-complete"
+                    }
+                    onClick={() =>
+                      onUpdateSet(exercise.id, set.id, "done", !set.done)
+                    }
                     type="button"
                   >
-                    {set.done ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+                    {set.done ? (
+                      <CheckCircle2 size={20} />
+                    ) : (
+                      <Circle size={20} />
+                    )}
                     {set.done ? "Completed" : "Complete Set"}
                   </button>
 
@@ -133,7 +166,14 @@ export default function SetLogger({
                         Type
                         <select
                           aria-label={`${exercise.name} ${setLabel} type`}
-                          onChange={(event) => onUpdateSet(exercise.id, set.id, "type", event.target.value)}
+                          onChange={(event) =>
+                            onUpdateSet(
+                              exercise.id,
+                              set.id,
+                              "type",
+                              event.target.value,
+                            )
+                          }
                           value={set.type}
                         >
                           <option value="S">Working</option>
@@ -147,7 +187,14 @@ export default function SetLogger({
                         RPE
                         <input
                           inputMode="decimal"
-                          onChange={(event) => onUpdateSet(exercise.id, set.id, "rpe", event.target.value)}
+                          onChange={(event) =>
+                            onUpdateSet(
+                              exercise.id,
+                              set.id,
+                              "rpe",
+                              event.target.value,
+                            )
+                          }
                           placeholder="Reps"
                           value={set.rpe || ""}
                         />
@@ -157,7 +204,14 @@ export default function SetLogger({
                         RIR
                         <input
                           inputMode="numeric"
-                          onChange={(event) => onUpdateSet(exercise.id, set.id, "rir", event.target.value)}
+                          onChange={(event) =>
+                            onUpdateSet(
+                              exercise.id,
+                              set.id,
+                              "rir",
+                              event.target.value,
+                            )
+                          }
                           placeholder="2"
                           value={set.rir || ""}
                         />
@@ -166,7 +220,14 @@ export default function SetLogger({
                       <label className="tf-set-advanced__failure">
                         <input
                           checked={Boolean(set.failure)}
-                          onChange={(event) => onUpdateSet(exercise.id, set.id, "failure", event.target.checked)}
+                          onChange={(event) =>
+                            onUpdateSet(
+                              exercise.id,
+                              set.id,
+                              "failure",
+                              event.target.checked,
+                            )
+                          }
                           type="checkbox"
                         />
                         Failure
@@ -175,7 +236,14 @@ export default function SetLogger({
 
                     <input
                       className="tf-set-note-input"
-                      onChange={(event) => onUpdateSet(exercise.id, set.id, "note", event.target.value)}
+                      onChange={(event) =>
+                        onUpdateSet(
+                          exercise.id,
+                          set.id,
+                          "note",
+                          event.target.value,
+                        )
+                      }
                       placeholder="Set note"
                       value={set.note || ""}
                     />
@@ -187,7 +255,11 @@ export default function SetLogger({
         })}
       </div>
 
-      <button className="tf-add-set-btn" onClick={() => onAddSet(exercise.id)} type="button">
+      <button
+        className="tf-add-set-btn"
+        onClick={() => onAddSet(exercise.id)}
+        type="button"
+      >
         <Plus size={19} />
         Add Set
       </button>

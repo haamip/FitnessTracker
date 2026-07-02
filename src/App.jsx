@@ -30,7 +30,9 @@ function WorkoutDetailRoute() {
   const { id = "workout-1" } = useParams();
   return <WorkoutDetail key={id} />;
 }
-const CompletedWorkoutDetail = lazy(() => import("./pages/CompletedWorkoutDetail"));
+const CompletedWorkoutDetail = lazy(
+  () => import("./pages/CompletedWorkoutDetail"),
+);
 const DeveloperTools = lazy(() => import("./pages/DeveloperTools"));
 const ExerciseDetail = lazy(() => import("./pages/ExerciseDetail"));
 
@@ -42,10 +44,15 @@ const ExerciseDetail = lazy(() => import("./pages/ExerciseDetail"));
  */
 function RouteFallback() {
   return (
-    <div className="screen" style={{ display: "grid", placeItems: "center", minHeight: "60vh" }}>
+    <div
+      className="screen"
+      style={{ display: "grid", placeItems: "center", minHeight: "60vh" }}
+    >
       <div style={{ textAlign: "center" }}>
         <strong>Loading TrackFit...</strong>
-        <p style={{ margin: "8px 0 0", color: "#777", fontWeight: 800 }}>Preparing your screen.</p>
+        <p style={{ margin: "8px 0 0", color: "#777", fontWeight: 800 }}>
+          Preparing your screen.
+        </p>
       </div>
     </div>
   );
@@ -68,7 +75,10 @@ function App() {
             <Route path="/workouts" element={<Workouts />} />
             <Route path="/workouts/builder" element={<AIWorkoutBuilder />} />
             <Route path="/dev-tools" element={<DeveloperTools />} />
-            <Route path="/workouts/history/:historyId" element={<CompletedWorkoutDetail />} />
+            <Route
+              path="/workouts/history/:historyId"
+              element={<CompletedWorkoutDetail />}
+            />
             <Route path="/workouts/:id" element={<WorkoutDetailRoute />} />
             <Route path="/exercises/:id" element={<ExerciseDetail />} />
           </Routes>

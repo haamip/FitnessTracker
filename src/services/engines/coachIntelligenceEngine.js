@@ -9,19 +9,6 @@
  *
  * Difficulty
  * ----------
- * ⭐⭐⭐☆☆
- *
- * Data flow:
- *
- * Repositories
- * ↓
- * Workout Analytics Engine = numbers
- * ↓
- * Coach Intelligence Engine = decisions
- * ↓
- * Coach Cards = display
- *
- * ============================================================================
  */
 
 import { buildWorkoutAnalytics } from "./workoutAnalyticsEngine";
@@ -29,7 +16,7 @@ import {
   CardioRepository,
   CheckInRepository,
   HistoryRepository,
-} from "./trackfitDataLayer";
+} from "../trackfitDataLayer";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEKLY_WORKOUT_TARGET = 4;
@@ -72,16 +59,25 @@ function getCheckInScore(checkIns) {
   if (!latest) {
     return {
       score: 70,
-      reason: "No check-in logged yet, so readiness is using training history only.",
+      reason:
+        "No check-in logged yet, so readiness is using training history only.",
     };
   }
 
-  const sleepScore = clampScore((Number(latest.sleep || 0) / SLEEP_TARGET) * 100);
-  const waterScore = clampScore((Number(latest.water || 0) / WATER_TARGET) * 100);
-  const proteinScore = clampScore((Number(latest.protein || 0) / PROTEIN_TARGET) * 100);
+  const sleepScore = clampScore(
+    (Number(latest.sleep || 0) / SLEEP_TARGET) * 100,
+  );
+  const waterScore = clampScore(
+    (Number(latest.water || 0) / WATER_TARGET) * 100,
+  );
+  const proteinScore = clampScore(
+    (Number(latest.protein || 0) / PROTEIN_TARGET) * 100,
+  );
 
   return {
-    score: Math.round((sleepScore * 0.45) + (waterScore * 0.25) + (proteinScore * 0.3)),
+    score: Math.round(
+      sleepScore * 0.45 + waterScore * 0.25 + proteinScore * 0.3,
+    ),
     reason: `Latest check-in: ${latest.sleep || 0}h sleep, ${latest.water || 0}L water and ${latest.protein || 0}g protein.`,
   };
 }
@@ -108,14 +104,16 @@ function calculateReadiness(analytics, checkIns) {
     return {
       score: 70,
       status: "Baseline",
-      reason: "Log a few workouts and check-ins so TrackFit can calculate real readiness.",
+      reason:
+        "Log a few workouts and check-ins so TrackFit can calculate real readiness.",
     };
   }
 
   const checkIn = getCheckInScore(checkIns);
 
   let loadScore = 70;
-  if (analytics.weeklyWorkouts >= 3 && analytics.weeklyWorkouts <= 4) loadScore = 88;
+  if (analytics.weeklyWorkouts >= 3 && analytics.weeklyWorkouts <= 4)
+    loadScore = 88;
   if (analytics.weeklyWorkouts > 4) loadScore = 68;
   if (analytics.weeklyWorkouts === 0) loadScore = 55;
 
@@ -125,13 +123,20 @@ function calculateReadiness(analytics, checkIns) {
   if (analytics.currentStreak >= 3) fatiguePenalty += 10;
 
   const score = clampScore(
-    (checkIn.score * 0.45) +
-      (loadScore * 0.35) +
-      (analytics.weeklyConsistencyPercent * 0.2) -
+    checkIn.score * 0.45 +
+      loadScore * 0.35 +
+      analytics.weeklyConsistencyPercent * 0.2 -
       fatiguePenalty,
   );
 
-  const status = score >= 85 ? "Ready" : score >= 68 ? "Controlled" : score >= 50 ? "Caution" : "Recover";
+  const status =
+    score >= 85
+      ? "Ready"
+      : score >= 68
+        ? "Controlled"
+        : score >= 50
+          ? "Caution"
+          : "Recover";
 
   return {
     score,
@@ -150,7 +155,8 @@ function calculateWeeklySummary(analytics) {
     sessions: analytics.weeklyWorkouts,
     volume: analytics.weeklyVolume,
     sets: analytics.totalSets,
-    durationMinutes: analytics.averageDurationMinutes * analytics.weeklyWorkouts,
+    durationMinutes:
+      analytics.averageDurationMinutes * analytics.weeklyWorkouts,
     prs: 0,
     mostTrainedMuscle: analytics.mostTrainedMuscle,
     message,
@@ -158,9 +164,14 @@ function calculateWeeklySummary(analytics) {
 }
 
 function calculateFatigue(analytics, checkIns, cardio) {
-  const recentCardio = cardio.filter((session) => isWithinDays(session.date, 7));
+  const recentCardio = cardio.filter((session) =>
+    isWithinDays(session.date, 7),
+  );
   const latestCheckIn = getLatestCheckIn(checkIns);
-  const cardioMinutes = recentCardio.reduce((sum, session) => sum + Number(session.duration || 0), 0);
+  const cardioMinutes = recentCardio.reduce(
+    (sum, session) => sum + Number(session.duration || 0),
+    0,
+  );
   const sleep = Number(latestCheckIn?.sleep || 0);
 
   let risk = 0;
@@ -174,20 +185,23 @@ function calculateFatigue(analytics, checkIns, cardio) {
   if (risk >= 5) {
     return {
       level: "High",
-      advice: "Fatigue is stacking up. Make today recovery, mobility or a lighter technique session.",
+      advice:
+        "Fatigue is stacking up. Make today recovery, mobility or a lighter technique session.",
     };
   }
 
   if (risk >= 3) {
     return {
       level: "Medium",
-      advice: "You can train, but keep the ego in the ute. Control volume and avoid junk sets.",
+      advice:
+        "You can train, but keep the ego in the ute. Control volume and avoid junk sets.",
     };
   }
 
   return {
     level: "Low",
-    advice: "No major fatigue flags. Good day for normal training if warm-ups feel strong.",
+    advice:
+      "No major fatigue flags. Good day for normal training if warm-ups feel strong.",
   };
 }
 
@@ -198,14 +212,18 @@ function calculateRecommendation(history, analytics) {
     return {
       workout: "Start Workout 1",
       route: "/workouts/workout-1",
-      reason: "No completed workout history yet. Log one clean session to unlock better recommendations.",
+      reason:
+        "No completed workout history yet. Log one clean session to unlock better recommendations.",
     };
   }
 
   const trainedMuscles = getPrimaryMusclesForWorkout(latestWorkout);
   const trainedText =
     trainedMuscles.length > 0
-      ? trainedMuscles.slice(0, 3).map((muscle) => muscle.replaceAll("_", " ")).join(", ")
+      ? trainedMuscles
+          .slice(0, 3)
+          .map((muscle) => muscle.replaceAll("_", " "))
+          .join(", ")
       : "your last trained muscles";
 
   const latestTitle = latestWorkout.title || "last workout";
@@ -237,7 +255,8 @@ function calculateRecommendation(history, analytics) {
   return {
     workout: latestTitle,
     route: `/workouts/${latestWorkout.workoutId || "workout-1"}`,
-    reason: "Repeat a known session so TrackFit can compare performance properly.",
+    reason:
+      "Repeat a known session so TrackFit can compare performance properly.",
   };
 }
 
@@ -308,7 +327,7 @@ function calculateWeeklyReview(analytics, checkIns) {
     ? clampScore((Number(latestCheckIn.protein || 0) / PROTEIN_TARGET) * 100)
     : 70;
 
-  const score = clampScore((consistencyScore * 0.65) + (proteinScore * 0.35));
+  const score = clampScore(consistencyScore * 0.65 + proteinScore * 0.35);
 
   return {
     score,

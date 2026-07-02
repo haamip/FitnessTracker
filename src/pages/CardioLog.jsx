@@ -24,9 +24,27 @@ const cardioData = [
 ];
 
 const sessions = [
-  { type: "Incline Walk", distance: "3.6km", time: "32 min", pace: "8:53/km", zone: "Zone 2" },
-  { type: "Bike", distance: "8.4km", time: "26 min", pace: "19.4km/h", zone: "Zone 3" },
-  { type: "Treadmill", distance: "2.4km", time: "20 min", pace: "8:20/km", zone: "Zone 2" },
+  {
+    type: "Incline Walk",
+    distance: "3.6km",
+    time: "32 min",
+    pace: "8:53/km",
+    zone: "Zone 2",
+  },
+  {
+    type: "Bike",
+    distance: "8.4km",
+    time: "26 min",
+    pace: "19.4km/h",
+    zone: "Zone 3",
+  },
+  {
+    type: "Treadmill",
+    distance: "2.4km",
+    time: "20 min",
+    pace: "8:20/km",
+    zone: "Zone 2",
+  },
 ];
 
 /**
@@ -88,7 +106,12 @@ export default function CardioLog() {
         </Button>
       </section>
 
-      <LineChartCard title="Weekly Distance" data={cardioData} dataKey="distance" unit="km" />
+      <LineChartCard
+        title="Weekly Distance"
+        data={cardioData}
+        dataKey="distance"
+        unit="km"
+      />
 
       <div className="v4-section-heading">
         <div>
@@ -100,7 +123,10 @@ export default function CardioLog() {
 
       <section className="v4-cardio-list">
         {sessions.map((session) => (
-          <article className="v4-cardio-row" key={`${session.type}-${session.time}`}>
+          <article
+            className="v4-cardio-row"
+            key={`${session.type}-${session.time}`}
+          >
             <div className="v4-cardio-row-icon">
               <Activity size={20} />
             </div>
@@ -108,7 +134,7 @@ export default function CardioLog() {
             <div>
               <strong>{session.type}</strong>
               <p>
-                {session.distance} · {session.time} · {session.pace}
+                {session.distance} Ã‚Â· {session.time} Ã‚Â· {session.pace}
               </p>
             </div>
 
@@ -141,8 +167,8 @@ export default function CardioLog() {
           <p className="eyebrow">Coach note</p>
           <h2>Cardio is helping the cut.</h2>
           <p>
-            Keep two easy Zone 2 sessions and one harder interval session each week. That gives fitness without cooking
-            your legs.
+            Keep two easy Zone 2 sessions and one harder interval session each
+            week. That gives fitness without cooking your legs.
           </p>
         </div>
       </section>

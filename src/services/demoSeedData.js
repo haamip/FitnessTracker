@@ -18,7 +18,7 @@ import {
  *
  * Difficulty
  * ----------
- * ⭐⭐☆☆☆
+ * 3/5
  *
  * Why this exists
  * ---------------
@@ -63,7 +63,15 @@ function createSet(id, weight, reps, done = true) {
   };
 }
 
-function createExercise(id, name, libraryId, movementPattern, weight, reps, setCount) {
+function createExercise(
+  id,
+  name,
+  libraryId,
+  movementPattern,
+  weight,
+  reps,
+  setCount,
+) {
   const primaryMuscles = MUSCLES_BY_PATTERN[movementPattern] || [];
 
   return {
@@ -84,8 +92,14 @@ function createExercise(id, name, libraryId, movementPattern, weight, reps, setC
 }
 
 function createWorkout(id, daysBack, title, exercises, prs = []) {
-  const completedSets = exercises.reduce((sum, exercise) => sum + exercise.sets.filter((set) => set.done).length, 0);
-  const totalSets = exercises.reduce((sum, exercise) => sum + exercise.sets.length, 0);
+  const completedSets = exercises.reduce(
+    (sum, exercise) => sum + exercise.sets.filter((set) => set.done).length,
+    0,
+  );
+  const totalSets = exercises.reduce(
+    (sum, exercise) => sum + exercise.sets.length,
+    0,
+  );
   const volume = exercises.reduce(
     (workoutTotal, exercise) =>
       workoutTotal +
@@ -112,7 +126,15 @@ function createWorkout(id, daysBack, title, exercises, prs = []) {
   };
 }
 
-function createPlanExercise(id, name, movementPattern, sets, reps, rest = "90 sec", demoWeight = "") {
+function createPlanExercise(
+  id,
+  name,
+  movementPattern,
+  sets,
+  reps,
+  rest = "90 sec",
+  demoWeight = "",
+) {
   return {
     id,
     name,
@@ -164,10 +186,42 @@ function createDemoPlan() {
       equipment: "Full gym",
       time: 60,
       exercises: [
-        createPlanExercise("barbell-bench-press-medium-grip", "Barbell Bench Press", "horizontal_push", 4, "6", "120 sec", "82.5"),
-        createPlanExercise("barbell-rear-delt-row", "Barbell Rear Delt Row", "horizontal_pull", 3, "8", "90 sec", "55"),
-        createPlanExercise("barbell-shoulder-pres", "Barbell Shoulder Press", "vertical_push", 3, "8", "90 sec", "45"),
-        createPlanExercise("barbell-curl", "Barbell Curl", "elbow_flexion", 3, "10", "60 sec", "35"),
+        createPlanExercise(
+          "barbell-bench-press-medium-grip",
+          "Barbell Bench Press",
+          "horizontal_push",
+          4,
+          "6",
+          "120 sec",
+          "82.5",
+        ),
+        createPlanExercise(
+          "barbell-rear-delt-row",
+          "Barbell Rear Delt Row",
+          "horizontal_pull",
+          3,
+          "8",
+          "90 sec",
+          "55",
+        ),
+        createPlanExercise(
+          "barbell-shoulder-pres",
+          "Barbell Shoulder Press",
+          "vertical_push",
+          3,
+          "8",
+          "90 sec",
+          "45",
+        ),
+        createPlanExercise(
+          "barbell-curl",
+          "Barbell Curl",
+          "elbow_flexion",
+          3,
+          "10",
+          "60 sec",
+          "35",
+        ),
       ],
     },
     {
@@ -177,9 +231,33 @@ function createDemoPlan() {
       equipment: "Full gym",
       time: 60,
       exercises: [
-        createPlanExercise("barbell-lunge", "Barbell Lunge", "squat", 4, "8", "120 sec", "55"),
-        createPlanExercise("barbell-glute-bridge", "Barbell Glute Bridge", "hinge", 4, "8", "120 sec", "105"),
-        createPlanExercise("barbell-shrug", "Barbell Shrug", "carry", 3, "10", "90 sec", "90"),
+        createPlanExercise(
+          "barbell-lunge",
+          "Barbell Lunge",
+          "squat",
+          4,
+          "8",
+          "120 sec",
+          "55",
+        ),
+        createPlanExercise(
+          "barbell-glute-bridge",
+          "Barbell Glute Bridge",
+          "hinge",
+          4,
+          "8",
+          "120 sec",
+          "105",
+        ),
+        createPlanExercise(
+          "barbell-shrug",
+          "Barbell Shrug",
+          "carry",
+          3,
+          "10",
+          "90 sec",
+          "90",
+        ),
       ],
     },
     {
@@ -189,9 +267,33 @@ function createDemoPlan() {
       equipment: "Full gym",
       time: 50,
       exercises: [
-        createPlanExercise("barbell-incline-bench-press-medium-grip", "Incline Bench Press", "horizontal_push", 3, "10", "90 sec", "65"),
-        createPlanExercise("barbell-guillotine-bench-press", "Guillotine Bench Press", "horizontal_push", 3, "10", "90 sec", "52.5"),
-        createPlanExercise("barbell-shoulder-pres", "Barbell Shoulder Press", "vertical_push", 3, "8", "90 sec", "45"),
+        createPlanExercise(
+          "barbell-incline-bench-press-medium-grip",
+          "Incline Bench Press",
+          "horizontal_push",
+          3,
+          "10",
+          "90 sec",
+          "65",
+        ),
+        createPlanExercise(
+          "barbell-guillotine-bench-press",
+          "Guillotine Bench Press",
+          "horizontal_push",
+          3,
+          "10",
+          "90 sec",
+          "52.5",
+        ),
+        createPlanExercise(
+          "barbell-shoulder-pres",
+          "Barbell Shoulder Press",
+          "vertical_push",
+          3,
+          "8",
+          "90 sec",
+          "45",
+        ),
       ],
     },
     {
@@ -201,9 +303,33 @@ function createDemoPlan() {
       equipment: "Full gym",
       time: 50,
       exercises: [
-        createPlanExercise("barbell-rear-delt-row", "Barbell Rear Delt Row", "horizontal_pull", 4, "10", "90 sec", "55"),
-        createPlanExercise("back-flyes-with-bands", "Back Flyes With Bands", "rear_delt", 3, "12", "60 sec", "12.5"),
-        createPlanExercise("barbell-curl", "Barbell Curl", "elbow_flexion", 3, "10", "60 sec", "35"),
+        createPlanExercise(
+          "barbell-rear-delt-row",
+          "Barbell Rear Delt Row",
+          "horizontal_pull",
+          4,
+          "10",
+          "90 sec",
+          "55",
+        ),
+        createPlanExercise(
+          "back-flyes-with-bands",
+          "Back Flyes With Bands",
+          "rear_delt",
+          3,
+          "12",
+          "60 sec",
+          "12.5",
+        ),
+        createPlanExercise(
+          "barbell-curl",
+          "Barbell Curl",
+          "elbow_flexion",
+          3,
+          "10",
+          "60 sec",
+          "35",
+        ),
       ],
     },
   ];
@@ -211,60 +337,342 @@ function createDemoPlan() {
 
 function createDemoWorkoutHistory() {
   return [
-    createWorkout("demo-history-upper-1", 0, "Upper Strength", [
-      createExercise("demo-bench-1", "Barbell Bench Press", "barbell-bench-press-medium-grip", "horizontal_push", 82.5, 6, 4),
-      createExercise("demo-row-1", "Barbell Rear Delt Row", "barbell-rear-delt-row", "horizontal_pull", 55, 10, 3),
-      createExercise("demo-press-1", "Barbell Shoulder Press", "barbell-shoulder-pres", "vertical_push", 45, 8, 3),
-    ], [{ type: "Estimated 1RM", exercise: "Barbell Bench Press", value: "99kg" }]),
+    createWorkout(
+      "demo-history-upper-1",
+      0,
+      "Upper Strength",
+      [
+        createExercise(
+          "demo-bench-1",
+          "Barbell Bench Press",
+          "barbell-bench-press-medium-grip",
+          "horizontal_push",
+          82.5,
+          6,
+          4,
+        ),
+        createExercise(
+          "demo-row-1",
+          "Barbell Rear Delt Row",
+          "barbell-rear-delt-row",
+          "horizontal_pull",
+          55,
+          10,
+          3,
+        ),
+        createExercise(
+          "demo-press-1",
+          "Barbell Shoulder Press",
+          "barbell-shoulder-pres",
+          "vertical_push",
+          45,
+          8,
+          3,
+        ),
+      ],
+      [
+        {
+          type: "Estimated 1RM",
+          exercise: "Barbell Bench Press",
+          value: "99kg",
+        },
+      ],
+    ),
     createWorkout("demo-history-lower-1", 2, "Lower Strength", [
-      createExercise("demo-lunge-1", "Barbell Lunge", "barbell-lunge", "squat", 55, 8, 4),
-      createExercise("demo-bridge-1", "Barbell Glute Bridge", "barbell-glute-bridge", "hinge", 105, 10, 4),
-      createExercise("demo-shrug-1", "Barbell Shrug", "barbell-shrug", "carry", 90, 12, 3),
+      createExercise(
+        "demo-lunge-1",
+        "Barbell Lunge",
+        "barbell-lunge",
+        "squat",
+        55,
+        8,
+        4,
+      ),
+      createExercise(
+        "demo-bridge-1",
+        "Barbell Glute Bridge",
+        "barbell-glute-bridge",
+        "hinge",
+        105,
+        10,
+        4,
+      ),
+      createExercise(
+        "demo-shrug-1",
+        "Barbell Shrug",
+        "barbell-shrug",
+        "carry",
+        90,
+        12,
+        3,
+      ),
     ]),
-    createWorkout("demo-history-push-1", 4, "Push Volume", [
-      createExercise("demo-incline-1", "Incline Bench Press", "barbell-incline-bench-press-medium-grip", "horizontal_push", 62.5, 10, 3),
-      createExercise("demo-guillotine-1", "Guillotine Bench Press", "barbell-guillotine-bench-press", "horizontal_push", 50, 12, 3),
-      createExercise("demo-press-2", "Barbell Shoulder Press", "barbell-shoulder-pres", "vertical_push", 42.5, 9, 3),
-    ], [{ type: "Set Volume", exercise: "Incline Bench Press", value: "625kg" }]),
+    createWorkout(
+      "demo-history-push-1",
+      4,
+      "Push Volume",
+      [
+        createExercise(
+          "demo-incline-1",
+          "Incline Bench Press",
+          "barbell-incline-bench-press-medium-grip",
+          "horizontal_push",
+          62.5,
+          10,
+          3,
+        ),
+        createExercise(
+          "demo-guillotine-1",
+          "Guillotine Bench Press",
+          "barbell-guillotine-bench-press",
+          "horizontal_push",
+          50,
+          12,
+          3,
+        ),
+        createExercise(
+          "demo-press-2",
+          "Barbell Shoulder Press",
+          "barbell-shoulder-pres",
+          "vertical_push",
+          42.5,
+          9,
+          3,
+        ),
+      ],
+      [{ type: "Set Volume", exercise: "Incline Bench Press", value: "625kg" }],
+    ),
     createWorkout("demo-history-pull-1", 6, "Pull Volume", [
-      createExercise("demo-row-2", "Barbell Rear Delt Row", "barbell-rear-delt-row", "horizontal_pull", 52.5, 12, 4),
-      createExercise("demo-band-fly-1", "Back Flyes With Bands", "back-flyes-with-bands", "rear_delt", 12.5, 15, 3),
-      createExercise("demo-curl-1", "Barbell Curl", "barbell-curl", "elbow_flexion", 35, 10, 3),
+      createExercise(
+        "demo-row-2",
+        "Barbell Rear Delt Row",
+        "barbell-rear-delt-row",
+        "horizontal_pull",
+        52.5,
+        12,
+        4,
+      ),
+      createExercise(
+        "demo-band-fly-1",
+        "Back Flyes With Bands",
+        "back-flyes-with-bands",
+        "rear_delt",
+        12.5,
+        15,
+        3,
+      ),
+      createExercise(
+        "demo-curl-1",
+        "Barbell Curl",
+        "barbell-curl",
+        "elbow_flexion",
+        35,
+        10,
+        3,
+      ),
     ]),
     createWorkout("demo-history-upper-2", 9, "Upper Strength", [
-      createExercise("demo-bench-2", "Barbell Bench Press", "barbell-bench-press-medium-grip", "horizontal_push", 80, 6, 4),
-      createExercise("demo-row-3", "Barbell Rear Delt Row", "barbell-rear-delt-row", "horizontal_pull", 52.5, 10, 3),
-      createExercise("demo-press-3", "Barbell Shoulder Press", "barbell-shoulder-pres", "vertical_push", 42.5, 8, 3),
+      createExercise(
+        "demo-bench-2",
+        "Barbell Bench Press",
+        "barbell-bench-press-medium-grip",
+        "horizontal_push",
+        80,
+        6,
+        4,
+      ),
+      createExercise(
+        "demo-row-3",
+        "Barbell Rear Delt Row",
+        "barbell-rear-delt-row",
+        "horizontal_pull",
+        52.5,
+        10,
+        3,
+      ),
+      createExercise(
+        "demo-press-3",
+        "Barbell Shoulder Press",
+        "barbell-shoulder-pres",
+        "vertical_push",
+        42.5,
+        8,
+        3,
+      ),
     ]),
     createWorkout("demo-history-lower-2", 12, "Lower Strength", [
-      createExercise("demo-lunge-2", "Barbell Lunge", "barbell-lunge", "squat", 52.5, 8, 4),
-      createExercise("demo-bridge-2", "Barbell Glute Bridge", "barbell-glute-bridge", "hinge", 100, 10, 4),
-      createExercise("demo-shrug-2", "Barbell Shrug", "barbell-shrug", "carry", 87.5, 12, 3),
+      createExercise(
+        "demo-lunge-2",
+        "Barbell Lunge",
+        "barbell-lunge",
+        "squat",
+        52.5,
+        8,
+        4,
+      ),
+      createExercise(
+        "demo-bridge-2",
+        "Barbell Glute Bridge",
+        "barbell-glute-bridge",
+        "hinge",
+        100,
+        10,
+        4,
+      ),
+      createExercise(
+        "demo-shrug-2",
+        "Barbell Shrug",
+        "barbell-shrug",
+        "carry",
+        87.5,
+        12,
+        3,
+      ),
     ]),
     createWorkout("demo-history-push-2", 15, "Push Volume", [
-      createExercise("demo-incline-2", "Incline Bench Press", "barbell-incline-bench-press-medium-grip", "horizontal_push", 60, 10, 3),
-      createExercise("demo-guillotine-2", "Guillotine Bench Press", "barbell-guillotine-bench-press", "horizontal_push", 50, 10, 3),
-      createExercise("demo-press-4", "Barbell Shoulder Press", "barbell-shoulder-pres", "vertical_push", 40, 9, 3),
+      createExercise(
+        "demo-incline-2",
+        "Incline Bench Press",
+        "barbell-incline-bench-press-medium-grip",
+        "horizontal_push",
+        60,
+        10,
+        3,
+      ),
+      createExercise(
+        "demo-guillotine-2",
+        "Guillotine Bench Press",
+        "barbell-guillotine-bench-press",
+        "horizontal_push",
+        50,
+        10,
+        3,
+      ),
+      createExercise(
+        "demo-press-4",
+        "Barbell Shoulder Press",
+        "barbell-shoulder-pres",
+        "vertical_push",
+        40,
+        9,
+        3,
+      ),
     ]),
     createWorkout("demo-history-pull-2", 18, "Pull Volume", [
-      createExercise("demo-row-4", "Barbell Rear Delt Row", "barbell-rear-delt-row", "horizontal_pull", 50, 12, 4),
-      createExercise("demo-band-fly-2", "Back Flyes With Bands", "back-flyes-with-bands", "rear_delt", 12.5, 12, 3),
-      createExercise("demo-curl-2", "Barbell Curl", "barbell-curl", "elbow_flexion", 32.5, 10, 3),
+      createExercise(
+        "demo-row-4",
+        "Barbell Rear Delt Row",
+        "barbell-rear-delt-row",
+        "horizontal_pull",
+        50,
+        12,
+        4,
+      ),
+      createExercise(
+        "demo-band-fly-2",
+        "Back Flyes With Bands",
+        "back-flyes-with-bands",
+        "rear_delt",
+        12.5,
+        12,
+        3,
+      ),
+      createExercise(
+        "demo-curl-2",
+        "Barbell Curl",
+        "barbell-curl",
+        "elbow_flexion",
+        32.5,
+        10,
+        3,
+      ),
     ]),
     createWorkout("demo-history-upper-3", 22, "Upper Strength", [
-      createExercise("demo-bench-3", "Barbell Bench Press", "barbell-bench-press-medium-grip", "horizontal_push", 80, 6, 4),
-      createExercise("demo-row-5", "Barbell Rear Delt Row", "barbell-rear-delt-row", "horizontal_pull", 50, 10, 3),
-      createExercise("demo-press-5", "Barbell Shoulder Press", "barbell-shoulder-pres", "vertical_push", 40, 8, 3),
+      createExercise(
+        "demo-bench-3",
+        "Barbell Bench Press",
+        "barbell-bench-press-medium-grip",
+        "horizontal_push",
+        80,
+        6,
+        4,
+      ),
+      createExercise(
+        "demo-row-5",
+        "Barbell Rear Delt Row",
+        "barbell-rear-delt-row",
+        "horizontal_pull",
+        50,
+        10,
+        3,
+      ),
+      createExercise(
+        "demo-press-5",
+        "Barbell Shoulder Press",
+        "barbell-shoulder-pres",
+        "vertical_push",
+        40,
+        8,
+        3,
+      ),
     ]),
     createWorkout("demo-history-lower-3", 25, "Lower Strength", [
-      createExercise("demo-lunge-3", "Barbell Lunge", "barbell-lunge", "squat", 50, 8, 4),
-      createExercise("demo-bridge-3", "Barbell Glute Bridge", "barbell-glute-bridge", "hinge", 95, 10, 4),
-      createExercise("demo-shrug-3", "Barbell Shrug", "barbell-shrug", "carry", 85, 12, 3),
+      createExercise(
+        "demo-lunge-3",
+        "Barbell Lunge",
+        "barbell-lunge",
+        "squat",
+        50,
+        8,
+        4,
+      ),
+      createExercise(
+        "demo-bridge-3",
+        "Barbell Glute Bridge",
+        "barbell-glute-bridge",
+        "hinge",
+        95,
+        10,
+        4,
+      ),
+      createExercise(
+        "demo-shrug-3",
+        "Barbell Shrug",
+        "barbell-shrug",
+        "carry",
+        85,
+        12,
+        3,
+      ),
     ]),
     createWorkout("demo-history-push-3", 28, "Push Volume", [
-      createExercise("demo-incline-3", "Incline Bench Press", "barbell-incline-bench-press-medium-grip", "horizontal_push", 57.5, 10, 3),
-      createExercise("demo-guillotine-3", "Guillotine Bench Press", "barbell-guillotine-bench-press", "horizontal_push", 47.5, 10, 3),
-      createExercise("demo-press-6", "Barbell Shoulder Press", "barbell-shoulder-pres", "vertical_push", 40, 8, 3),
+      createExercise(
+        "demo-incline-3",
+        "Incline Bench Press",
+        "barbell-incline-bench-press-medium-grip",
+        "horizontal_push",
+        57.5,
+        10,
+        3,
+      ),
+      createExercise(
+        "demo-guillotine-3",
+        "Guillotine Bench Press",
+        "barbell-guillotine-bench-press",
+        "horizontal_push",
+        47.5,
+        10,
+        3,
+      ),
+      createExercise(
+        "demo-press-6",
+        "Barbell Shoulder Press",
+        "barbell-shoulder-pres",
+        "vertical_push",
+        40,
+        8,
+        3,
+      ),
     ]),
   ];
 }
@@ -296,13 +704,55 @@ export function seedDemoData() {
   }));
 
   const cardio = [
-    { id: "demo-cardio-1", date: daysAgo(0), type: "Incline Walk", distance: 3.4, duration: 28 },
-    { id: "demo-cardio-2", date: daysAgo(2), type: "Bike", distance: 8.8, duration: 24 },
-    { id: "demo-cardio-3", date: daysAgo(4), type: "Walk", distance: 4.2, duration: 39 },
-    { id: "demo-cardio-4", date: daysAgo(7), type: "Incline Walk", distance: 3.1, duration: 26 },
-    { id: "demo-cardio-5", date: daysAgo(10), type: "Rower", distance: 2.2, duration: 12 },
-    { id: "demo-cardio-6", date: daysAgo(14), type: "Incline Walk", distance: 3.8, duration: 32 },
-    { id: "demo-cardio-7", date: daysAgo(21), type: "Walk", distance: 4.6, duration: 42 },
+    {
+      id: "demo-cardio-1",
+      date: daysAgo(0),
+      type: "Incline Walk",
+      distance: 3.4,
+      duration: 28,
+    },
+    {
+      id: "demo-cardio-2",
+      date: daysAgo(2),
+      type: "Bike",
+      distance: 8.8,
+      duration: 24,
+    },
+    {
+      id: "demo-cardio-3",
+      date: daysAgo(4),
+      type: "Walk",
+      distance: 4.2,
+      duration: 39,
+    },
+    {
+      id: "demo-cardio-4",
+      date: daysAgo(7),
+      type: "Incline Walk",
+      distance: 3.1,
+      duration: 26,
+    },
+    {
+      id: "demo-cardio-5",
+      date: daysAgo(10),
+      type: "Rower",
+      distance: 2.2,
+      duration: 12,
+    },
+    {
+      id: "demo-cardio-6",
+      date: daysAgo(14),
+      type: "Incline Walk",
+      distance: 3.8,
+      duration: 32,
+    },
+    {
+      id: "demo-cardio-7",
+      date: daysAgo(21),
+      type: "Walk",
+      distance: 4.6,
+      duration: 42,
+    },
   ];
 
   clearDemoData();

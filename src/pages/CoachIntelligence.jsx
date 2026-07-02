@@ -12,7 +12,7 @@ import {
   WeeklyReviewCard,
   WeeklySummaryCard,
 } from "../components/coach";
-import { buildCoachDashboard } from "../services/coachIntelligenceEngine";
+import { buildCoachDashboard } from "../services/engines/coachIntelligenceEngine";
 import "./CoachIntelligence.css";
 
 export default function CoachIntelligence() {
