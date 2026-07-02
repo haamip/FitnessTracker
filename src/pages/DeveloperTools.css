@@ -1,0 +1,240 @@
+/* ============================================================================
+   TrackFit Developer Tools Dashboard
+   ----------------------------------------------------------------------------
+   Internal-only desktop-style information layout. This deliberately breaks out
+   of the normal mobile app screen so debugging data can breathe.
+============================================================================ */
+
+.tf-dev-tools {
+  display: block;
+  width: 100%;
+  max-width: none;
+  color: #111827;
+}
+
+.tf-dev-tools .tf-back-link {
+  width: fit-content;
+  margin-bottom: 18px;
+}
+
+.tf-dev-tools .tf-history-hero {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 8px 14px;
+  padding: 24px;
+  border-radius: 26px;
+  background: linear-gradient(135deg, #111827, #1f2937);
+  color: #ffffff;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.2);
+}
+
+.tf-dev-tools .tf-history-hero svg {
+  grid-row: span 3;
+  color: #f59e0b;
+}
+
+.tf-dev-tools .tf-history-hero h1 {
+  margin: 0;
+  font-size: clamp(30px, 4vw, 48px);
+  line-height: 0.95;
+  letter-spacing: -1.4px;
+  font-weight: 950;
+}
+
+.tf-dev-tools .tf-history-hero span {
+  color: rgba(255, 255, 255, 0.74);
+  font-weight: 800;
+}
+
+.tf-dev-tool-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.tf-dev-tool-list button,
+.tf-dev-json-card > button {
+  min-width: 0;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 20px;
+  background: #ffffff;
+  color: #111827;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+}
+
+.tf-dev-tool-list button.danger {
+  border-color: rgba(239, 68, 68, 0.18);
+  background: #fff7f7;
+}
+
+.tf-dev-tool-list button svg {
+  flex: 0 0 auto;
+  color: #f59e0b;
+}
+
+.tf-dev-tool-list button.danger svg {
+  color: #ef4444;
+}
+
+.tf-dev-tool-list strong,
+.tf-dev-json-card strong {
+  display: block;
+  color: #111827;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.tf-dev-tool-list span,
+.tf-dev-json-card span {
+  display: block;
+  margin-top: 4px;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.tf-dev-status-card,
+.tf-dev-tools .tf-history-card {
+  margin-top: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 22px;
+  background: #ffffff;
+  padding: 18px;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+}
+
+.tf-dev-status-card p,
+.tf-dev-tools .tf-history-card p {
+  margin: 7px 0 0;
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 750;
+}
+
+.tf-dev-status-card span,
+.tf-dev-tools .tf-history-card > span {
+  display: block;
+  margin-top: 10px;
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.tf-dev-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.tf-dev-grid article {
+  min-height: 128px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 22px;
+  background: #ffffff;
+  padding: 18px;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+}
+
+.tf-dev-grid svg {
+  color: #f59e0b;
+}
+
+.tf-dev-grid strong {
+  display: block;
+  margin-top: 16px;
+  color: #111827;
+  font-size: 32px;
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: -0.8px;
+}
+
+.tf-dev-grid span {
+  display: block;
+  margin-top: 7px;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.tf-dev-json-card {
+  margin-top: 14px;
+}
+
+.tf-dev-json-card > button {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.tf-dev-json-card pre {
+  max-height: 520px;
+  overflow: auto;
+  margin: 10px 0 0;
+  padding: 16px;
+  border-radius: 18px;
+  background: #0b1020;
+  color: #d1e7ff;
+  font-size: 12px;
+  line-height: 1.55;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.tf-dev-tools .tf-save-plan-btn {
+  position: static;
+  width: fit-content;
+  min-width: 220px;
+  margin: 20px 0 0;
+}
+
+@media (min-width: 860px) {
+  .tf-dev-tools {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .tf-dev-tools .tf-back-link,
+  .tf-dev-tools .tf-history-hero,
+  .tf-dev-tool-list,
+  .tf-dev-status-card,
+  .tf-dev-grid,
+  .tf-dev-json-card,
+  .tf-dev-tools .tf-save-plan-btn {
+    grid-column: 1 / -1;
+  }
+
+  .tf-dev-tools .tf-history-card {
+    grid-column: span 4;
+    margin-top: 0;
+  }
+
+  .tf-dev-json-card {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 760px) {
+  .tf-dev-tool-list,
+  .tf-dev-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tf-dev-tools .tf-history-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .tf-dev-tools .tf-history-hero svg {
+    grid-row: auto;
+  }
+}
