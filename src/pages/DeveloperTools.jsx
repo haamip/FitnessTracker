@@ -27,6 +27,7 @@ import {
 import "./TrackFitScreens.css";
 import "./DeveloperTools.css";
 import { buildWorkoutAnalytics } from "../services/workoutAnalyticsEngine";
+import { buildProgressionEngine } from "../services/progressionEngine";
 import { buildPrEngine } from "../services/prEngineV2";
 
 function readDeveloperSnapshot(action = "Ready") {
@@ -39,6 +40,7 @@ function readDeveloperSnapshot(action = "Ready") {
   const coachIntelligence = buildCoachDashboard();
   const workoutAnalytics = buildWorkoutAnalytics(history);
   const prEngine = buildPrEngine(history);
+  const progressionEngine = buildProgressionEngine(history);
   const activeTotals = calculateWorkoutTotals(activeWorkout);
   const latestWorkout = history[0] || null;
 
@@ -55,6 +57,7 @@ function readDeveloperSnapshot(action = "Ready") {
     latestWorkout,
     workoutAnalytics,
     prEngine,
+    progressionEngine,
     checkedAt: new Date().toLocaleTimeString(),
   };
 }
@@ -254,7 +257,21 @@ export default function DeveloperTools() {
             : "No data yet"}
         </p>
       </section>
-
+      <section className="tf-history-card">
+        <p className="eyebrow">Progression Engine</p>
+        <strong>
+          {snapshot.progressionEngine.totalExercisesAnalysed} exercises
+        </strong>
+        <p>Improving: {snapshot.progressionEngine.improvingCount}</p>
+        <p>Stable: {snapshot.progressionEngine.stableCount}</p>
+        <p>Declining: {snapshot.progressionEngine.decliningCount}</p>
+        <p>
+          Strongest progress:{" "}
+          {snapshot.progressionEngine.strongestProgress
+            ? `${snapshot.progressionEngine.strongestProgress.exercise} ${snapshot.progressionEngine.strongestProgress.strengthImprovementPercent}%`
+            : "No clear trend yet"}
+        </p>
+      </section>
       <section className="tf-history-card">
         <p className="eyebrow">Fatigue + Plateau</p>
         <strong>{snapshot.coachIntelligence.fatigue.level} fatigue</strong>
@@ -314,6 +331,10 @@ export default function DeveloperTools() {
         data={snapshot.workoutAnalytics}
       />
       <JsonPanel title="PR Engine output" data={snapshot.prEngine} />
+      <JsonPanel
+        title="Progression Engine output"
+        data={snapshot.progressionEngine}
+      />
 
       <Link className="tf-save-plan-btn" to="/workouts?refresh=manual">
         Open workouts
