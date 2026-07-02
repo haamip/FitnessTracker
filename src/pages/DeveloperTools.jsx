@@ -15,7 +15,10 @@ import {
   DEMO_ATHLETE_PROFILES,
   generateDemoAthlete,
 } from "../services/generators/demoAthleteGenerator";
-import { clearDemoData, seedDemoData } from "../services/generators/demoSeedData";
+import {
+  clearDemoData,
+  seedDemoData,
+} from "../services/generators/demoSeedData";
 import { calculateWorkoutTotals, formatClock } from "../services/workoutEngine";
 import {
   AIPlanRepository,
@@ -29,6 +32,7 @@ import "./DeveloperTools.css";
 import { buildWorkoutAnalytics } from "../services/engines/workoutAnalyticsEngine";
 import { buildProgressionEngine } from "../services/engines/progressionEngine";
 import { buildPrEngine } from "../services/engines/prEngineV2";
+import { buildRecoveryEngine } from "../services/engines/recoveryEngine";
 
 function readDeveloperSnapshot(action = "Ready") {
   const plan = AIPlanRepository.getPlan();
@@ -41,7 +45,9 @@ function readDeveloperSnapshot(action = "Ready") {
   const workoutAnalytics = buildWorkoutAnalytics(history);
   const prEngine = buildPrEngine(history);
   const progressionEngine = buildProgressionEngine(history);
+  const recoveryEngine = buildRecoveryEngine(history, checkIns);
   const activeTotals = calculateWorkoutTotals(activeWorkout);
+
   const latestWorkout = history[0] || null;
 
   return {
@@ -58,6 +64,7 @@ function readDeveloperSnapshot(action = "Ready") {
     workoutAnalytics,
     prEngine,
     progressionEngine,
+    recoveryEngine,
     checkedAt: new Date().toLocaleTimeString(),
   };
 }
@@ -272,13 +279,30 @@ export default function DeveloperTools() {
             : "No clear trend yet"}
         </p>
       </section>
+
       <section className="tf-history-card">
         <p className="eyebrow">Fatigue + Plateau</p>
         <strong>{snapshot.coachIntelligence.fatigue.level} fatigue</strong>
         <p>{snapshot.coachIntelligence.fatigue.advice}</p>
         <p>{snapshot.coachIntelligence.plateau.message}</p>
       </section>
-
+      <section className="tf-history-card">
+        <p className="eyebrow">Recovery Engine</p>
+        <strong>{snapshot.recoveryEngine.recoveryScore}%</strong>
+        <p>Status: {snapshot.recoveryEngine.status}</p>
+        <p>
+          Average muscle recovery:{" "}
+          {snapshot.recoveryEngine.averageMuscleRecovery}%
+        </p>
+        <p>Load penalty: {snapshot.recoveryEngine.trainingLoadPenalty}</p>
+        <p>
+          Lowest recovery:{" "}
+          {snapshot.recoveryEngine.lowestMuscles.length > 0
+            ? snapshot.recoveryEngine.lowestMuscles.join(", ")
+            : "No fatigue detected"}
+        </p>
+        <p>{snapshot.recoveryEngine.recommendation}</p>
+      </section>
       <section className="tf-history-card">
         <p className="eyebrow">Legacy Daily Coach</p>
         <strong>{snapshot.coach.nextBestMove.title}</strong>
@@ -318,6 +342,10 @@ export default function DeveloperTools() {
       <JsonPanel
         title="Coach Intelligence output"
         data={snapshot.coachIntelligence}
+      />
+      <JsonPanel
+        title="Recovery Engine output"
+        data={snapshot.recoveryEngine}
       />
       <JsonPanel title="Legacy Coach output" data={snapshot.coach} />
       <JsonPanel title="History repository" data={snapshot.history} />

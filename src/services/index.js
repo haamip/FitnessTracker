@@ -4,7 +4,7 @@ export * from "./engines/exerciseInsightEngine";
 export * from "./engines/progressionEngine";
 export * from "./engines/prEngineV2";
 export * from "./engines/workoutAnalyticsEngine";
-
+export * from "./engines/recoveryEngine";
 export * from "./generators/demoAthleteGenerator";
 export * from "./generators/demoSeedData";
 
