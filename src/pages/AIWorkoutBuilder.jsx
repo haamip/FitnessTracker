@@ -16,7 +16,7 @@ import {
 import {
   AIPlanRepository,
   WorkoutRepository,
-} from "../services/trackfitDataLayer";
+} from "../services/repositories/trackfitDataLayer";
 import "./TrackFitScreens.css";
 
 function convertDayToWorkout(day) {

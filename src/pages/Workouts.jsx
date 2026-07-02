@@ -15,7 +15,7 @@ import {
   CardioRepository,
   CheckInRepository,
   HistoryRepository,
-} from "../services/trackfitDataLayer";
+} from "../services/repositories/trackfitDataLayer";
 import "./TrackFitScreens.css";
 import "../styles/TrackFitWorkoutFixes.css";
 

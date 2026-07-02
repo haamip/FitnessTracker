@@ -1,6 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Clock3, Dumbbell, Trophy } from "lucide-react";
-import { HistoryRepository } from "../services/trackfitDataLayer";
+import { HistoryRepository } from "../services/repositories/trackfitDataLayer";
 import "./TrackFitScreens.css";
 
 /**

@@ -29,7 +29,7 @@
  * ============================================================================
  */
 
-import { HistoryRepository } from "../trackfitDataLayer";
+import { HistoryRepository } from "../repositories/trackfitDataLayer";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 

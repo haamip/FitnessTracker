@@ -4,7 +4,7 @@ import {
   CheckInRepository,
   HistoryRepository,
   WorkoutRepository,
-} from "../trackfitDataLayer";
+} from "../repositories/trackfitDataLayer";
 
 /**
  * ============================================================================

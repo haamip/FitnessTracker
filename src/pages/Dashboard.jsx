@@ -20,7 +20,7 @@ import LineChartCard from "../components/LineChartCard";
 import GamificationPanel from "../components/ui/GamificationPanel";
 import { generateDailyCoachBrief } from "../services/engines/aiCoachEngine";
 import { getAllTimePRs } from "../services/prEngine";
-import { HistoryRepository } from "../services/trackfitDataLayer";
+import { HistoryRepository } from "../services/repositories/trackfitDataLayer";
 import { getWeeklyTrainingSummary } from "../services/workoutSummaryEngine";
 import "./TrackFitScreens.css";
 

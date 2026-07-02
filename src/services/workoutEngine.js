@@ -1,4 +1,4 @@
-import { HistoryRepository } from "./trackfitDataLayer";
+import { HistoryRepository } from "./repositories/trackfitDataLayer";
 
 export const WORKOUT_HISTORY_KEY = "trackfit_workout_history";
 

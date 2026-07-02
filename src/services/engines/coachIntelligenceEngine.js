@@ -16,7 +16,7 @@ import {
   CardioRepository,
   CheckInRepository,
   HistoryRepository,
-} from "../trackfitDataLayer";
+} from "../repositories/trackfitDataLayer";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEKLY_WORKOUT_TARGET = 4;

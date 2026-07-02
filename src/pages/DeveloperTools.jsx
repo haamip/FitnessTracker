@@ -23,7 +23,7 @@ import {
   CheckInRepository,
   HistoryRepository,
   WorkoutRepository,
-} from "../services/trackfitDataLayer";
+} from "../services/repositories/trackfitDataLayer";
 import "./TrackFitScreens.css";
 import "./DeveloperTools.css";
 import { buildWorkoutAnalytics } from "../services/engines/workoutAnalyticsEngine";

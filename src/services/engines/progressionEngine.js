@@ -25,7 +25,7 @@
  * ============================================================================
  */
 
-import { HistoryRepository } from "../trackfitDataLayer";
+import { HistoryRepository } from "../repositories/trackfitDataLayer";
 import { findPreviousExercise } from "../workoutEngine";
 function getNumber(value) {
   return Number.parseFloat(value) || 0;

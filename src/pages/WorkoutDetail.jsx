@@ -35,7 +35,7 @@ import {
   WorkoutRepository,
   AIPlanRepository,
   HistoryRepository,
-} from "../services/trackfitDataLayer";
+} from "../services/repositories/trackfitDataLayer";
 import "./TrackFitScreens.css";
 
 const DEFAULT_REST_SECONDS = 90;

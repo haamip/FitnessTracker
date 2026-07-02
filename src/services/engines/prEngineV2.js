@@ -24,7 +24,7 @@
  * ============================================================================
  */
 
-import { HistoryRepository } from "../trackfitDataLayer";
+import { HistoryRepository } from "../repositories/trackfitDataLayer";
 
 function getNumber(value) {
   return Number.parseFloat(value) || 0;
