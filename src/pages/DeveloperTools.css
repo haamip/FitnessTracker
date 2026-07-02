@@ -47,7 +47,8 @@
   font-weight: 800;
 }
 
-.tf-dev-tool-list {
+.tf-dev-tool-list,
+.tf-dev-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
@@ -101,8 +102,8 @@
 }
 
 .tf-dev-status-card,
-.tf-dev-tools .tf-history-card {
-  margin-top: 18px;
+.tf-dev-tools .tf-history-card,
+.tf-dev-grid article {
   border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: 22px;
   background: #ffffff;
@@ -110,38 +111,65 @@
   box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
 }
 
+.tf-dev-status-card,
+.tf-dev-tools .tf-history-card {
+  margin-top: 18px;
+}
+
+.tf-dev-tools .tf-history-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 8px;
+  min-width: 0;
+  min-height: 205px;
+  text-align: left;
+}
+
+.tf-dev-tools .tf-history-card .eyebrow {
+  margin: 0;
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.1;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+}
+
+.tf-dev-tools .tf-history-card strong,
+.tf-dev-status-card strong {
+  display: block;
+  max-width: 100%;
+  color: #111827;
+  font-size: 24px;
+  line-height: 1.08;
+  letter-spacing: -0.5px;
+  font-weight: 950;
+  overflow-wrap: anywhere;
+}
+
 .tf-dev-status-card p,
 .tf-dev-tools .tf-history-card p {
-  margin: 7px 0 0;
+  width: 100%;
+  margin: 0;
   color: #4b5563;
   font-size: 14px;
-  line-height: 1.35;
+  line-height: 1.4;
   font-weight: 750;
+  overflow-wrap: anywhere;
 }
 
 .tf-dev-status-card span,
 .tf-dev-tools .tf-history-card > span {
   display: block;
-  margin-top: 10px;
+  margin-top: auto;
   color: #9ca3af;
   font-size: 12px;
   font-weight: 850;
 }
 
-.tf-dev-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 18px;
-}
-
 .tf-dev-grid article {
   min-height: 128px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 22px;
-  background: #ffffff;
-  padding: 18px;
-  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
 }
 
 .tf-dev-grid svg {
@@ -152,10 +180,11 @@
   display: block;
   margin-top: 16px;
   color: #111827;
-  font-size: 32px;
+  font-size: clamp(26px, 3vw, 40px);
   line-height: 1;
   font-weight: 950;
   letter-spacing: -0.8px;
+  overflow-wrap: anywhere;
 }
 
 .tf-dev-grid span {
@@ -202,6 +231,7 @@
     display: grid;
     grid-template-columns: repeat(12, minmax(0, 1fr));
     gap: 18px;
+    align-items: stretch;
   }
 
   .tf-dev-tools .tf-back-link,
