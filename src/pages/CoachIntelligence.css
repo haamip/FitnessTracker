@@ -234,3 +234,50 @@
   font-size: 12px;
   font-weight: 850;
 }
+/* --------------------------------------------------------------------------
+   Coach Mini Stat List
+-------------------------------------------------------------------------- */
+
+.coach-mini-stat-list {
+  display: grid;
+  gap: 7px;
+  margin: 14px 0;
+}
+
+.coach-mini-stat-list p {
+  margin: 0;
+  padding: 9px 11px;
+  border-radius: 12px;
+  background: #f9fafb;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 850;
+}
+/* --------------------------------------------------------------------------
+   Coach Recommendation Box
+-------------------------------------------------------------------------- */
+
+.coach-recommendation-box {
+  margin: 14px 0 16px;
+  padding: 14px;
+  border-radius: 16px;
+  background: #fffbeb;
+  border: 1px solid rgba(245, 158, 11, 0.22);
+}
+
+.coach-recommendation-box span {
+  margin-bottom: 6px;
+  color: #92400e;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.coach-recommendation-box p {
+  margin: 0;
+  color: #78350f;
+  font-size: 14px;
+  line-height: 1.45;
+  font-weight: 800;
+}

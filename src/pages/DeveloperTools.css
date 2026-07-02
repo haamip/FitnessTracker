@@ -5,6 +5,10 @@
    of the normal mobile app screen so debugging data can breathe.
 ============================================================================ */
 
+/* ============================================================================
+   TrackFit Developer Tools Dashboard
+============================================================================ */
+
 .tf-dev-tools {
   display: block;
   width: 100%;
@@ -26,7 +30,6 @@
   border-radius: 26px;
   background: linear-gradient(135deg, #111827, #1f2937);
   color: #ffffff;
-  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.2);
 }
 
 .tf-dev-tools .tf-history-hero svg {
@@ -38,24 +41,25 @@
   margin: 0;
   font-size: clamp(30px, 4vw, 48px);
   line-height: 0.95;
-  letter-spacing: -1.4px;
   font-weight: 950;
 }
 
-.tf-dev-tools .tf-history-hero span {
-  color: rgba(255, 255, 255, 0.74);
-  font-weight: 800;
-}
-
 .tf-dev-tool-list,
-.tf-dev-grid {
+.tf-dev-grid,
+.tf-dev-athlete-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(240px, 1fr));
   gap: 14px;
   margin-top: 18px;
 }
 
+.tf-dev-athlete-grid {
+  width: 100%;
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+}
+
 .tf-dev-tool-list button,
+.tf-dev-athlete-grid button,
 .tf-dev-json-card > button {
   min-width: 0;
   border: 1px solid rgba(15, 23, 42, 0.08);
@@ -68,6 +72,11 @@
   gap: 12px;
   text-align: left;
   box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+  white-space: normal;
+}
+
+.tf-dev-athlete-grid button {
+  min-height: 92px;
 }
 
 .tf-dev-tool-list button.danger {
@@ -75,7 +84,9 @@
   background: #fff7f7;
 }
 
-.tf-dev-tool-list button svg {
+.tf-dev-tool-list button svg,
+.tf-dev-athlete-grid button svg,
+.tf-dev-grid svg {
   flex: 0 0 auto;
   color: #f59e0b;
 }
@@ -84,21 +95,34 @@
   color: #ef4444;
 }
 
+.tf-dev-tool-list button div,
+.tf-dev-athlete-grid button div {
+  min-width: 0;
+}
+
 .tf-dev-tool-list strong,
+.tf-dev-athlete-grid strong,
 .tf-dev-json-card strong {
   display: block;
   color: #111827;
   font-size: 15px;
+  line-height: 1.15;
   font-weight: 950;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .tf-dev-tool-list span,
+.tf-dev-athlete-grid span,
 .tf-dev-json-card span {
   display: block;
   margin-top: 4px;
   color: #6b7280;
   font-size: 12px;
+  line-height: 1.35;
   font-weight: 800;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .tf-dev-status-card,
@@ -120,10 +144,9 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  justify-content: flex-start;
   gap: 8px;
   min-width: 0;
-  min-height: 205px;
+  min-height: auto;
   text-align: left;
 }
 
@@ -131,7 +154,6 @@
   margin: 0;
   color: #6b7280;
   font-size: 12px;
-  line-height: 1.1;
   font-weight: 950;
   letter-spacing: 0.08em;
 }
@@ -143,9 +165,7 @@
   color: #111827;
   font-size: 24px;
   line-height: 1.08;
-  letter-spacing: -0.5px;
   font-weight: 950;
-  overflow-wrap: anywhere;
 }
 
 .tf-dev-status-card p,
@@ -156,13 +176,11 @@
   font-size: 14px;
   line-height: 1.4;
   font-weight: 750;
-  overflow-wrap: anywhere;
 }
 
 .tf-dev-status-card span,
 .tf-dev-tools .tf-history-card > span {
   display: block;
-  margin-top: auto;
   color: #9ca3af;
   font-size: 12px;
   font-weight: 850;
@@ -172,10 +190,6 @@
   min-height: 128px;
 }
 
-.tf-dev-grid svg {
-  color: #f59e0b;
-}
-
 .tf-dev-grid strong {
   display: block;
   margin-top: 16px;
@@ -183,8 +197,6 @@
   font-size: clamp(26px, 3vw, 40px);
   line-height: 1;
   font-weight: 950;
-  letter-spacing: -0.8px;
-  overflow-wrap: anywhere;
 }
 
 .tf-dev-grid span {
@@ -231,7 +243,6 @@
     display: grid;
     grid-template-columns: repeat(12, minmax(0, 1fr));
     gap: 18px;
-    align-items: stretch;
   }
 
   .tf-dev-tools .tf-back-link,
@@ -249,14 +260,27 @@
     margin-top: 0;
   }
 
+  .tf-dev-tools .tf-history-card:has(.tf-dev-athlete-grid) {
+    grid-column: 1 / -1;
+  }
+
   .tf-dev-json-card {
     grid-column: span 6;
   }
 }
 
+@media (max-width: 980px) {
+  .tf-dev-tool-list,
+  .tf-dev-grid,
+  .tf-dev-athlete-grid {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+}
+
 @media (max-width: 760px) {
   .tf-dev-tool-list,
-  .tf-dev-grid {
+  .tf-dev-grid,
+  .tf-dev-athlete-grid {
     grid-template-columns: 1fr;
   }
 

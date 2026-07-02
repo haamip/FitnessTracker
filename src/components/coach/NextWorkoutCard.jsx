@@ -4,14 +4,17 @@
  * ============================================================================
  *
  * Difficulty
+ * ----------
  * ⭐⭐☆☆☆
  *
  * PURPOSE
  * -------
  * Shows the workout the Coach recommends next.
  *
- * This component does not decide the workout.
- * It only displays what the Coach Intelligence Engine gives it.
+ * Why this exists
+ * ---------------
+ * The Coach engine decides the recommendation.
+ * This card explains the decision and gives the user one clear action.
  *
  * ============================================================================
  */
@@ -27,15 +30,18 @@ export default function NextWorkoutCard({ recommendation }) {
 
   return (
     <TrackFitCard
-      eyebrow="Next workout"
+      eyebrow="Recommended next"
       title={workout}
       icon={<Dumbbell size={22} />}
       className="coach-next-workout-card"
     >
-      <p>{reason}</p>
+      <div className="coach-recommendation-box">
+        <span>Why this workout?</span>
+        <p>{reason}</p>
+      </div>
 
       <Link className="coach-card-link" to={route}>
-        Start workout <ChevronRight size={18} />
+        Start recommended workout <ChevronRight size={18} />
       </Link>
     </TrackFitCard>
   );
