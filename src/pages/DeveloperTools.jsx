@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Brain, Database, Dumbbell, RefreshCw, Trash2 } from "lucide-react";
+import { ArrowLeft, Brain, Database, Dumbbell, RefreshCw, Trash2, UserRound } from "lucide-react";
 import { generateDailyCoachBrief } from "../services/aiCoachEngine";
+import { DEMO_ATHLETE_PROFILES, generateDemoAthlete } from "../services/demoAthleteGenerator";
 import { clearDemoData, seedDemoData } from "../services/demoSeedData";
 import { calculateWorkoutTotals, formatClock } from "../services/workoutEngine";
 import {
@@ -74,6 +75,11 @@ export default function DeveloperTools() {
     refreshSnapshot("Seeded demo data");
   }
 
+  function handleSeedDemoAthlete(profile) {
+    const result = generateDemoAthlete(profile);
+    refreshSnapshot(`Seeded ${result.label}`);
+  }
+
   function handleClearDemoData() {
     clearDemoData();
     refreshSnapshot("Cleared demo data");
@@ -116,6 +122,24 @@ export default function DeveloperTools() {
             <span>Remove generated local testing records.</span>
           </div>
         </button>
+      </section>
+
+      <section className="tf-history-card">
+        <p className="eyebrow">Demo athlete generator</p>
+        <strong>Seed a full athlete profile</strong>
+        <p>Use these profiles to test readiness, fatigue, progression and plateau logic.</p>
+
+        <section className="tf-dev-tool-list">
+          {DEMO_ATHLETE_PROFILES.map((profile) => (
+            <button key={profile.id} onClick={() => handleSeedDemoAthlete(profile.id)} type="button">
+              <UserRound size={20} />
+              <div>
+                <strong>{profile.label}</strong>
+                <span>Generate repeatable testing history.</span>
+              </div>
+            </button>
+          ))}
+        </section>
       </section>
 
       <section className="tf-history-card tf-dev-status-card">
