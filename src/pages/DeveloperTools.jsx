@@ -15,6 +15,7 @@ import {
 } from "../services/trackfitDataLayer";
 import "./TrackFitScreens.css";
 import "./DeveloperTools.css";
+import { buildWorkoutAnalytics } from "../services/workoutAnalyticsEngine";
 
 function readDeveloperSnapshot(action = "Ready") {
   const plan = AIPlanRepository.getPlan();
@@ -24,6 +25,7 @@ function readDeveloperSnapshot(action = "Ready") {
   const activeWorkout = WorkoutRepository.getById("workout-1") || [];
   const coach = generateDailyCoachBrief(history);
   const coachIntelligence = buildCoachDashboard();
+  const workoutAnalytics = buildWorkoutAnalytics(history);
   const activeTotals = calculateWorkoutTotals(activeWorkout);
   const latestWorkout = history[0] || null;
 
@@ -38,6 +40,7 @@ function readDeveloperSnapshot(action = "Ready") {
     coach,
     coachIntelligence,
     latestWorkout,
+    workoutAnalytics,
     checkedAt: new Date().toLocaleTimeString(),
   };
 }
@@ -192,6 +195,15 @@ export default function DeveloperTools() {
         <p>{snapshot.coachIntelligence.recommendation.reason}</p>
         <p>Route: {snapshot.coachIntelligence.recommendation.route}</p>
       </section>
+      <section className="tf-history-card">
+  <p className="eyebrow">Workout Analytics</p>
+  <strong>{snapshot.workoutAnalytics.totalWorkouts} workouts</strong>
+  <p>Weekly volume: {snapshot.workoutAnalytics.weeklyVolume.toLocaleString()}kg</p>
+  <p>Monthly volume: {snapshot.workoutAnalytics.monthlyVolume.toLocaleString()}kg</p>
+  <p>Current streak: {snapshot.workoutAnalytics.currentStreak}</p>
+  <p>Favourite exercise: {snapshot.workoutAnalytics.favouriteExercise}</p>
+  <p>Most trained muscle: {snapshot.workoutAnalytics.mostTrainedMuscle}</p>
+</section>
 
       <section className="tf-history-card">
         <p className="eyebrow">Fatigue + Plateau</p>
@@ -231,6 +243,7 @@ export default function DeveloperTools() {
       <JsonPanel title="History repository" data={snapshot.history} />
       <JsonPanel title="Active workout repository" data={snapshot.activeWorkout} />
       <JsonPanel title="AI plan repository" data={snapshot.plan} />
+      <JsonPanel title="Workout Analytics output" data={snapshot.workoutAnalytics} />
 
       <Link className="tf-save-plan-btn" to="/workouts?refresh=manual">
         Open workouts
