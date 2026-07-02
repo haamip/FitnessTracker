@@ -1,4 +1,5 @@
-﻿import BottomNav from "./BottomNav";
+import { useLocation } from "react-router-dom";
+import BottomNav from "./BottomNav";
 import logo from "../../assets/brand/trackfit-logo.png";
 import "./MobileShell.css";
 
@@ -7,21 +8,27 @@ import "./MobileShell.css";
  *
  * Main phone-frame layout used across TrackFit.
  * Keeps the top brand bar, routed page content, and bottom navigation consistent.
+ *
+ * Developer Tools uses a wider internal dashboard layout because it is for
+ * inspecting app data rather than testing the phone UI.
  */
 export default function MobileShell({ children }) {
+  const location = useLocation();
+  const isDeveloperTools = location.pathname === "/dev-tools";
+
   return (
-    <div className="mobile-frame">
+    <div className={isDeveloperTools ? "mobile-frame dev-frame" : "mobile-frame"}>
       <header className="app-topbar">
         <img src={logo} alt="TrackFit" className="topbar-logo" />
         <div>
           <strong>TrackFit</strong>
-          <span>Built to move</span>
+          <span>{isDeveloperTools ? "Developer cockpit" : "Built to move"}</span>
         </div>
       </header>
 
       <main className="mobile-content">{children}</main>
 
-      <BottomNav />
+      {!isDeveloperTools && <BottomNav />}
     </div>
   );
 }
