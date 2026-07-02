@@ -4,7 +4,7 @@
  * Repositories are the single local data access point while TrackFit is
  * offline-first. Pages should not touch localStorage directly.
  */
-import { readJson, writeJson } from "../storage";
+import { readJson, writeJson } from "../utils/storage";
 
 const WORKOUT_KEY_PREFIX = "trackfit_workout_";
 const WORKOUT_HISTORY_KEY = "trackfit_workout_history";

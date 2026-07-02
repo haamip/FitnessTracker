@@ -1,4 +1,4 @@
-import { readJson, writeJson } from "../services/storage";
+import { readJson, writeJson } from "../services/utils/storage";
 
 /**
  * TrackFit local data repositories.
