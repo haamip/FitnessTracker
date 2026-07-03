@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { generateDailyCoachBrief } from "../services/engines/aiCoachEngine";
 import { buildCoachDashboard } from "../services/engines/coachIntelligenceEngine";
+import { buildDecisionEngine } from "../services/engines/decisionEngine";
 import {
   DEMO_ATHLETE_PROFILES,
   generateDemoAthlete,
@@ -46,6 +47,14 @@ function readDeveloperSnapshot(action = "Ready") {
   const prEngine = buildPrEngine(history);
   const progressionEngine = buildProgressionEngine(history);
   const recoveryEngine = buildRecoveryEngine(history, checkIns);
+  const decisionEngine = buildDecisionEngine({
+    history,
+    checkIns,
+    analytics: workoutAnalytics,
+    prEngine,
+    progressionEngine,
+    recoveryEngine,
+  });
   const activeTotals = calculateWorkoutTotals(activeWorkout);
 
   const latestWorkout = history[0] || null;
@@ -65,6 +74,7 @@ function readDeveloperSnapshot(action = "Ready") {
     prEngine,
     progressionEngine,
     recoveryEngine,
+    decisionEngine,
     checkedAt: new Date().toLocaleTimeString(),
   };
 }
@@ -219,8 +229,8 @@ export default function DeveloperTools() {
         </article>
         <article>
           <Database size={20} />
-          <strong>{snapshot.coachIntelligence.fatigue.level}</strong>
-          <span>Real fatigue level</span>
+          <strong>{snapshot.decisionEngine.trainingIntensity}</strong>
+          <span>Decision engine call</span>
         </article>
       </section>
 
@@ -230,15 +240,31 @@ export default function DeveloperTools() {
         <p>{snapshot.coachIntelligence.recommendation.reason}</p>
         <p>Route: {snapshot.coachIntelligence.recommendation.route}</p>
       </section>
+
+      <section className="tf-history-card">
+        <p className="eyebrow">Decision Engine</p>
+        <strong>
+          {snapshot.decisionEngine.decisionScore}% - {snapshot.decisionEngine.trainingIntensity}
+        </strong>
+        <p>{snapshot.decisionEngine.coachSummary}</p>
+        <p>Readiness band: {snapshot.decisionEngine.readinessBand}</p>
+        <p>Next move: {snapshot.decisionEngine.nextBestMove.title}</p>
+        <p>
+          Limiters: {snapshot.decisionEngine.limiters.length > 0
+            ? snapshot.decisionEngine.limiters.join(", ")
+            : "No major limiters"}
+        </p>
+      </section>
+
       <section className="tf-history-card">
         <p className="eyebrow">Workout Analytics</p>
         <strong>{snapshot.workoutAnalytics.totalWorkouts} workouts</strong>
         <p>
-          Weekly volume:{" "}
+          Weekly volume: {" "}
           {snapshot.workoutAnalytics.weeklyVolume.toLocaleString()}kg
         </p>
         <p>
-          Monthly volume:{" "}
+          Monthly volume: {" "}
           {snapshot.workoutAnalytics.monthlyVolume.toLocaleString()}kg
         </p>
         <p>Current streak: {snapshot.workoutAnalytics.currentStreak}</p>
@@ -252,13 +278,13 @@ export default function DeveloperTools() {
         <strong>{snapshot.prEngine.totalExercisesTracked} exercises</strong>
         <p>Sets analysed: {snapshot.prEngine.totalCompletedSetsAnalysed}</p>
         <p>
-          Heaviest set:{" "}
+          Heaviest set: {" "}
           {snapshot.prEngine.heaviestSet
             ? `${snapshot.prEngine.heaviestSet.exercise} ${snapshot.prEngine.heaviestSet.weight}kg x ${snapshot.prEngine.heaviestSet.reps}`
             : "No data yet"}
         </p>
         <p>
-          Best e1RM:{" "}
+          Best e1RM: {" "}
           {snapshot.prEngine.bestOverallEstimatedOneRepMax
             ? `${snapshot.prEngine.bestOverallEstimatedOneRepMax.exercise} ${Math.round(snapshot.prEngine.bestOverallEstimatedOneRepMax.estimatedOneRepMax)}kg`
             : "No data yet"}
@@ -273,7 +299,7 @@ export default function DeveloperTools() {
         <p>Stable: {snapshot.progressionEngine.stableCount}</p>
         <p>Declining: {snapshot.progressionEngine.decliningCount}</p>
         <p>
-          Strongest progress:{" "}
+          Strongest progress: {" "}
           {snapshot.progressionEngine.strongestProgress
             ? `${snapshot.progressionEngine.strongestProgress.exercise} ${snapshot.progressionEngine.strongestProgress.strengthImprovementPercent}%`
             : "No clear trend yet"}
@@ -291,12 +317,12 @@ export default function DeveloperTools() {
         <strong>{snapshot.recoveryEngine.recoveryScore}%</strong>
         <p>Status: {snapshot.recoveryEngine.status}</p>
         <p>
-          Average muscle recovery:{" "}
+          Average muscle recovery: {" "}
           {snapshot.recoveryEngine.averageMuscleRecovery}%
         </p>
         <p>Load penalty: {snapshot.recoveryEngine.trainingLoadPenalty}</p>
         <p>
-          Lowest recovery:{" "}
+          Lowest recovery: {" "}
           {snapshot.recoveryEngine.lowestMuscles.length > 0
             ? snapshot.recoveryEngine.lowestMuscles.join(", ")
             : "No fatigue detected"}
@@ -325,7 +351,7 @@ export default function DeveloperTools() {
         <p className="eyebrow">Active Workout</p>
         <strong>{snapshot.activeWorkout.length} exercises</strong>
         <p>
-          {snapshot.activeTotals.doneSets}/{snapshot.activeTotals.totalSets}{" "}
+          {snapshot.activeTotals.doneSets}/{snapshot.activeTotals.totalSets} {" "}
           sets complete
         </p>
         <p>{Math.round(snapshot.activeTotals.volume)}kg active volume</p>
@@ -334,7 +360,7 @@ export default function DeveloperTools() {
             snapshot.latestWorkout?.seconds ||
               snapshot.latestWorkout?.durationSeconds ||
               0,
-          )}{" "}
+          )} {" "}
           latest saved duration
         </p>
       </section>
@@ -342,6 +368,10 @@ export default function DeveloperTools() {
       <JsonPanel
         title="Coach Intelligence output"
         data={snapshot.coachIntelligence}
+      />
+      <JsonPanel
+        title="Decision Engine output"
+        data={snapshot.decisionEngine}
       />
       <JsonPanel
         title="Recovery Engine output"
