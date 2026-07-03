@@ -5,12 +5,16 @@
  *
  * PURPOSE
  * -------
- * Makes coaching decisions from repository data and workout analytics.
+ * Makes coaching decisions from repository data and engine outputs.
  *
  * Difficulty
  * ----------
  */
 
+import { buildDecisionEngine } from "./decisionEngine";
+import { buildPrEngine } from "./prEngineV2";
+import { buildProgressionEngine } from "./progressionEngine";
+import { buildRecoveryEngine } from "./recoveryEngine";
 import { buildWorkoutAnalytics } from "./workoutAnalyticsEngine";
 import {
   CardioRepository,
@@ -41,16 +45,6 @@ function isWithinDays(value, days) {
 
 function getLatestCheckIn(checkIns) {
   return checkIns[0] || null;
-}
-
-function getPrimaryMusclesForWorkout(workout) {
-  return [
-    ...new Set(
-      (workout?.exercises || [])
-        .flatMap((exercise) => exercise.primaryMuscles || [])
-        .filter(Boolean),
-    ),
-  ];
 }
 
 function getCheckInScore(checkIns) {
@@ -87,22 +81,34 @@ export function buildCoachDashboard() {
   const checkIns = CheckInRepository.getAll();
   const cardio = CardioRepository.getAll();
   const analytics = buildWorkoutAnalytics(history);
+  const prEngine = buildPrEngine(history);
+  const progressionEngine = buildProgressionEngine(history);
+  const recoveryEngine = buildRecoveryEngine(history, checkIns);
+  const decision = buildDecisionEngine({
+    history,
+    checkIns,
+    analytics,
+    prEngine,
+    progressionEngine,
+    recoveryEngine,
+  });
 
   return {
-    readiness: calculateReadiness(analytics, checkIns),
+    readiness: calculateReadiness(analytics, checkIns, decision),
     weeklySummary: calculateWeeklySummary(analytics),
     fatigue: calculateFatigue(analytics, checkIns, cardio),
-    recommendation: calculateRecommendation(history, analytics),
+    recommendation: mapDecisionToRecommendation(decision),
+    decision,
     plateau: detectPlateau(history),
     weeklyReview: calculateWeeklyReview(analytics, checkIns),
     analytics,
   };
 }
 
-function calculateReadiness(analytics, checkIns) {
+function calculateReadiness(analytics, checkIns, decision) {
   if (analytics.totalWorkouts === 0) {
     return {
-      score: 70,
+      score: decision.decisionScore,
       status: "Baseline",
       reason:
         "Log a few workouts and check-ins so TrackFit can calculate real readiness.",
@@ -123,9 +129,10 @@ function calculateReadiness(analytics, checkIns) {
   if (analytics.currentStreak >= 3) fatiguePenalty += 10;
 
   const score = clampScore(
-    checkIn.score * 0.45 +
-      loadScore * 0.35 +
-      analytics.weeklyConsistencyPercent * 0.2 -
+    checkIn.score * 0.35 +
+      loadScore * 0.25 +
+      analytics.weeklyConsistencyPercent * 0.15 +
+      decision.decisionScore * 0.25 -
       fatiguePenalty,
   );
 
@@ -141,7 +148,7 @@ function calculateReadiness(analytics, checkIns) {
   return {
     score,
     status,
-    reason: `${checkIn.reason} Weekly load is ${analytics.weeklyWorkouts}/${WEEKLY_WORKOUT_TARGET} sessions.`,
+    reason: `${checkIn.reason} Decision engine says ${decision.trainingIntensity.toLowerCase()} with a ${decision.decisionScore}% score.`,
   };
 }
 
@@ -205,58 +212,14 @@ function calculateFatigue(analytics, checkIns, cardio) {
   };
 }
 
-function calculateRecommendation(history, analytics) {
-  const latestWorkout = analytics.lastWorkout || history[0];
-
-  if (!latestWorkout) {
-    return {
-      workout: "Start Workout 1",
-      route: "/workouts/workout-1",
-      reason:
-        "No completed workout history yet. Log one clean session to unlock better recommendations.",
-    };
-  }
-
-  const trainedMuscles = getPrimaryMusclesForWorkout(latestWorkout);
-  const trainedText =
-    trainedMuscles.length > 0
-      ? trainedMuscles
-          .slice(0, 3)
-          .map((muscle) => muscle.replaceAll("_", " "))
-          .join(", ")
-      : "your last trained muscles";
-
-  const latestTitle = latestWorkout.title || "last workout";
-
-  if (
-    latestTitle.toLowerCase().includes("upper") ||
-    trainedMuscles.includes("chest") ||
-    trainedMuscles.includes("shoulders")
-  ) {
-    return {
-      workout: "Lower Strength",
-      route: "/workouts/demo-plan-lower-strength",
-      reason: `Your latest session loaded ${trainedText}. Lower body is the cleaner rotation today.`,
-    };
-  }
-
-  if (
-    latestTitle.toLowerCase().includes("lower") ||
-    trainedMuscles.includes("quadriceps") ||
-    trainedMuscles.includes("glutes")
-  ) {
-    return {
-      workout: "Upper Strength",
-      route: "/workouts/demo-plan-upper-strength",
-      reason: `Your latest session loaded ${trainedText}. Upper body gives legs more recovery time.`,
-    };
-  }
-
+function mapDecisionToRecommendation(decision) {
   return {
-    workout: latestTitle,
-    route: `/workouts/${latestWorkout.workoutId || "workout-1"}`,
-    reason:
-      "Repeat a known session so TrackFit can compare performance properly.",
+    workout: decision.nextBestMove.title,
+    route: decision.nextBestMove.route,
+    reason: decision.nextBestMove.detail,
+    action: decision.nextBestMove.action,
+    intensity: decision.trainingIntensity,
+    score: decision.decisionScore,
   };
 }
 
@@ -346,14 +309,16 @@ function calculateWeeklyReview(analytics, checkIns) {
  * ============================================================================
  *
  * WorkoutAnalyticsEngine calculates numbers.
- * CoachIntelligenceEngine makes decisions.
+ * DecisionEngine combines engine outputs.
+ * CoachIntelligenceEngine prepares coach-facing output.
  *
  * If something looks wrong:
  *
- * 1. Check HistoryRepository
- * 2. Check WorkoutAnalyticsEngine output
- * 3. Check this Coach engine
- * 4. Check the card rendering it
+ * 1. Check repositories
+ * 2. Check individual engine outputs
+ * 3. Check Decision Engine output
+ * 4. Check this Coach engine
+ * 5. Check the card rendering it
  *
  * ============================================================================
  */
