@@ -72,7 +72,12 @@ function getConsistencyScore(analytics) {
   return clampScore(analytics.weeklyConsistencyPercent);
 }
 
-function getDecisionScore({ analytics, prEngine, progressionEngine, recoveryEngine }) {
+function getDecisionScore({
+  analytics,
+  prEngine,
+  progressionEngine,
+  recoveryEngine,
+}) {
   const consistencyScore = getConsistencyScore(analytics);
   const progressionScore = getProgressionScore(progressionEngine);
   const prScore = getPrScore(prEngine);
@@ -112,7 +117,12 @@ function getPrimaryLimiters({ analytics, progressionEngine, recoveryEngine }) {
   return limiters;
 }
 
-function getOpportunities({ analytics, prEngine, progressionEngine, recoveryEngine }) {
+function getOpportunities({
+  analytics,
+  prEngine,
+  progressionEngine,
+  recoveryEngine,
+}) {
   const opportunities = [];
 
   if (recoveryEngine.recoveryScore >= 85) {
@@ -138,7 +148,10 @@ function getOpportunities({ analytics, prEngine, progressionEngine, recoveryEngi
   return opportunities;
 }
 
-function getNextBestMove({ analytics, progressionEngine, recoveryEngine }, intensity) {
+function getNextBestMove(
+  { analytics, progressionEngine, recoveryEngine },
+  intensity,
+) {
   if (analytics.totalWorkouts === 0) {
     return {
       title: "Start with one clean session",
@@ -153,7 +166,7 @@ function getNextBestMove({ analytics, progressionEngine, recoveryEngine }, inten
     return {
       title: "Recovery day",
       detail:
-        "Recovery is too low for hard loading. Use walking, mobility or light technique work today.",
+        "Recovery is too low for heavy training. Use walking, mobility or light technique work today.",
       action: "Open workouts",
       route: "/workouts",
     };
@@ -163,7 +176,7 @@ function getNextBestMove({ analytics, progressionEngine, recoveryEngine }, inten
     return {
       title: "Controlled training day",
       detail:
-        "Train, but keep load conservative and avoid chasing PRs until recovery improves.",
+        "Train, but keep load conservative and avoid chasing records until recovery improves.",
       action: "Open workouts",
       route: "/workouts",
     };
@@ -187,7 +200,7 @@ function getNextBestMove({ analytics, progressionEngine, recoveryEngine }, inten
   };
 }
 
-function getCoachSummary(decisionScore, intensity, limiters) {
+function getCoachSummary(intensity, limiters) {
   if (intensity === "Push") {
     return "Green light. Recovery and training signals support a strong session today.";
   }
@@ -197,7 +210,7 @@ function getCoachSummary(decisionScore, intensity, limiters) {
   }
 
   if (intensity === "Maintain") {
-    return "Train controlled. The goal today is quality work, not ego lifting.";
+    return "Train controlled. The goal today is quality work and clean logging.";
   }
 
   const limiterText = limiters[0] ? ` Main limiter: ${limiters[0]}.` : "";
@@ -240,7 +253,7 @@ export function buildDecisionEngine({
       { analytics, progressionEngine, recoveryEngine },
       trainingIntensity,
     ),
-    coachSummary: getCoachSummary(decisionScore, trainingIntensity, limiters),
+    coachSummary: getCoachSummary(trainingIntensity, limiters),
     limiters,
     opportunities,
     signals: {
