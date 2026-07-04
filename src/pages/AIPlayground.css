@@ -70,6 +70,36 @@
   word-break: break-word;
 }
 
+.tf-ai-cost-table {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 18px;
+  overflow-x: auto;
+}
+
+.tf-ai-cost-row {
+  display: grid;
+  grid-template-columns: 0.9fr 1.3fr 0.8fr 0.8fr 0.9fr;
+  gap: 10px;
+  align-items: center;
+  min-width: 760px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(248, 250, 252, 0.95);
+  color: #334155;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.tf-ai-cost-head {
+  background: #0f172a;
+  color: #f8fafc;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.72rem;
+}
+
 .tf-ai-debug-stack {
   display: flex;
   flex-direction: column;
