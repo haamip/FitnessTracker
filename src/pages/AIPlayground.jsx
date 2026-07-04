@@ -5,6 +5,7 @@ import { buildCoachDashboard } from "../services/engines/coachIntelligenceEngine
 import { buildTrackFitAIPlaygroundSnapshot } from "../services/ai/trackfitCoachService";
 import "./TrackFitScreens.css";
 import "./DeveloperTools.css";
+import "./AIPlayground.css";
 
 function buildPlaygroundSnapshot() {
   /**
@@ -22,6 +23,15 @@ function buildPlaygroundSnapshot() {
     decisionEngine: coachIntelligence.decision,
     ai,
   };
+}
+
+function SectionHeader({ title, detail }) {
+  return (
+    <div className="tf-ai-section-header">
+      <h2>{title}</h2>
+      <p>{detail}</p>
+    </div>
+  );
 }
 
 function JsonPanel({ title, data }) {
@@ -48,7 +58,7 @@ function TextPanel({ title, eyebrow, children }) {
         <span>{isOpen ? "Collapse" : "Expand"}</span>
       </button>
       {isOpen && (
-        <div className="tf-history-card" style={{ marginTop: 12 }}>
+        <div className="tf-ai-panel" style={{ marginTop: 12 }}>
           <p className="eyebrow">{eyebrow}</p>
           {children}
         </div>
@@ -92,7 +102,7 @@ export default function AIPlayground() {
   }
 
   return (
-    <main className="screen tf-dev-tools">
+    <main className="screen tf-dev-tools tf-ai-playground">
       <Link className="tf-back-link" to="/dev-tools">
         <ArrowLeft size={20} /> Back to Developer Tools
       </Link>
@@ -104,85 +114,123 @@ export default function AIPlayground() {
         <span>Compact cockpit for prompt, provider and coaching pipeline checks.</span>
       </section>
 
-      <section className="tf-dev-tool-list">
-        <button onClick={refreshPlayground} type="button">
-          <RefreshCw size={20} />
-          <div>
-            <strong>Refresh playground</strong>
-            <span>Re-run Coach Intelligence and rebuild the prompt.</span>
-          </div>
-        </button>
+      <section className="tf-ai-section">
+        <SectionHeader
+          title="Controls"
+          detail="Refresh the full coaching pipeline or copy the exact prompt for inspection."
+        />
+        <section className="tf-dev-tool-list">
+          <button onClick={refreshPlayground} type="button">
+            <RefreshCw size={20} />
+            <div>
+              <strong>Refresh playground</strong>
+              <span>Re-run Coach Intelligence and rebuild the prompt.</span>
+            </div>
+          </button>
 
-        <button onClick={copyPrompt} type="button">
-          <Copy size={20} />
-          <div>
-            <strong>Copy prompt</strong>
-            <span>{copyStatus}</span>
-          </div>
-        </button>
+          <button onClick={copyPrompt} type="button">
+            <Copy size={20} />
+            <div>
+              <strong>Copy prompt</strong>
+              <span>{copyStatus}</span>
+            </div>
+          </button>
+        </section>
       </section>
 
-      <section className="tf-dev-grid">
-        <article>
-          <Brain size={20} />
-          <strong>{decision.decisionScore}%</strong>
-          <span>{decision.trainingIntensity} decision</span>
-        </article>
-        <article>
-          <Bot size={20} />
-          <strong>{ai.provider.active}</strong>
-          <span>Real provider disabled</span>
-        </article>
-        <article>
-          <Database size={20} />
-          <strong>{ai.cost.totalTokens}</strong>
-          <span>Estimated mock tokens</span>
-        </article>
+      <section className="tf-ai-section">
+        <SectionHeader
+          title="Run summary"
+          detail="The top-level state of the current mock AI run."
+        />
+        <section className="tf-dev-grid tf-ai-metric-grid">
+          <article>
+            <Brain size={20} />
+            <strong>{decision.decisionScore}%</strong>
+            <span>{decision.trainingIntensity} decision</span>
+          </article>
+          <article>
+            <Bot size={20} />
+            <strong>{ai.provider.active}</strong>
+            <span>Real provider disabled</span>
+          </article>
+          <article>
+            <Database size={20} />
+            <strong>{ai.cost.totalTokens}</strong>
+            <span>Estimated mock tokens</span>
+          </article>
+        </section>
       </section>
 
-      <section className="tf-history-card">
-        <p className="eyebrow">Current AI Run</p>
-        <strong>{decision.nextBestMove.title}</strong>
-        <p>{decision.coachSummary}</p>
-        <p>Main limiter: {mainLimiter}</p>
-        <p>Main opportunity: {mainOpportunity}</p>
-        <p>Mock response time: {ai.mockResponse.responseTimeMs}ms</p>
+      <section className="tf-ai-section">
+        <SectionHeader
+          title="Current decision"
+          detail="The human-readable output from TrackFit before AI explains it."
+        />
+        <section className="tf-ai-panel">
+          <p className="eyebrow">Current AI Run</p>
+          <strong>{decision.nextBestMove.title}</strong>
+          <p>{decision.coachSummary}</p>
+          <p>Main limiter: {mainLimiter}</p>
+          <p>Main opportunity: {mainOpportunity}</p>
+          <p>Mock response time: {ai.mockResponse.responseTimeMs}ms</p>
+        </section>
       </section>
 
-      <section className="tf-dev-grid">
-        <PipelineStep title="Repositories" detail="History, check-ins, cardio" />
-        <PipelineStep title="Engines" detail="Analytics, PR, recovery" />
-        <PipelineStep title="Decision" detail={decision.trainingIntensity} />
-        <PipelineStep title="Coach" detail={coach.recommendation.workout} />
-        <PipelineStep title="Prompt" detail={`${ai.cost.inputTokens} input tokens`} />
-        <PipelineStep title="Mock AI" detail="No paid request" />
+      <section className="tf-ai-section">
+        <SectionHeader
+          title="Pipeline"
+          detail="The order TrackFit follows before any real AI provider gets involved."
+        />
+        <section className="tf-dev-grid tf-ai-pipeline-grid">
+          <PipelineStep title="Repositories" detail="History, check-ins, cardio" />
+          <PipelineStep title="Engines" detail="Analytics, PR, recovery" />
+          <PipelineStep title="Decision" detail={decision.trainingIntensity} />
+          <PipelineStep title="Coach" detail={coach.recommendation.workout} />
+          <PipelineStep title="Prompt" detail={`${ai.cost.inputTokens} input tokens`} />
+          <PipelineStep title="Mock AI" detail="No paid request" />
+        </section>
       </section>
 
-      <TextPanel title="Prompt Preview" eyebrow="Prompt Builder">
-        <strong>Exact coaching prompt</strong>
-        <p>
-          This is what TrackFit will eventually send to the real AI provider.
-          For now, it stays local and costs nothing.
-        </p>
-        <pre>{ai.prompt}</pre>
-      </TextPanel>
+      <section className="tf-ai-section">
+        <SectionHeader
+          title="Expandable inspection"
+          detail="Open these only when you need to inspect prompt text, mock output or estimated cost."
+        />
+        <TextPanel title="Prompt Preview" eyebrow="Prompt Builder">
+          <strong>Exact coaching prompt</strong>
+          <p>
+            This is what TrackFit will eventually send to the real AI provider.
+            For now, it stays local and costs nothing.
+          </p>
+          <pre className="tf-ai-code-block">{ai.prompt}</pre>
+        </TextPanel>
 
-      <TextPanel title="Mock AI Response" eyebrow="Mock Provider">
-        <strong>{ai.mockResponse.provider}</strong>
-        <p>{ai.mockResponse.message}</p>
-        <p>Response time: {ai.mockResponse.responseTimeMs}ms</p>
-      </TextPanel>
+        <TextPanel title="Mock AI Response" eyebrow="Mock Provider">
+          <strong>{ai.mockResponse.provider}</strong>
+          <p>{ai.mockResponse.message}</p>
+          <p>Response time: {ai.mockResponse.responseTimeMs}ms</p>
+        </TextPanel>
 
-      <TextPanel title="Cost Guard" eyebrow="Token Estimate">
-        <strong>${ai.cost.estimatedCostAud.toFixed(2)} AUD</strong>
-        <p>{ai.cost.note}</p>
-        <p>Input tokens: {ai.cost.inputTokens}</p>
-        <p>Output tokens: {ai.cost.outputTokens}</p>
-      </TextPanel>
+        <TextPanel title="Cost Guard" eyebrow="Token Estimate">
+          <strong>${ai.cost.estimatedCostAud.toFixed(2)} AUD</strong>
+          <p>{ai.cost.note}</p>
+          <p>Input tokens: {ai.cost.inputTokens}</p>
+          <p>Output tokens: {ai.cost.outputTokens}</p>
+        </TextPanel>
+      </section>
 
-      <JsonPanel title="Coach Intelligence output" data={coach} />
-      <JsonPanel title="Decision Engine output" data={decision} />
-      <JsonPanel title="AI playground output" data={ai} />
+      <section className="tf-ai-section">
+        <SectionHeader
+          title="Raw debug output"
+          detail="Developer-only JSON kept out of the way until something needs debugging."
+        />
+        <div className="tf-ai-debug-stack">
+          <JsonPanel title="Coach Intelligence output" data={coach} />
+          <JsonPanel title="Decision Engine output" data={decision} />
+          <JsonPanel title="AI playground output" data={ai} />
+        </div>
+      </section>
     </main>
   );
 }
