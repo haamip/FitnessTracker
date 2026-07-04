@@ -25,6 +25,11 @@ function buildPlaygroundSnapshot() {
   };
 }
 
+function formatUsd(value) {
+  if (value < 0.0001) return "<$0.0001";
+  return `$${value.toFixed(4)}`;
+}
+
 function SectionHeader({ title, detail }) {
   return (
     <div className="tf-ai-section-header">
@@ -74,6 +79,29 @@ function PipelineStep({ title, detail }) {
       <strong>{title}</strong>
       <span>{detail}</span>
     </article>
+  );
+}
+
+function CostComparisonTable({ rows }) {
+  return (
+    <div className="tf-ai-cost-table">
+      <div className="tf-ai-cost-row tf-ai-cost-head">
+        <span>Provider</span>
+        <span>Model</span>
+        <span>Input / 1M</span>
+        <span>Output / 1M</span>
+        <span>Cost if live</span>
+      </div>
+      {rows.map((row) => (
+        <div className="tf-ai-cost-row" key={row.id}>
+          <span>{row.provider}</span>
+          <strong>{row.model}</strong>
+          <span>${row.inputUsdPerMillion}</span>
+          <span>${row.outputUsdPerMillion}</span>
+          <strong>{formatUsd(row.totalCostUsd)}</strong>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -179,6 +207,24 @@ export default function AIPlayground() {
 
       <section className="tf-ai-section">
         <SectionHeader
+          title="Cost if live"
+          detail="Mock mode still costs $0. These estimates show what the same request would cost on real providers."
+        />
+        <section className="tf-ai-panel">
+          <p className="eyebrow">Cheapest current estimate</p>
+          <strong>
+            {ai.cost.cheapestModel.model} - {formatUsd(ai.cost.cheapestModel.totalCostUsd)} USD
+          </strong>
+          <p>
+            Input: {ai.cost.inputTokens} tokens. Output: {ai.cost.outputTokens} tokens.
+          </p>
+          <p>{ai.cost.note}</p>
+          <CostComparisonTable rows={ai.cost.comparison} />
+        </section>
+      </section>
+
+      <section className="tf-ai-section">
+        <SectionHeader
           title="Pipeline"
           detail="The order TrackFit follows before any real AI provider gets involved."
         />
@@ -213,7 +259,7 @@ export default function AIPlayground() {
         </TextPanel>
 
         <TextPanel title="Cost Guard" eyebrow="Token Estimate">
-          <strong>${ai.cost.estimatedCostAud.toFixed(2)} AUD</strong>
+          <strong>{formatUsd(ai.cost.estimatedCostUsd)} USD in mock mode</strong>
           <p>{ai.cost.note}</p>
           <p>Input tokens: {ai.cost.inputTokens}</p>
           <p>Output tokens: {ai.cost.outputTokens}</p>
