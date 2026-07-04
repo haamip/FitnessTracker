@@ -9,12 +9,12 @@ import "./MobileShell.css";
  * Main phone-frame layout used across TrackFit.
  * Keeps the top brand bar, routed page content, and bottom navigation consistent.
  *
- * Developer Tools uses a wider internal dashboard layout because it is for
+ * Developer routes use a wider internal dashboard layout because they are for
  * inspecting app data rather than testing the phone UI.
  */
 export default function MobileShell({ children }) {
   const location = useLocation();
-  const isDeveloperTools = location.pathname === "/dev-tools";
+  const isDeveloperTools = location.pathname.startsWith("/dev-tools");
 
   return (
     <div
