@@ -25,6 +25,7 @@ const Workouts = lazy(() => import("./pages/Workouts"));
 const AIWorkoutBuilder = lazy(() => import("./pages/AIWorkoutBuilder"));
 const WorkoutDetail = lazy(() => import("./pages/WorkoutDetail"));
 const CoachIntelligence = lazy(() => import("./pages/CoachIntelligence"));
+const AIPlayground = lazy(() => import("./pages/AIPlayground"));
 
 function WorkoutDetailRoute() {
   const { id = "workout-1" } = useParams();
@@ -75,6 +76,7 @@ function App() {
             <Route path="/workouts" element={<Workouts />} />
             <Route path="/workouts/builder" element={<AIWorkoutBuilder />} />
             <Route path="/dev-tools" element={<DeveloperTools />} />
+            <Route path="/dev-tools/ai" element={<AIPlayground />} />
             <Route
               path="/workouts/history/:historyId"
               element={<CompletedWorkoutDetail />}
