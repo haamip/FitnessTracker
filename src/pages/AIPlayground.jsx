@@ -38,6 +38,25 @@ function JsonPanel({ title, data }) {
   );
 }
 
+function TextPanel({ title, eyebrow, children }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <section className="tf-dev-json-card">
+      <button onClick={() => setIsOpen((current) => !current)} type="button">
+        <strong>{title}</strong>
+        <span>{isOpen ? "Collapse" : "Expand"}</span>
+      </button>
+      {isOpen && (
+        <div className="tf-history-card" style={{ marginTop: 12 }}>
+          <p className="eyebrow">{eyebrow}</p>
+          {children}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function PipelineStep({ title, detail }) {
   return (
     <article>
@@ -52,6 +71,12 @@ export default function AIPlayground() {
   const [snapshot, setSnapshot] = useState(() => buildPlaygroundSnapshot());
   const [copyStatus, setCopyStatus] = useState("Ready");
 
+  const decision = snapshot.decisionEngine;
+  const coach = snapshot.coachIntelligence;
+  const ai = snapshot.ai;
+  const mainLimiter = decision.limiters[0] || "No major limiter";
+  const mainOpportunity = decision.opportunities[0] || "No clear opportunity yet";
+
   function refreshPlayground() {
     setSnapshot(buildPlaygroundSnapshot());
     setCopyStatus("Ready");
@@ -59,7 +84,7 @@ export default function AIPlayground() {
 
   async function copyPrompt() {
     try {
-      await navigator.clipboard.writeText(snapshot.ai.prompt);
+      await navigator.clipboard.writeText(ai.prompt);
       setCopyStatus("Prompt copied");
     } catch {
       setCopyStatus("Copy failed");
@@ -76,10 +101,7 @@ export default function AIPlayground() {
         <Bot size={30} />
         <p className="eyebrow">Developer Suite</p>
         <h1>AI Playground</h1>
-        <span>
-          Inspect the full coaching pipeline before a real AI provider is wired
-          up.
-        </span>
+        <span>Compact cockpit for prompt, provider and coaching pipeline checks.</span>
       </section>
 
       <section className="tf-dev-tool-list">
@@ -103,68 +125,64 @@ export default function AIPlayground() {
       <section className="tf-dev-grid">
         <article>
           <Brain size={20} />
-          <strong>{snapshot.decisionEngine.decisionScore}%</strong>
-          <span>Decision score</span>
+          <strong>{decision.decisionScore}%</strong>
+          <span>{decision.trainingIntensity} decision</span>
         </article>
         <article>
           <Bot size={20} />
-          <strong>{snapshot.ai.provider.active}</strong>
-          <span>{snapshot.ai.provider.status}</span>
+          <strong>{ai.provider.active}</strong>
+          <span>Real provider disabled</span>
         </article>
         <article>
           <Database size={20} />
-          <strong>{snapshot.ai.cost.totalTokens}</strong>
+          <strong>{ai.cost.totalTokens}</strong>
           <span>Estimated mock tokens</span>
         </article>
       </section>
 
+      <section className="tf-history-card">
+        <p className="eyebrow">Current AI Run</p>
+        <strong>{decision.nextBestMove.title}</strong>
+        <p>{decision.coachSummary}</p>
+        <p>Main limiter: {mainLimiter}</p>
+        <p>Main opportunity: {mainOpportunity}</p>
+        <p>Mock response time: {ai.mockResponse.responseTimeMs}ms</p>
+      </section>
+
       <section className="tf-dev-grid">
-        <PipelineStep title="Repositories" detail="History, check-ins and cardio are read first." />
-        <PipelineStep title="Engines" detail="Analytics, PR, progression and recovery calculate raw signals." />
-        <PipelineStep title="Decision Engine" detail={snapshot.decisionEngine.trainingIntensity} />
-        <PipelineStep title="Coach Intelligence" detail={snapshot.coachIntelligence.recommendation.workout} />
-        <PipelineStep title="Prompt Builder" detail={`${snapshot.ai.cost.inputTokens} input tokens estimated`} />
-        <PipelineStep title="Mock Provider" detail={`${snapshot.ai.mockResponse.responseTimeMs}ms mock response`} />
+        <PipelineStep title="Repositories" detail="History, check-ins, cardio" />
+        <PipelineStep title="Engines" detail="Analytics, PR, recovery" />
+        <PipelineStep title="Decision" detail={decision.trainingIntensity} />
+        <PipelineStep title="Coach" detail={coach.recommendation.workout} />
+        <PipelineStep title="Prompt" detail={`${ai.cost.inputTokens} input tokens`} />
+        <PipelineStep title="Mock AI" detail="No paid request" />
       </section>
 
-      <section className="tf-history-card">
-        <p className="eyebrow">Decision Engine</p>
-        <strong>
-          {snapshot.decisionEngine.decisionScore}% - {snapshot.decisionEngine.trainingIntensity}
-        </strong>
-        <p>{snapshot.decisionEngine.coachSummary}</p>
-        <p>Readiness band: {snapshot.decisionEngine.readinessBand}</p>
-        <p>Next move: {snapshot.decisionEngine.nextBestMove.title}</p>
-      </section>
-
-      <section className="tf-history-card">
-        <p className="eyebrow">Prompt Preview</p>
+      <TextPanel title="Prompt Preview" eyebrow="Prompt Builder">
         <strong>Exact coaching prompt</strong>
         <p>
           This is what TrackFit will eventually send to the real AI provider.
           For now, it stays local and costs nothing.
         </p>
-        <pre>{snapshot.ai.prompt}</pre>
-      </section>
+        <pre>{ai.prompt}</pre>
+      </TextPanel>
 
-      <section className="tf-history-card">
-        <p className="eyebrow">Mock AI Response</p>
-        <strong>{snapshot.ai.mockResponse.provider}</strong>
-        <p>{snapshot.ai.mockResponse.message}</p>
-        <p>Response time: {snapshot.ai.mockResponse.responseTimeMs}ms</p>
-      </section>
+      <TextPanel title="Mock AI Response" eyebrow="Mock Provider">
+        <strong>{ai.mockResponse.provider}</strong>
+        <p>{ai.mockResponse.message}</p>
+        <p>Response time: {ai.mockResponse.responseTimeMs}ms</p>
+      </TextPanel>
 
-      <section className="tf-history-card">
-        <p className="eyebrow">Cost Guard</p>
-        <strong>${snapshot.ai.cost.estimatedCostAud.toFixed(2)} AUD</strong>
-        <p>{snapshot.ai.cost.note}</p>
-        <p>Input tokens: {snapshot.ai.cost.inputTokens}</p>
-        <p>Output tokens: {snapshot.ai.cost.outputTokens}</p>
-      </section>
+      <TextPanel title="Cost Guard" eyebrow="Token Estimate">
+        <strong>${ai.cost.estimatedCostAud.toFixed(2)} AUD</strong>
+        <p>{ai.cost.note}</p>
+        <p>Input tokens: {ai.cost.inputTokens}</p>
+        <p>Output tokens: {ai.cost.outputTokens}</p>
+      </TextPanel>
 
-      <JsonPanel title="Coach Intelligence output" data={snapshot.coachIntelligence} />
-      <JsonPanel title="Decision Engine output" data={snapshot.decisionEngine} />
-      <JsonPanel title="AI playground output" data={snapshot.ai} />
+      <JsonPanel title="Coach Intelligence output" data={coach} />
+      <JsonPanel title="Decision Engine output" data={decision} />
+      <JsonPanel title="AI playground output" data={ai} />
     </main>
   );
 }
