@@ -18,6 +18,57 @@
  * ============================================================================
  */
 
+const AI_MODEL_PRICES = [
+  {
+    id: "gemini-2.5-flash-lite",
+    provider: "Google",
+    model: "Gemini 2.5 Flash-Lite",
+    inputUsdPerMillion: 0.1,
+    outputUsdPerMillion: 0.4,
+    note: "Lowest-cost comparison option for high-volume coaching text.",
+  },
+  {
+    id: "gpt-5.4-nano",
+    provider: "OpenAI",
+    model: "GPT-5.4 Nano",
+    inputUsdPerMillion: 0.2,
+    outputUsdPerMillion: 1.25,
+    note: "Cheap OpenAI option for simple coaching language.",
+  },
+  {
+    id: "gpt-5.4-mini",
+    provider: "OpenAI",
+    model: "GPT-5.4 Mini",
+    inputUsdPerMillion: 0.75,
+    outputUsdPerMillion: 4.5,
+    note: "Balanced OpenAI comparison option.",
+  },
+  {
+    id: "claude-haiku-4.5",
+    provider: "Anthropic",
+    model: "Claude Haiku 4.5",
+    inputUsdPerMillion: 1,
+    outputUsdPerMillion: 5,
+    note: "Fast lower-cost Claude comparison option.",
+  },
+  {
+    id: "claude-sonnet-4.5",
+    provider: "Anthropic",
+    model: "Claude Sonnet 4.5",
+    inputUsdPerMillion: 3,
+    outputUsdPerMillion: 15,
+    note: "Higher-quality Claude comparison option.",
+  },
+  {
+    id: "gpt-5.5",
+    provider: "OpenAI",
+    model: "GPT-5.5",
+    inputUsdPerMillion: 5,
+    outputUsdPerMillion: 30,
+    note: "Premium OpenAI comparison option.",
+  },
+];
+
 function safeList(items, fallback = "None detected") {
   if (!Array.isArray(items) || items.length === 0) return fallback;
   return items.join(", ");
@@ -32,6 +83,24 @@ function getTokenEstimate(text) {
    * playground until we connect the real provider usage numbers later.
    */
   return Math.max(1, Math.ceil(String(text || "").length / 4));
+}
+
+function calculateModelCost({ inputTokens, outputTokens, model }) {
+  const inputCost = (inputTokens / 1_000_000) * model.inputUsdPerMillion;
+  const outputCost = (outputTokens / 1_000_000) * model.outputUsdPerMillion;
+
+  return {
+    ...model,
+    inputCostUsd: inputCost,
+    outputCostUsd: outputCost,
+    totalCostUsd: inputCost + outputCost,
+  };
+}
+
+function buildCostComparison({ inputTokens, outputTokens }) {
+  return AI_MODEL_PRICES.map((model) =>
+    calculateModelCost({ inputTokens, outputTokens, model }),
+  ).sort((a, b) => a.totalCostUsd - b.totalCostUsd);
 }
 
 export function buildTrackFitCoachPrompt({ coachIntelligence, decisionEngine }) {
@@ -105,6 +174,8 @@ export function buildTrackFitAIPlaygroundSnapshot({ coachIntelligence }) {
   });
   const inputTokens = getTokenEstimate(prompt);
   const outputTokens = getTokenEstimate(mockResponse.message);
+  const costComparison = buildCostComparison({ inputTokens, outputTokens });
+  const cheapestModel = costComparison[0];
 
   return {
     provider: {
@@ -118,8 +189,11 @@ export function buildTrackFitAIPlaygroundSnapshot({ coachIntelligence }) {
       inputTokens,
       outputTokens,
       totalTokens: inputTokens + outputTokens,
-      estimatedCostAud: 0,
-      note: "Cost stays $0.00 while the playground uses the mock provider.",
+      currency: "USD",
+      estimatedCostUsd: 0,
+      cheapestModel,
+      comparison: costComparison,
+      note: "Mock mode costs $0.00. These rows estimate what the same prompt would cost if sent live.",
     },
     generatedAt: new Date().toLocaleTimeString(),
   };
