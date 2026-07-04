@@ -1,10 +1,28 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Bot, Brain, Copy, Database, RefreshCw } from "lucide-react";
 import { buildCoachDashboard } from "../services/engines/coachIntelligenceEngine";
 import { buildTrackFitAIPlaygroundSnapshot } from "../services/ai/trackfitCoachService";
 import "./TrackFitScreens.css";
 import "./DeveloperTools.css";
+
+function buildPlaygroundSnapshot() {
+  /**
+   * WHY THIS EXISTS
+   * ----------------
+   * The playground should re-run the same coaching pipeline the real app uses.
+   * Keeping this in one function lets the first page load and the refresh button
+   * rebuild the exact same snapshot without hook warnings.
+   */
+  const coachIntelligence = buildCoachDashboard();
+  const ai = buildTrackFitAIPlaygroundSnapshot({ coachIntelligence });
+
+  return {
+    coachIntelligence,
+    decisionEngine: coachIntelligence.decision,
+    ai,
+  };
+}
 
 function JsonPanel({ title, data }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -31,25 +49,13 @@ function PipelineStep({ title, detail }) {
 }
 
 export default function AIPlayground() {
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [snapshot, setSnapshot] = useState(() => buildPlaygroundSnapshot());
   const [copyStatus, setCopyStatus] = useState("Ready");
 
-  const snapshot = useMemo(() => {
-    /**
-     * WHY THIS EXISTS
-     * ----------------
-     * Refreshing this page should re-run the same coaching pipeline the real app
-     * uses. That keeps the AI playground honest instead of showing fake numbers.
-     */
-    const coachIntelligence = buildCoachDashboard();
-    const ai = buildTrackFitAIPlaygroundSnapshot({ coachIntelligence });
-
-    return {
-      coachIntelligence,
-      decisionEngine: coachIntelligence.decision,
-      ai,
-    };
-  }, [refreshKey]);
+  function refreshPlayground() {
+    setSnapshot(buildPlaygroundSnapshot());
+    setCopyStatus("Ready");
+  }
 
   async function copyPrompt() {
     try {
@@ -77,7 +83,7 @@ export default function AIPlayground() {
       </section>
 
       <section className="tf-dev-tool-list">
-        <button onClick={() => setRefreshKey((current) => current + 1)} type="button">
+        <button onClick={refreshPlayground} type="button">
           <RefreshCw size={20} />
           <div>
             <strong>Refresh playground</strong>
