@@ -5,17 +5,16 @@
  * Deeper coaching and reasoning screen.
  *
  * Data:
- * Reads workout history, nutrition, movement and check-ins from repositories.
+ * Reads unified Coach Intelligence output.
  *
  * Features:
  * - Next best move
  * - Training summary
- * - Last session
- * - Daily support signals
+ * - Nutrition and movement support signals
  * - Recommendation reasoning
  *
  * Future:
- * AI-generated natural language coach response using TrackFit engine output.
+ * AI-generated coach response using the same intelligence object.
  */
 
 import { useMemo, useState } from "react";
@@ -39,129 +38,48 @@ import {
   Waves,
 } from "lucide-react";
 
-import { generateDailyCoachBrief } from "../services/engines/aiCoachEngine";
-import {
-  CardioRepository,
-  CheckInRepository,
-  HistoryRepository,
-  NutritionRepository,
-} from "../services/repositories/trackfitDataLayer";
+import { buildCoachDashboard } from "../services/engines/coachIntelligenceEngine";
 import "./TrackFitScreens.css";
-
-const today = new Date().toISOString().slice(0, 10);
-
-function toNumber(value) {
-  const number = Number.parseFloat(value);
-  return Number.isFinite(number) ? number : 0;
-}
-
-function getDateOnly(value) {
-  if (!value) return "";
-  return String(value).slice(0, 10);
-}
-
-function getTodayRecords(records) {
-  return records.filter(
-    (record) => getDateOnly(record.date || record.completedAt) === today,
-  );
-}
-
-function buildNutritionSummary(meals) {
-  return meals.reduce(
-    (summary, meal) => ({
-      calories: summary.calories + toNumber(meal.calories),
-      protein: summary.protein + toNumber(meal.protein),
-      carbs: summary.carbs + toNumber(meal.carbs),
-      fats: summary.fats + toNumber(meal.fats),
-    }),
-    { calories: 0, protein: 0, carbs: 0, fats: 0 },
-  );
-}
-
-function buildMovementSummary(cardio) {
-  return cardio.reduce(
-    (summary, session) => ({
-      distanceKm:
-        summary.distanceKm +
-        toNumber(session.distanceKm ?? session.distance ?? session.km),
-      steps: summary.steps + toNumber(session.steps),
-      durationMin:
-        summary.durationMin +
-        toNumber(session.durationMin ?? session.duration ?? session.minutes),
-    }),
-    { distanceKm: 0, steps: 0, durationMin: 0 },
-  );
-}
 
 export default function Coach() {
   const [showWhy, setShowWhy] = useState(false);
-
-  const workoutHistory = useMemo(() => HistoryRepository.getAll(), []);
-  const nutrition = useMemo(() => NutritionRepository.getAll(), []);
-  const checkIns = useMemo(() => CheckInRepository.getAll(), []);
-  const cardio = useMemo(() => CardioRepository.getAll(), []);
-
-  const coach = useMemo(
-    () => generateDailyCoachBrief(workoutHistory),
-    [workoutHistory],
-  );
-
-  const todaysMeals = useMemo(() => getTodayRecords(nutrition), [nutrition]);
-  const todaysCardio = useMemo(() => getTodayRecords(cardio), [cardio]);
-  const latestCheckIn = checkIns[0] || null;
-
-  const nutritionSummary = useMemo(
-    () => buildNutritionSummary(todaysMeals),
-    [todaysMeals],
-  );
-
-  const movementSummary = useMemo(
-    () => buildMovementSummary(todaysCardio),
-    [todaysCardio],
-  );
-
-  const water = toNumber(latestCheckIn?.waterL ?? latestCheckIn?.water);
-  const sleep = toNumber(latestCheckIn?.sleepHours ?? latestCheckIn?.sleep);
-  const proteinTarget = 185;
-  const calorieTarget = 2600;
+  const coach = useMemo(() => buildCoachDashboard(), []);
+  const decision = coach.decision;
 
   const supportSignals = [
     {
       icon: Beef,
       label: "Protein",
-      value: `${nutritionSummary.protein}g`,
-      note:
-        nutritionSummary.protein >= proteinTarget
-          ? "Target hit"
-          : `${Math.max(0, proteinTarget - nutritionSummary.protein)}g left`,
+      value: `${coach.nutrition.protein}g`,
+      note: coach.nutrition.message,
       route: "/nutrition",
     },
     {
       icon: Flame,
       label: "Calories",
-      value: nutritionSummary.calories.toLocaleString(),
-      note: `${Math.max(0, calorieTarget - nutritionSummary.calories).toLocaleString()} left`,
+      value: coach.nutrition.calories.toLocaleString(),
+      note: `${coach.nutrition.calorieTarget.toLocaleString()} target`,
       route: "/nutrition",
     },
     {
       icon: Waves,
       label: "Water",
-      value: `${water.toFixed(1)}L`,
-      note: "Goal 4L",
+      value: `${decision.signals.recovery.recoveryScore}%`,
+      note: decision.signals.recovery.status,
       route: "/checkin",
     },
     {
       icon: Moon,
-      label: "Sleep",
-      value: `${sleep.toFixed(1)}h`,
-      note: sleep >= 7 ? "Solid" : "Low",
+      label: "Recovery",
+      value: `${coach.readiness.score}%`,
+      note: coach.readiness.status,
       route: "/checkin",
     },
     {
       icon: Footprints,
       label: "Steps",
-      value: Math.round(movementSummary.steps).toLocaleString(),
-      note: `${movementSummary.distanceKm.toFixed(1)}km today`,
+      value: Math.round(coach.movement.steps).toLocaleString(),
+      note: `${coach.movement.distanceKm.toFixed(1)}km today`,
       route: "/cardio",
     },
   ];
@@ -171,8 +89,8 @@ export default function Coach() {
       <section className="tf-coach-hero">
         <div>
           <p className="eyebrow">Training Coach</p>
-          <h1>{coach.title}</h1>
-          <p>{coach.readiness.note}</p>
+          <h1>{decision.trainingIntensity} day</h1>
+          <p>{decision.coachSummary}</p>
         </div>
 
         <div
@@ -180,7 +98,7 @@ export default function Coach() {
           style={{ "--score": `${coach.readiness.score}%` }}
         >
           <strong>{coach.readiness.score}</strong>
-          <span>{coach.readiness.label}</span>
+          <span>{coach.readiness.status}</span>
         </div>
       </section>
 
@@ -190,11 +108,11 @@ export default function Coach() {
         </div>
         <div>
           <p className="eyebrow">Next best move</p>
-          <h2>{coach.nextBestMove.title}</h2>
-          <p>{coach.nextBestMove.detail}</p>
+          <h2>{coach.recommendation.workout}</h2>
+          <p>{coach.recommendation.reason}</p>
         </div>
-        <Link to={coach.nextBestMove.route}>
-          {coach.nextBestMove.action} <ChevronRight size={17} />
+        <Link to={coach.recommendation.route}>
+          {coach.recommendation.action} <ChevronRight size={17} />
         </Link>
       </section>
 
@@ -202,7 +120,7 @@ export default function Coach() {
         <div className="tf-section-title-row">
           <div>
             <p className="eyebrow">Support signals</p>
-            <h2>Today&apos;s fuel and recovery</h2>
+            <h2>Food, movement and recovery</h2>
           </div>
           <Brain size={22} />
         </div>
@@ -219,73 +137,6 @@ export default function Coach() {
         </section>
       </section>
 
-      <section className="tf-coach-card tf-last-session-card">
-        <div className="tf-section-title-row">
-          <div>
-            <p className="eyebrow">Last session</p>
-            <h2>{coach.lastSession.title}</h2>
-          </div>
-          <Dumbbell size={22} />
-        </div>
-
-        <p>{coach.lastSession.note}</p>
-
-        <div className="tf-last-session-grid">
-          <article>
-            <Clock3 size={18} />
-            <strong>{coach.lastSession.durationLabel}</strong>
-            <span>{coach.lastSession.dateLabel}</span>
-          </article>
-          <article>
-            <Activity size={18} />
-            <strong>{coach.lastSession.sets}</strong>
-            <span>sets</span>
-          </article>
-          <article>
-            <TrendingUp size={18} />
-            <strong>{coach.lastSession.volumeLabel}</strong>
-            <span>volume</span>
-          </article>
-          <article>
-            <Trophy size={18} />
-            <strong>{coach.lastSession.prs}</strong>
-            <span>PRs</span>
-          </article>
-        </div>
-      </section>
-
-      <section className="tf-coach-action-card compact">
-        <div className="tf-icon-disc">
-          <Dumbbell size={23} />
-        </div>
-        <div>
-          <p className="eyebrow">Suggested workout</p>
-          <h2>{coach.suggestedWorkout.title}</h2>
-          <p>{coach.suggestedWorkout.reason}</p>
-        </div>
-        <Link to={coach.suggestedWorkout.route}>
-          Start <ChevronRight size={17} />
-        </Link>
-      </section>
-
-      <section className="tf-coach-metrics">
-        <article>
-          <TrendingUp size={20} />
-          <strong>{coach.weeklySummary.workouts}</strong>
-          <span>sessions</span>
-        </article>
-        <article>
-          <Trophy size={20} />
-          <strong>{coach.weeklySummary.totalPrs}</strong>
-          <span>PR signals</span>
-        </article>
-        <article>
-          <Target size={20} />
-          <strong>{coach.benchGoal.percent}%</strong>
-          <span>bench goal</span>
-        </article>
-      </section>
-
       <section className="tf-coach-card">
         <div className="tf-section-title-row">
           <div>
@@ -294,24 +145,78 @@ export default function Coach() {
           </div>
           <Sparkles size={22} />
         </div>
-        <p>{coach.weeklySummaryText}</p>
+        <p>{coach.weeklySummary.message}</p>
       </section>
 
-      {coach.plateaus.length > 0 && (
+      <section className="tf-coach-metrics">
+        <article>
+          <TrendingUp size={20} />
+          <strong>{coach.weeklySummary.sessions}</strong>
+          <span>sessions</span>
+        </article>
+
+        <article>
+          <Activity size={20} />
+          <strong>
+            {Math.round(coach.weeklySummary.volume).toLocaleString()}
+          </strong>
+          <span>weekly volume</span>
+        </article>
+
+        <article>
+          <Target size={20} />
+          <strong>{coach.weeklyReview.score}%</strong>
+          <span>weekly review</span>
+        </article>
+      </section>
+
+      <section className="tf-coach-card tf-last-session-card">
+        <div className="tf-section-title-row">
+          <div>
+            <p className="eyebrow">Fatigue</p>
+            <h2>{coach.fatigue.level}</h2>
+          </div>
+          <Dumbbell size={22} />
+        </div>
+
+        <p>{coach.fatigue.advice}</p>
+
+        <div className="tf-last-session-grid">
+          <article>
+            <Clock3 size={18} />
+            <strong>{Math.round(coach.weeklySummary.durationMinutes)}</strong>
+            <span>minutes</span>
+          </article>
+          <article>
+            <Activity size={18} />
+            <strong>{coach.weeklySummary.sets}</strong>
+            <span>sets</span>
+          </article>
+          <article>
+            <TrendingUp size={18} />
+            <strong>
+              {Math.round(coach.weeklySummary.volume).toLocaleString()}
+            </strong>
+            <span>volume</span>
+          </article>
+          <article>
+            <Trophy size={18} />
+            <strong>{coach.decision.opportunities.length}</strong>
+            <span>opportunities</span>
+          </article>
+        </div>
+      </section>
+
+      {coach.plateau.detected && (
         <section className="tf-coach-card warning">
           <div className="tf-section-title-row">
             <div>
               <p className="eyebrow">Plateau watch</p>
-              <h2>Needs attention</h2>
+              <h2>{coach.plateau.exercise}</h2>
             </div>
             <ShieldCheck size={22} />
           </div>
-          {coach.plateaus.map((plateau) => (
-            <article className="tf-coach-list-row" key={plateau.exercise}>
-              <strong>{plateau.exercise}</strong>
-              <span>{plateau.message}</span>
-            </article>
-          ))}
+          <p>{coach.plateau.message}</p>
         </section>
       )}
 
@@ -327,12 +232,15 @@ export default function Coach() {
 
         {showWhy && (
           <div className="tf-why-list">
-            {coach.reasons.map((reason) => (
-              <p key={reason}>- {reason}</p>
+            <p>- Decision score: {decision.decisionScore}%.</p>
+            <p>- Training intensity: {decision.trainingIntensity}.</p>
+            <p>- Main recommendation: {decision.nextBestMove.detail}</p>
+            {decision.limiters.map((limiter) => (
+              <p key={limiter}>- Limiter: {limiter}</p>
             ))}
-            <p>
-              - Support signals checked: nutrition, movement, sleep and water.
-            </p>
+            {decision.opportunities.map((opportunity) => (
+              <p key={opportunity}>- Opportunity: {opportunity}</p>
+            ))}
           </div>
         )}
       </section>
@@ -341,29 +249,38 @@ export default function Coach() {
         <div className="tf-section-title-row">
           <div>
             <p className="eyebrow">Recovery map</p>
-            <h2>Muscles to watch</h2>
+            <h2>Decision signals</h2>
           </div>
           <Brain size={22} />
         </div>
 
-        {coach.readiness.muscles.length === 0 ? (
-          <p>
-            Log workouts with exercises from the library and TrackFit will build
-            your recovery map.
-          </p>
-        ) : (
-          <div className="tf-recovery-list">
-            {coach.readiness.muscles.map((item) => (
-              <div key={item.muscle}>
-                <span>{item.muscle.replaceAll("_", " ")}</span>
-                <strong>{item.score}%</strong>
-                <div>
-                  <i style={{ width: `${item.score}%` }} />
-                </div>
-              </div>
-            ))}
+        <div className="tf-recovery-list">
+          <div>
+            <span>recovery</span>
+            <strong>{decision.signals.recovery.recoveryScore}%</strong>
+            <div>
+              <i
+                style={{ width: `${decision.signals.recovery.recoveryScore}%` }}
+              />
+            </div>
           </div>
-        )}
+
+          <div>
+            <span>nutrition</span>
+            <strong>{decision.signals.nutrition.score}%</strong>
+            <div>
+              <i style={{ width: `${decision.signals.nutrition.score}%` }} />
+            </div>
+          </div>
+
+          <div>
+            <span>movement</span>
+            <strong>{decision.signals.movement.score}%</strong>
+            <div>
+              <i style={{ width: `${decision.signals.movement.score}%` }} />
+            </div>
+          </div>
+        </div>
       </section>
     </main>
   );
