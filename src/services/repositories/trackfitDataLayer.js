@@ -10,6 +10,7 @@ const WORKOUT_KEY_PREFIX = "trackfit_workout_";
 const WORKOUT_HISTORY_KEY = "trackfit_workout_history";
 const CHECKINS_KEY = "trackfit_checkins";
 const CARDIO_KEY = "trackfit_cardio";
+const NUTRITION_KEY = "trackfit_nutrition";
 const AI_PLAN_KEY = "trackfit_ai_workout_plan";
 
 function removeJson(key) {
@@ -100,5 +101,29 @@ export const CheckInRepository = {
 
   clear() {
     removeJson(CHECKINS_KEY);
+  },
+};
+
+export const NutritionRepository = {
+  getAll() {
+    return readJson(NUTRITION_KEY, []).sort(newestFirst);
+  },
+
+  getToday(date = new Date().toISOString().slice(0, 10)) {
+    return this.getAll().filter((meal) => meal.date === date);
+  },
+
+  saveAll(meals) {
+    writeJson(NUTRITION_KEY, meals);
+  },
+
+  add(meal) {
+    const meals = [meal, ...this.getAll()];
+    this.saveAll(meals);
+    return meals;
+  },
+
+  clear() {
+    removeJson(NUTRITION_KEY);
   },
 };
