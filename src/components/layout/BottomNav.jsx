@@ -34,7 +34,7 @@ export default function BottomNav() {
 
       <NavLink to="/cardio">
         <HeartPulse size={20} />
-        <span>Cardio</span>
+        <span>Move</span>
       </NavLink>
 
       <NavLink to="/checkin">
