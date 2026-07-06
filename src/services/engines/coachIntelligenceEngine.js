@@ -5,10 +5,12 @@
  *
  * PURPOSE
  * -------
- * Makes coaching decisions from repository data and engine outputs.
+ * Prepares coach-facing output from repositories and engine decisions.
  *
- * Difficulty
- * ----------
+ * The Decision Engine makes the call.
+ * Coach Intelligence shapes that call for UI, Developer Tools and future AI.
+ *
+ * ============================================================================
  */
 
 import { buildDecisionEngine } from "./decisionEngine";
@@ -20,16 +22,19 @@ import {
   CardioRepository,
   CheckInRepository,
   HistoryRepository,
+  NutritionRepository,
 } from "../repositories/trackfitDataLayer";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEKLY_WORKOUT_TARGET = 4;
-const PROTEIN_TARGET = 170;
-const WATER_TARGET = 3;
-const SLEEP_TARGET = 7;
 
 function clampScore(value) {
   return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function toNumber(value) {
+  const number = Number.parseFloat(value);
+  return Number.isFinite(number) ? number : 0;
 }
 
 function toDate(value) {
@@ -58,50 +63,19 @@ function getCheckInScore(checkIns) {
     };
   }
 
-  const sleepScore = clampScore(
-    (Number(latest.sleep || 0) / SLEEP_TARGET) * 100,
-  );
-  const waterScore = clampScore(
-    (Number(latest.water || 0) / WATER_TARGET) * 100,
-  );
-  const proteinScore = clampScore(
-    (Number(latest.protein || 0) / PROTEIN_TARGET) * 100,
-  );
+  const sleep = toNumber(latest.sleepHours ?? latest.sleep);
+  const water = toNumber(latest.waterL ?? latest.water);
+  const protein = toNumber(latest.proteinG ?? latest.protein);
+
+  const sleepScore = clampScore((sleep / 7) * 100);
+  const waterScore = clampScore((water / 4) * 100);
+  const proteinScore = clampScore((protein / 185) * 100);
 
   return {
     score: Math.round(
       sleepScore * 0.45 + waterScore * 0.25 + proteinScore * 0.3,
     ),
-    reason: `Latest check-in: ${latest.sleep || 0}h sleep, ${latest.water || 0}L water and ${latest.protein || 0}g protein.`,
-  };
-}
-
-export function buildCoachDashboard() {
-  const history = HistoryRepository.getAll();
-  const checkIns = CheckInRepository.getAll();
-  const cardio = CardioRepository.getAll();
-  const analytics = buildWorkoutAnalytics(history);
-  const prEngine = buildPrEngine(history);
-  const progressionEngine = buildProgressionEngine(history);
-  const recoveryEngine = buildRecoveryEngine(history, checkIns);
-  const decision = buildDecisionEngine({
-    history,
-    checkIns,
-    analytics,
-    prEngine,
-    progressionEngine,
-    recoveryEngine,
-  });
-
-  return {
-    readiness: calculateReadiness(analytics, checkIns, decision),
-    weeklySummary: calculateWeeklySummary(analytics),
-    fatigue: calculateFatigue(analytics, checkIns, cardio),
-    recommendation: mapDecisionToRecommendation(decision),
-    decision,
-    plateau: detectPlateau(history),
-    weeklyReview: calculateWeeklyReview(analytics, checkIns),
-    analytics,
+    reason: `Latest check-in: ${sleep}h sleep, ${water}L water and ${protein}g protein.`,
   };
 }
 
@@ -118,8 +92,9 @@ function calculateReadiness(analytics, checkIns, decision) {
   const checkIn = getCheckInScore(checkIns);
 
   let loadScore = 70;
-  if (analytics.weeklyWorkouts >= 3 && analytics.weeklyWorkouts <= 4)
+  if (analytics.weeklyWorkouts >= 3 && analytics.weeklyWorkouts <= 4) {
     loadScore = 88;
+  }
   if (analytics.weeklyWorkouts > 4) loadScore = 68;
   if (analytics.weeklyWorkouts === 0) loadScore = 55;
 
@@ -129,10 +104,10 @@ function calculateReadiness(analytics, checkIns, decision) {
   if (analytics.currentStreak >= 3) fatiguePenalty += 10;
 
   const score = clampScore(
-    checkIn.score * 0.35 +
-      loadScore * 0.25 +
+    checkIn.score * 0.3 +
+      loadScore * 0.2 +
       analytics.weeklyConsistencyPercent * 0.15 +
-      decision.decisionScore * 0.25 -
+      decision.decisionScore * 0.35 -
       fatiguePenalty,
   );
 
@@ -176,10 +151,12 @@ function calculateFatigue(analytics, checkIns, cardio) {
   );
   const latestCheckIn = getLatestCheckIn(checkIns);
   const cardioMinutes = recentCardio.reduce(
-    (sum, session) => sum + Number(session.duration || 0),
+    (sum, session) =>
+      sum +
+      toNumber(session.durationMin ?? session.duration ?? session.minutes),
     0,
   );
-  const sleep = Number(latestCheckIn?.sleep || 0);
+  const sleep = toNumber(latestCheckIn?.sleepHours ?? latestCheckIn?.sleep);
 
   let risk = 0;
 
@@ -220,6 +197,44 @@ function mapDecisionToRecommendation(decision) {
     action: decision.nextBestMove.action,
     intensity: decision.trainingIntensity,
     score: decision.decisionScore,
+  };
+}
+
+function buildNutritionSummary(decision) {
+  const signal = decision.signals.nutrition;
+
+  return {
+    score: signal.score,
+    calories: signal.today.calories,
+    protein: signal.today.protein,
+    carbs: signal.today.carbs,
+    fats: signal.today.fats,
+    averageProtein: signal.averageProtein,
+    daysWithFood: signal.daysWithFood,
+    proteinTarget: signal.proteinTarget,
+    calorieTarget: signal.calorieTarget,
+    message:
+      signal.today.protein >= signal.proteinTarget
+        ? "Protein target is hit today."
+        : `${Math.max(0, signal.proteinTarget - signal.today.protein)}g protein left today.`,
+  };
+}
+
+function buildMovementSummary(decision) {
+  const signal = decision.signals.movement;
+
+  return {
+    score: signal.score,
+    steps: signal.today.steps,
+    distanceKm: signal.today.distanceKm,
+    durationMin: signal.today.durationMin,
+    weeklyMinutes: signal.weeklyMinutes,
+    stepTarget: signal.stepTarget,
+    weeklyMinutesTarget: signal.weeklyMinutesTarget,
+    message:
+      signal.weeklyMinutes >= signal.weeklyMinutesTarget
+        ? "Weekly movement target is on track."
+        : `${Math.max(0, signal.weeklyMinutesTarget - signal.weeklyMinutes)} movement minutes left this week.`,
   };
 }
 
@@ -281,44 +296,58 @@ function detectPlateau(history) {
   };
 }
 
-function calculateWeeklyReview(analytics, checkIns) {
-  const latestCheckIn = getLatestCheckIn(checkIns);
-
+function calculateWeeklyReview(analytics, decision) {
   const consistencyScore = analytics.weeklyConsistencyPercent;
+  const nutritionScore = decision.signals.nutrition.score;
+  const movementScore = decision.signals.movement.score;
 
-  const proteinScore = latestCheckIn
-    ? clampScore((Number(latestCheckIn.protein || 0) / PROTEIN_TARGET) * 100)
-    : 70;
-
-  const score = clampScore(consistencyScore * 0.65 + proteinScore * 0.35);
+  const score = clampScore(
+    consistencyScore * 0.5 + nutritionScore * 0.3 + movementScore * 0.2,
+  );
 
   return {
     score,
     message:
       score >= 85
-        ? "Strong week. Training and recovery habits are lining up nicely."
+        ? "Strong week. Training, food and movement are lining up nicely."
         : score >= 65
           ? "Solid week. Tighten one habit and keep the training rhythm going."
           : "Quiet week. Get one clean session logged and rebuild momentum.",
   };
 }
 
-/**
- * ============================================================================
- * DEVELOPER NOTES
- * ============================================================================
- *
- * WorkoutAnalyticsEngine calculates numbers.
- * DecisionEngine combines engine outputs.
- * CoachIntelligenceEngine prepares coach-facing output.
- *
- * If something looks wrong:
- *
- * 1. Check repositories
- * 2. Check individual engine outputs
- * 3. Check Decision Engine output
- * 4. Check this Coach engine
- * 5. Check the card rendering it
- *
- * ============================================================================
- */
+export function buildCoachDashboard() {
+  const history = HistoryRepository.getAll();
+  const checkIns = CheckInRepository.getAll();
+  const cardio = CardioRepository.getAll();
+  const nutrition = NutritionRepository.getAll();
+
+  const analytics = buildWorkoutAnalytics(history);
+  const prEngine = buildPrEngine(history);
+  const progressionEngine = buildProgressionEngine(history);
+  const recoveryEngine = buildRecoveryEngine(history, checkIns);
+
+  const decision = buildDecisionEngine({
+    history,
+    checkIns,
+    cardio,
+    nutrition,
+    analytics,
+    prEngine,
+    progressionEngine,
+    recoveryEngine,
+  });
+
+  return {
+    readiness: calculateReadiness(analytics, checkIns, decision),
+    weeklySummary: calculateWeeklySummary(analytics),
+    fatigue: calculateFatigue(analytics, checkIns, cardio),
+    nutrition: buildNutritionSummary(decision),
+    movement: buildMovementSummary(decision),
+    recommendation: mapDecisionToRecommendation(decision),
+    decision,
+    plateau: detectPlateau(history),
+    weeklyReview: calculateWeeklyReview(analytics, decision),
+    analytics,
+  };
+}
