@@ -2,50 +2,172 @@
  * TRACKFIT PAGE
  *
  * Purpose:
- * Main responsibility of this page.
+ * Deeper coaching and reasoning screen.
  *
  * Data:
- * Repository and services used by this page.
+ * Reads workout history, nutrition, movement and check-ins from repositories.
  *
  * Features:
- * - Feature 1
- * - Feature 2
- * - Feature 3
+ * - Next best move
+ * - Training summary
+ * - Last session
+ * - Daily support signals
+ * - Recommendation reasoning
  *
  * Future:
- * Planned improvements after MVP.
+ * AI-generated natural language coach response using TrackFit engine output.
  */
+
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity,
+  Beef,
   Brain,
   ChevronRight,
   Clock3,
   Dumbbell,
+  Flame,
+  Footprints,
   HelpCircle,
+  Moon,
   ShieldCheck,
   Sparkles,
   Target,
   TrendingUp,
   Trophy,
+  Waves,
 } from "lucide-react";
 
 import { generateDailyCoachBrief } from "../services/engines/aiCoachEngine";
-import { readWorkoutHistory } from "../services/workoutEngine";
+import {
+  CardioRepository,
+  CheckInRepository,
+  HistoryRepository,
+  NutritionRepository,
+} from "../services/repositories/trackfitDataLayer";
 import "./TrackFitScreens.css";
+
+const today = new Date().toISOString().slice(0, 10);
+
+function toNumber(value) {
+  const number = Number.parseFloat(value);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function getDateOnly(value) {
+  if (!value) return "";
+  return String(value).slice(0, 10);
+}
+
+function getTodayRecords(records) {
+  return records.filter(
+    (record) => getDateOnly(record.date || record.completedAt) === today,
+  );
+}
+
+function buildNutritionSummary(meals) {
+  return meals.reduce(
+    (summary, meal) => ({
+      calories: summary.calories + toNumber(meal.calories),
+      protein: summary.protein + toNumber(meal.protein),
+      carbs: summary.carbs + toNumber(meal.carbs),
+      fats: summary.fats + toNumber(meal.fats),
+    }),
+    { calories: 0, protein: 0, carbs: 0, fats: 0 },
+  );
+}
+
+function buildMovementSummary(cardio) {
+  return cardio.reduce(
+    (summary, session) => ({
+      distanceKm:
+        summary.distanceKm +
+        toNumber(session.distanceKm ?? session.distance ?? session.km),
+      steps: summary.steps + toNumber(session.steps),
+      durationMin:
+        summary.durationMin +
+        toNumber(session.durationMin ?? session.duration ?? session.minutes),
+    }),
+    { distanceKm: 0, steps: 0, durationMin: 0 },
+  );
+}
 
 export default function Coach() {
   const [showWhy, setShowWhy] = useState(false);
-  const workoutHistory = useMemo(() => readWorkoutHistory(), []);
+
+  const workoutHistory = useMemo(() => HistoryRepository.getAll(), []);
+  const nutrition = useMemo(() => NutritionRepository.getAll(), []);
+  const checkIns = useMemo(() => CheckInRepository.getAll(), []);
+  const cardio = useMemo(() => CardioRepository.getAll(), []);
+
   const coach = useMemo(
     () => generateDailyCoachBrief(workoutHistory),
     [workoutHistory],
   );
 
+  const todaysMeals = useMemo(() => getTodayRecords(nutrition), [nutrition]);
+  const todaysCardio = useMemo(() => getTodayRecords(cardio), [cardio]);
+  const latestCheckIn = checkIns[0] || null;
+
+  const nutritionSummary = useMemo(
+    () => buildNutritionSummary(todaysMeals),
+    [todaysMeals],
+  );
+
+  const movementSummary = useMemo(
+    () => buildMovementSummary(todaysCardio),
+    [todaysCardio],
+  );
+
+  const water = toNumber(latestCheckIn?.waterL ?? latestCheckIn?.water);
+  const sleep = toNumber(latestCheckIn?.sleepHours ?? latestCheckIn?.sleep);
+  const proteinTarget = 185;
+  const calorieTarget = 2600;
+
+  const supportSignals = [
+    {
+      icon: Beef,
+      label: "Protein",
+      value: `${nutritionSummary.protein}g`,
+      note:
+        nutritionSummary.protein >= proteinTarget
+          ? "Target hit"
+          : `${Math.max(0, proteinTarget - nutritionSummary.protein)}g left`,
+      route: "/nutrition",
+    },
+    {
+      icon: Flame,
+      label: "Calories",
+      value: nutritionSummary.calories.toLocaleString(),
+      note: `${Math.max(0, calorieTarget - nutritionSummary.calories).toLocaleString()} left`,
+      route: "/nutrition",
+    },
+    {
+      icon: Waves,
+      label: "Water",
+      value: `${water.toFixed(1)}L`,
+      note: "Goal 4L",
+      route: "/checkin",
+    },
+    {
+      icon: Moon,
+      label: "Sleep",
+      value: `${sleep.toFixed(1)}h`,
+      note: sleep >= 7 ? "Solid" : "Low",
+      route: "/checkin",
+    },
+    {
+      icon: Footprints,
+      label: "Steps",
+      value: Math.round(movementSummary.steps).toLocaleString(),
+      note: `${movementSummary.distanceKm.toFixed(1)}km today`,
+      route: "/cardio",
+    },
+  ];
+
   return (
     <main className="screen tf-coach-page">
-      {/* Coach hero: the first thing users see should answer "what should I do today?" */}
       <section className="tf-coach-hero">
         <div>
           <p className="eyebrow">Training Coach</p>
@@ -62,7 +184,6 @@ export default function Coach() {
         </div>
       </section>
 
-      {/* Next best move: one clean recommendation instead of making the user think. */}
       <section className="tf-coach-action-card tf-next-move-card">
         <div className="tf-icon-disc">
           <Sparkles size={23} />
@@ -75,6 +196,27 @@ export default function Coach() {
         <Link to={coach.nextBestMove.route}>
           {coach.nextBestMove.action} <ChevronRight size={17} />
         </Link>
+      </section>
+
+      <section className="tf-coach-card">
+        <div className="tf-section-title-row">
+          <div>
+            <p className="eyebrow">Support signals</p>
+            <h2>Today&apos;s fuel and recovery</h2>
+          </div>
+          <Brain size={22} />
+        </div>
+
+        <section className="v4-stat-grid">
+          {supportSignals.map((item) => (
+            <Link className="v4-stat-card" key={item.label} to={item.route}>
+              <item.icon size={21} />
+              <strong>{item.value}</strong>
+              <span>{item.label}</span>
+              <small>{item.note}</small>
+            </Link>
+          ))}
+        </section>
       </section>
 
       <section className="tf-coach-card tf-last-session-card">
@@ -112,7 +254,6 @@ export default function Coach() {
         </div>
       </section>
 
-      {/* Suggested workout card: backup action if the user wants the old direct start flow. */}
       <section className="tf-coach-action-card compact">
         <div className="tf-icon-disc">
           <Dumbbell size={23} />
@@ -189,6 +330,9 @@ export default function Coach() {
             {coach.reasons.map((reason) => (
               <p key={reason}>- {reason}</p>
             ))}
+            <p>
+              - Support signals checked: nutrition, movement, sleep and water.
+            </p>
           </div>
         )}
       </section>
