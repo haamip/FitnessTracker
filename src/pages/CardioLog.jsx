@@ -1,8 +1,11 @@
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Activity,
+  Bike,
   Clock,
   Flame,
+  Footprints,
   HeartPulse,
   Plus,
   Route,
@@ -13,47 +16,181 @@ import {
 
 import Button from "../components/ui/Button";
 import LineChartCard from "../components/LineChartCard";
+import { CardioRepository } from "../services/repositories/trackfitDataLayer";
 import "./TrackFitScreens.css";
 
-const cardioData = [
-  { date: "Mon", distance: 2.4 },
-  { date: "Tue", distance: 3.1 },
-  { date: "Wed", distance: 0 },
-  { date: "Thu", distance: 4.2 },
-  { date: "Fri", distance: 3.6 },
+const CARDIO_TYPES = [
+  "Incline Walk",
+  "Treadmill",
+  "Outdoor Walk",
+  "Run",
+  "Bike",
+  "Rower",
+  "Stair Climber",
+  "Other",
 ];
 
-const sessions = [
+const demoSessions = [
   {
+    id: "demo-cardio-1",
+    date: new Date().toISOString().slice(0, 10),
     type: "Incline Walk",
-    distance: "3.6km",
-    time: "32 min",
-    pace: "8:53/km",
+    distanceKm: 3.6,
+    durationMin: 32,
+    steps: 6200,
+    calories: 280,
     zone: "Zone 2",
   },
   {
+    id: "demo-cardio-2",
+    date: new Date(Date.now() - 86400000).toISOString().slice(0, 10),
     type: "Bike",
-    distance: "8.4km",
-    time: "26 min",
-    pace: "19.4km/h",
+    distanceKm: 8.4,
+    durationMin: 26,
+    steps: 0,
+    calories: 340,
     zone: "Zone 3",
   },
   {
+    id: "demo-cardio-3",
+    date: new Date(Date.now() - 172800000).toISOString().slice(0, 10),
     type: "Treadmill",
-    distance: "2.4km",
-    time: "20 min",
-    pace: "8:20/km",
+    distanceKm: 2.4,
+    durationMin: 20,
+    steps: 3800,
+    calories: 226,
     zone: "Zone 2",
   },
 ];
+
+const initialForm = {
+  type: "Incline Walk",
+  distanceKm: "",
+  durationMin: "",
+  steps: "",
+  calories: "",
+  zone: "Zone 2",
+};
+
+function toNumber(value) {
+  const number = Number.parseFloat(value);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function formatDateLabel(value) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "Today";
+
+  return new Intl.DateTimeFormat("en-AU", {
+    weekday: "short",
+  }).format(date);
+}
+
+function formatSessionDate(value) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "Recently";
+
+  return new Intl.DateTimeFormat("en-AU", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(date);
+}
+
+function getPace(distanceKm, durationMin) {
+  if (!distanceKm || !durationMin) return "Pace pending";
+
+  const pace = durationMin / distanceKm;
+  const minutes = Math.floor(pace);
+  const seconds = Math.round((pace - minutes) * 60)
+    .toString()
+    .padStart(2, "0");
+
+  return `${minutes}:${seconds}/km`;
+}
+
+function buildWeeklyChart(sessions) {
+  const byDay = new Map();
+
+  sessions.forEach((session) => {
+    const label = formatDateLabel(session.date);
+    const current = byDay.get(label) || 0;
+    byDay.set(label, Math.round((current + session.distanceKm) * 10) / 10);
+  });
+
+  return [...byDay.entries()].reverse().map(([date, distance]) => ({
+    date,
+    distance,
+  }));
+}
 
 /**
  * CardioLog
  *
- * Cardio tracking surface for weekly movement, recent sessions and conditioning guidance.
- * This is still demo-data driven, but the layout is ready for live cardio entries later.
+ * Movement tracking surface for cardio and steps.
+ * Cardio now reads and writes through the repository layer so the page is ready
+ * for real user data before wearable syncing is added later.
  */
 export default function CardioLog() {
+  const [savedSessions, setSavedSessions] = useState(() => CardioRepository.getAll());
+  const [form, setForm] = useState(initialForm);
+  const [selectedType, setSelectedType] = useState("All");
+
+  const sessions = savedSessions.length > 0 ? savedSessions : demoSessions;
+  const filteredSessions = useMemo(
+    () =>
+      selectedType === "All"
+        ? sessions
+        : sessions.filter((session) => session.type === selectedType),
+    [selectedType, sessions],
+  );
+
+  const totals = useMemo(
+    () =>
+      filteredSessions.reduce(
+        (summary, session) => ({
+          distanceKm: summary.distanceKm + (session.distanceKm || 0),
+          durationMin: summary.durationMin + (session.durationMin || 0),
+          calories: summary.calories + (session.calories || 0),
+          steps: summary.steps + (session.steps || 0),
+        }),
+        { distanceKm: 0, durationMin: 0, calories: 0, steps: 0 },
+      ),
+    [filteredSessions],
+  );
+
+  const chartData = useMemo(
+    () => buildWeeklyChart(filteredSessions),
+    [filteredSessions],
+  );
+
+  function updateField(field, value) {
+    setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function handleSubmit(event) {
+    event.preventDefault();
+
+    const newSession = {
+      id: `cardio-${Date.now()}`,
+      date: new Date().toISOString().slice(0, 10),
+      type: form.type,
+      distanceKm: toNumber(form.distanceKm),
+      durationMin: toNumber(form.durationMin),
+      steps: Math.round(toNumber(form.steps)),
+      calories: Math.round(toNumber(form.calories)),
+      zone: form.zone,
+    };
+
+    const nextSessions = [newSession, ...savedSessions];
+    CardioRepository.saveAll(nextSessions);
+    setSavedSessions(nextSessions);
+    setSelectedType("All");
+    setForm(initialForm);
+  }
+
   return (
     <motion.div
       className="screen cardio-v4"
@@ -63,9 +200,9 @@ export default function CardioLog() {
     >
       <section className="v4-cardio-hero">
         <div>
-          <p className="eyebrow">Cardio</p>
-          <h1>13.3km</h1>
-          <p>This week&apos;s movement. Keep the engine ticking over.</p>
+          <p className="eyebrow">Movement</p>
+          <h1>{totals.distanceKm.toFixed(1)}km</h1>
+          <p>Cardio and steps in one place. Keep the engine ticking over.</p>
         </div>
 
         <div className="v4-cardio-icon">
@@ -76,39 +213,144 @@ export default function CardioLog() {
       <section className="v4-cardio-stats">
         <article>
           <Route size={21} />
-          <strong>13.3km</strong>
+          <strong>{totals.distanceKm.toFixed(1)}km</strong>
           <span>Distance</span>
         </article>
 
         <article>
+          <Footprints size={21} />
+          <strong>{totals.steps.toLocaleString()}</strong>
+          <span>Steps</span>
+        </article>
+
+        <article>
           <Clock size={21} />
-          <strong>78min</strong>
+          <strong>{Math.round(totals.durationMin)}min</strong>
           <span>Time</span>
         </article>
 
         <article>
           <Flame size={21} />
-          <strong>846</strong>
+          <strong>{totals.calories}</strong>
           <span>Calories</span>
         </article>
       </section>
 
-      <section className="v4-cardio-action">
+      <form className="form-card form-grid" onSubmit={handleSubmit}>
         <div>
-          <p className="eyebrow">Log cardio</p>
-          <h2>Add today&apos;s session</h2>
-          <p>Walk, bike, treadmill, rower - it all counts.</p>
+          <p className="eyebrow">Log movement</p>
+          <h2>Add today's cardio</h2>
+          <p>Pick the type, add steps if you have them, and TrackFit will build the graph.</p>
         </div>
 
-        <Button className="v4-cardio-add">
+        <label>
+          Cardio type
+          <select
+            value={form.type}
+            onChange={(event) => updateField("type", event.target.value)}
+          >
+            {CARDIO_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          Distance km
+          <input
+            inputMode="decimal"
+            min="0"
+            placeholder="3.6"
+            type="number"
+            value={form.distanceKm}
+            onChange={(event) => updateField("distanceKm", event.target.value)}
+          />
+        </label>
+
+        <label>
+          Duration minutes
+          <input
+            inputMode="numeric"
+            min="0"
+            placeholder="32"
+            type="number"
+            value={form.durationMin}
+            onChange={(event) => updateField("durationMin", event.target.value)}
+          />
+        </label>
+
+        <label>
+          Steps
+          <input
+            inputMode="numeric"
+            min="0"
+            placeholder="6200"
+            type="number"
+            value={form.steps}
+            onChange={(event) => updateField("steps", event.target.value)}
+          />
+        </label>
+
+        <label>
+          Calories
+          <input
+            inputMode="numeric"
+            min="0"
+            placeholder="280"
+            type="number"
+            value={form.calories}
+            onChange={(event) => updateField("calories", event.target.value)}
+          />
+        </label>
+
+        <label>
+          Effort zone
+          <select
+            value={form.zone}
+            onChange={(event) => updateField("zone", event.target.value)}
+          >
+            <option>Zone 1</option>
+            <option>Zone 2</option>
+            <option>Zone 3</option>
+            <option>Zone 4</option>
+            <option>Zone 5</option>
+          </select>
+        </label>
+
+        <Button className="v4-save-checkin" type="submit">
           <Plus size={17} />
-          Add
+          Save movement
         </Button>
+      </form>
+
+      <div className="v4-section-heading">
+        <div>
+          <p className="eyebrow">Graph filter</p>
+          <h2>Cardio type</h2>
+        </div>
+        <span>{selectedType}</span>
+      </div>
+
+      <section className="v4-quick-grid">
+        {["All", ...CARDIO_TYPES].map((type) => (
+          <button
+            className="v4-quick-card"
+            key={type}
+            onClick={() => setSelectedType(type)}
+            type="button"
+          >
+            {type === "Bike" ? <Bike size={21} /> : <Activity size={21} />}
+            <strong>{type}</strong>
+            <span>{type === selectedType ? "Showing on graph" : "Tap to filter"}</span>
+          </button>
+        ))}
       </section>
 
       <LineChartCard
-        title="Weekly Distance"
-        data={cardioData}
+        title={`${selectedType} Distance`}
+        data={chartData}
         dataKey="distance"
         unit="km"
       />
@@ -116,17 +358,14 @@ export default function CardioLog() {
       <div className="v4-section-heading">
         <div>
           <p className="eyebrow">Recent</p>
-          <h2>Sessions</h2>
+          <h2>Movement sessions</h2>
         </div>
-        <span>3 logged</span>
+        <span>{filteredSessions.length} logged</span>
       </div>
 
       <section className="v4-cardio-list">
-        {sessions.map((session) => (
-          <article
-            className="v4-cardio-row"
-            key={`${session.type}-${session.time}`}
-          >
+        {filteredSessions.map((session) => (
+          <article className="v4-cardio-row" key={session.id}>
             <div className="v4-cardio-row-icon">
               <Activity size={20} />
             </div>
@@ -134,7 +373,10 @@ export default function CardioLog() {
             <div>
               <strong>{session.type}</strong>
               <p>
-                {session.distance} Ãƒâ€šÃ‚Â· {session.time} Ãƒâ€šÃ‚Â· {session.pace}
+                {session.distanceKm.toFixed(1)}km - {session.durationMin} min - {getPace(session.distanceKm, session.durationMin)}
+              </p>
+              <p>
+                {formatSessionDate(session.date)} - {session.steps.toLocaleString()} steps
               </p>
             </div>
 
@@ -145,9 +387,9 @@ export default function CardioLog() {
 
       <section className="v4-zone-card">
         <div>
-          <p className="eyebrow">Heart-rate zones</p>
-          <h2>Most work is Zone 2</h2>
-          <p>Good for fat loss, recovery and building the base engine.</p>
+          <p className="eyebrow">Movement rule</p>
+          <h2>Steps count. Cardio counts. Consistency wins.</h2>
+          <p>Use cardio type filters to see what is actually moving the needle.</p>
         </div>
 
         <div className="v4-zone-bars">
@@ -165,10 +407,9 @@ export default function CardioLog() {
 
         <div>
           <p className="eyebrow">Coach note</p>
-          <h2>Cardio is helping the cut.</h2>
+          <h2>Movement now has context.</h2>
           <p>
-            Keep two easy Zone 2 sessions and one harder interval session each
-            week. That gives fitness without cooking your legs.
+            Cardio type and steps are being saved together, so the coach can compare effort instead of only counting kilometres.
           </p>
         </div>
       </section>
