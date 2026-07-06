@@ -43,6 +43,7 @@ import {
   CardioRepository,
   CheckInRepository,
   HistoryRepository,
+  NutritionRepository,
   WorkoutRepository,
 } from "../services/repositories/trackfitDataLayer";
 import "./TrackFitScreens.css";
@@ -57,6 +58,7 @@ function readDeveloperSnapshot(action = "Ready") {
   const history = HistoryRepository.getAll();
   const checkIns = CheckInRepository.getAll();
   const cardio = CardioRepository.getAll();
+  const nutrition = NutritionRepository.getAll();
   const activeWorkout = WorkoutRepository.getById("workout-1") || [];
   const coach = generateDailyCoachBrief(history);
   const coachIntelligence = buildCoachDashboard();
@@ -67,6 +69,8 @@ function readDeveloperSnapshot(action = "Ready") {
   const decisionEngine = buildDecisionEngine({
     history,
     checkIns,
+    cardio,
+    nutrition,
     analytics: workoutAnalytics,
     prEngine,
     progressionEngine,
@@ -82,6 +86,7 @@ function readDeveloperSnapshot(action = "Ready") {
     history,
     checkIns,
     cardio,
+    nutrition,
     activeWorkout,
     activeTotals,
     coach,
@@ -121,6 +126,7 @@ export default function DeveloperTools() {
       ["Active workout exercises", snapshot.activeWorkout.length],
       ["Check-ins", snapshot.checkIns.length],
       ["Cardio sessions", snapshot.cardio.length],
+      ["Nutrition meals", snapshot.nutrition.length],
     ],
     [snapshot],
   );
@@ -252,7 +258,49 @@ export default function DeveloperTools() {
       </section>
 
       <section className="tf-history-card">
-        <p className="eyebrow">Coach Intelligence Engine</p>
+        <p className="eyebrow">Nutrition Signal</p>
+        <strong>
+          {snapshot.decisionEngine.signals.nutrition.score}% nutrition score
+        </strong>
+        <p>
+          Today: {snapshot.decisionEngine.signals.nutrition.today.calories} cal,{" "}
+          {snapshot.decisionEngine.signals.nutrition.today.protein}g protein
+        </p>
+        <p>
+          7-day average protein:{" "}
+          {snapshot.decisionEngine.signals.nutrition.averageProtein}g
+        </p>
+        <p>
+          Days with food logged:{" "}
+          {snapshot.decisionEngine.signals.nutrition.daysWithFood}
+        </p>
+      </section>
+
+      <section className="tf-history-card">
+        <p className="eyebrow">Movement Signal</p>
+        <strong>
+          {snapshot.decisionEngine.signals.movement.score}% movement score
+        </strong>
+        <p>
+          Today:{" "}
+          {Math.round(
+            snapshot.decisionEngine.signals.movement.today.steps,
+          ).toLocaleString()}{" "}
+          steps,{" "}
+          {snapshot.decisionEngine.signals.movement.today.distanceKm.toFixed(1)}
+          km
+        </p>
+        <p>
+          Weekly movement:{" "}
+          {snapshot.decisionEngine.signals.movement.weeklyMinutes} minutes
+        </p>
+        <p>
+          Weekly target:{" "}
+          {snapshot.decisionEngine.signals.movement.weeklyMinutesTarget} minutes
+        </p>
+      </section>
+
+      <section className="tf-history-card">        <p className="eyebrow">Coach Intelligence Engine</p>
         <strong>{snapshot.coachIntelligence.recommendation.workout}</strong>
         <p>{snapshot.coachIntelligence.recommendation.reason}</p>
         <p>Route: {snapshot.coachIntelligence.recommendation.route}</p>

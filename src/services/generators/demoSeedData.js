@@ -3,6 +3,7 @@ import {
   CardioRepository,
   CheckInRepository,
   HistoryRepository,
+  NutritionRepository,
   WorkoutRepository,
 } from "../repositories/trackfitDataLayer";
 
@@ -688,10 +689,64 @@ function clearDemoPlanWorkouts(plan) {
     WorkoutRepository.removeById(day.id);
   });
 }
+function createDemoNutrition() {
+  const mealTemplates = [
+    {
+      type: "Breakfast",
+      name: "Oats, protein and banana",
+      calories: 520,
+      protein: 42,
+      carbs: 62,
+      fats: 12,
+    },
+    {
+      type: "Lunch",
+      name: "Chicken, rice and veg",
+      calories: 680,
+      protein: 58,
+      carbs: 72,
+      fats: 16,
+    },
+    {
+      type: "Snack",
+      name: "Greek yoghurt and berries",
+      calories: 260,
+      protein: 28,
+      carbs: 26,
+      fats: 5,
+    },
+    {
+      type: "Dinner",
+      name: "Lean beef, potato and salad",
+      calories: 740,
+      protein: 62,
+      carbs: 66,
+      fats: 22,
+    },
+    {
+      type: "Shake",
+      name: "Protein shake",
+      calories: 180,
+      protein: 32,
+      carbs: 5,
+      fats: 3,
+    },
+  ];
 
+  return Array.from({ length: 21 }, (_, dayIndex) =>
+    mealTemplates.map((meal, mealIndex) => ({
+      id: `demo-meal-${dayIndex}-${mealIndex}`,
+      date: daysAgo(dayIndex).slice(0, 10),
+      ...meal,
+      calories: meal.calories + ((dayIndex + mealIndex) % 3) * 25,
+      protein: meal.protein + ((dayIndex + mealIndex) % 2) * 4,
+    })),
+  ).flat();
+}
 export function seedDemoData() {
   const plan = createDemoPlan();
   const workouts = createDemoWorkoutHistory();
+  const nutrition = createDemoNutrition();
 
   const checkins = Array.from({ length: 28 }, (_, index) => ({
     id: `demo-checkin-${index}`,
@@ -760,6 +815,7 @@ export function seedDemoData() {
   HistoryRepository.saveAll(workouts);
   CheckInRepository.saveAll(checkins);
   CardioRepository.saveAll(cardio);
+  NutritionRepository.saveAll(nutrition);
   saveDemoPlanWorkouts(plan);
 
   return workouts;
@@ -771,6 +827,7 @@ export function clearDemoData() {
   HistoryRepository.clear();
   CheckInRepository.clear();
   CardioRepository.clear();
+  NutritionRepository.clear();
 }
 
 /**
