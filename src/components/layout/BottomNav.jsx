@@ -1,11 +1,32 @@
+/*
+ * TRACKFIT COMPONENT
+ *
+ * Purpose:
+ * Main bottom navigation for the mobile app shell.
+ *
+ * Data:
+ * Uses React Router links only.
+ *
+ * Features:
+ * - Home
+ * - Train
+ * - Move
+ * - Food
+ * - Coach
+ * - Check-in
+ *
+ * Future:
+ * Consider a More page if the navigation grows beyond MVP.
+ */
+
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   Dumbbell,
-  TrendingUp,
   HeartPulse,
   CheckSquare,
   Brain,
+  Utensils,
 } from "lucide-react";
 import "./BottomNav.css";
 
@@ -22,19 +43,19 @@ export default function BottomNav() {
         <span>Train</span>
       </NavLink>
 
-      <NavLink to="/progress">
-        <TrendingUp size={20} />
-        <span>Progress</span>
+      <NavLink to="/cardio">
+        <HeartPulse size={20} />
+        <span>Move</span>
+      </NavLink>
+
+      <NavLink to="/nutrition">
+        <Utensils size={20} />
+        <span>Food</span>
       </NavLink>
 
       <NavLink to="/coach">
         <Brain size={20} />
         <span>Coach</span>
-      </NavLink>
-
-      <NavLink to="/cardio">
-        <HeartPulse size={20} />
-        <span>Move</span>
       </NavLink>
 
       <NavLink to="/checkin">

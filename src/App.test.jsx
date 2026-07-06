@@ -12,6 +12,6 @@ describe("TrackFit app shell", () => {
 
     expect(screen.getByRole("link", { name: /Home/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Train/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Progress/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /food/i })).toBeInTheDocument();
   });
 });
