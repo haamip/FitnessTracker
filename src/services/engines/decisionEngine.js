@@ -5,19 +5,15 @@
  *
  * PURPOSE
  * -------
- * Combines Analytics, PR, Progression and Recovery into one training decision.
- *
- * Why this exists
- * ---------------
- * Each engine owns a focused calculation. The Decision Engine is the layer that
- * turns those signals into a clear coaching call.
+ * Combines training, recovery, movement and nutrition signals into one coaching
+ * decision.
  *
  * Data flow:
  *
  * Repositories
  * Engines
  * Decision Engine
- * Coach Intelligence / Developer Tools / future app surfaces
+ * Coach Intelligence / Developer Tools / future AI layer
  *
  * ============================================================================
  */
@@ -27,12 +23,36 @@ import { buildProgressionEngine } from "./progressionEngine";
 import { buildRecoveryEngine } from "./recoveryEngine";
 import { buildWorkoutAnalytics } from "./workoutAnalyticsEngine";
 import {
+  CardioRepository,
   CheckInRepository,
   HistoryRepository,
+  NutritionRepository,
 } from "../repositories/trackfitDataLayer";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const PROTEIN_TARGET = 185;
+const CALORIE_TARGET = 2600;
+const STEP_TARGET = 10000;
+const MOVEMENT_MINUTES_TARGET = 120;
 
 function clampScore(value) {
   return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function toNumber(value) {
+  const number = Number.parseFloat(value);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function getDateOnly(value) {
+  if (!value) return "";
+  return String(value).slice(0, 10);
+}
+
+function isWithinDays(value, days) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return false;
+  return Date.now() - date.getTime() <= days * DAY_MS;
 }
 
 function getReadinessBand(score) {
@@ -72,11 +92,99 @@ function getConsistencyScore(analytics) {
   return clampScore(analytics.weeklyConsistencyPercent);
 }
 
+function buildNutritionSignal(nutrition) {
+  const today = new Date().toISOString().slice(0, 10);
+  const todaysMeals = nutrition.filter(
+    (meal) => getDateOnly(meal.date) === today,
+  );
+
+  const todayTotals = todaysMeals.reduce(
+    (summary, meal) => ({
+      calories: summary.calories + toNumber(meal.calories),
+      protein: summary.protein + toNumber(meal.protein),
+      carbs: summary.carbs + toNumber(meal.carbs),
+      fats: summary.fats + toNumber(meal.fats),
+    }),
+    { calories: 0, protein: 0, carbs: 0, fats: 0 },
+  );
+
+  const recentMeals = nutrition.filter((meal) => isWithinDays(meal.date, 7));
+  const recentProtein = recentMeals.reduce(
+    (sum, meal) => sum + toNumber(meal.protein),
+    0,
+  );
+  const daysWithFood = new Set(
+    recentMeals.map((meal) => getDateOnly(meal.date)),
+  ).size;
+  const averageProtein =
+    daysWithFood > 0 ? Math.round(recentProtein / daysWithFood) : 0;
+
+  const proteinScore = clampScore((todayTotals.protein / PROTEIN_TARGET) * 100);
+  const calorieScore =
+    todayTotals.calories === 0
+      ? 55
+      : clampScore(100 - Math.abs(CALORIE_TARGET - todayTotals.calories) / 20);
+
+  return {
+    score: clampScore(proteinScore * 0.65 + calorieScore * 0.35),
+    today: todayTotals,
+    averageProtein,
+    daysWithFood,
+    proteinTarget: PROTEIN_TARGET,
+    calorieTarget: CALORIE_TARGET,
+  };
+}
+
+function buildMovementSignal(cardio) {
+  const today = new Date().toISOString().slice(0, 10);
+  const todaysMovement = cardio.filter(
+    (session) => getDateOnly(session.date) === today,
+  );
+  const recentMovement = cardio.filter((session) =>
+    isWithinDays(session.date, 7),
+  );
+
+  const todayTotals = todaysMovement.reduce(
+    (summary, session) => ({
+      steps: summary.steps + toNumber(session.steps),
+      distanceKm:
+        summary.distanceKm +
+        toNumber(session.distanceKm ?? session.distance ?? session.km),
+      durationMin:
+        summary.durationMin +
+        toNumber(session.durationMin ?? session.duration ?? session.minutes),
+    }),
+    { steps: 0, distanceKm: 0, durationMin: 0 },
+  );
+
+  const weeklyMinutes = recentMovement.reduce(
+    (sum, session) =>
+      sum +
+      toNumber(session.durationMin ?? session.duration ?? session.minutes),
+    0,
+  );
+
+  const stepScore = clampScore((todayTotals.steps / STEP_TARGET) * 100);
+  const minutesScore = clampScore(
+    (weeklyMinutes / MOVEMENT_MINUTES_TARGET) * 100,
+  );
+
+  return {
+    score: clampScore(stepScore * 0.45 + minutesScore * 0.55),
+    today: todayTotals,
+    weeklyMinutes,
+    stepTarget: STEP_TARGET,
+    weeklyMinutesTarget: MOVEMENT_MINUTES_TARGET,
+  };
+}
+
 function getDecisionScore({
   analytics,
   prEngine,
   progressionEngine,
   recoveryEngine,
+  nutritionSignal,
+  movementSignal,
 }) {
   const consistencyScore = getConsistencyScore(analytics);
   const progressionScore = getProgressionScore(progressionEngine);
@@ -84,14 +192,22 @@ function getDecisionScore({
   const recoveryScore = recoveryEngine.recoveryScore || 0;
 
   return clampScore(
-    recoveryScore * 0.35 +
-      consistencyScore * 0.25 +
-      progressionScore * 0.25 +
-      prScore * 0.15,
+    recoveryScore * 0.3 +
+      consistencyScore * 0.18 +
+      progressionScore * 0.2 +
+      prScore * 0.12 +
+      nutritionSignal.score * 0.12 +
+      movementSignal.score * 0.08,
   );
 }
 
-function getPrimaryLimiters({ analytics, progressionEngine, recoveryEngine }) {
+function getPrimaryLimiters({
+  analytics,
+  progressionEngine,
+  recoveryEngine,
+  nutritionSignal,
+  movementSignal,
+}) {
   const limiters = [];
 
   if (analytics.weeklyWorkouts === 0) {
@@ -114,6 +230,21 @@ function getPrimaryLimiters({ analytics, progressionEngine, recoveryEngine }) {
     limiters.push("Training load penalty active");
   }
 
+  if (
+    nutritionSignal.today.protein > 0 &&
+    nutritionSignal.today.protein < PROTEIN_TARGET * 0.75
+  ) {
+    limiters.push("Protein is low today");
+  }
+
+  if (nutritionSignal.daysWithFood < 4) {
+    limiters.push("Nutrition logging is inconsistent");
+  }
+
+  if (movementSignal.weeklyMinutes < MOVEMENT_MINUTES_TARGET * 0.5) {
+    limiters.push("Weekly movement is low");
+  }
+
   return limiters;
 }
 
@@ -122,6 +253,8 @@ function getOpportunities({
   prEngine,
   progressionEngine,
   recoveryEngine,
+  nutritionSignal,
+  movementSignal,
 }) {
   const opportunities = [];
 
@@ -145,11 +278,25 @@ function getOpportunities({
     opportunities.push("Weekly training frequency is inside the target range");
   }
 
+  if (nutritionSignal.today.protein >= PROTEIN_TARGET) {
+    opportunities.push("Protein target is hit today");
+  }
+
+  if (movementSignal.weeklyMinutes >= MOVEMENT_MINUTES_TARGET) {
+    opportunities.push("Weekly movement target is on track");
+  }
+
   return opportunities;
 }
 
 function getNextBestMove(
-  { analytics, progressionEngine, recoveryEngine },
+  {
+    analytics,
+    progressionEngine,
+    recoveryEngine,
+    nutritionSignal,
+    movementSignal,
+  },
   intensity,
 ) {
   if (analytics.totalWorkouts === 0) {
@@ -167,8 +314,34 @@ function getNextBestMove(
       title: "Recovery day",
       detail:
         "Recovery is too low for heavy training. Use walking, mobility or light technique work today.",
-      action: "Open workouts",
-      route: "/workouts",
+      action: "Open movement",
+      route: "/cardio",
+    };
+  }
+
+  if (
+    nutritionSignal.today.protein > 0 &&
+    nutritionSignal.today.protein < PROTEIN_TARGET * 0.65
+  ) {
+    return {
+      title: "Fuel first",
+      detail:
+        "Protein is low today. Hit a high-protein meal before pushing volume hard.",
+      action: "Open food",
+      route: "/nutrition",
+    };
+  }
+
+  if (
+    movementSignal.today.steps < 3000 &&
+    movementSignal.weeklyMinutes < MOVEMENT_MINUTES_TARGET * 0.6
+  ) {
+    return {
+      title: "Add easy movement",
+      detail:
+        "Movement is low. Add a 20 minute walk to support recovery and fat-loss consistency.",
+      action: "Open movement",
+      route: "/cardio",
     };
   }
 
@@ -182,7 +355,10 @@ function getNextBestMove(
     };
   }
 
-  if (progressionEngine.strongestProgress && recoveryEngine.recoveryScore >= 75) {
+  if (
+    progressionEngine.strongestProgress &&
+    recoveryEngine.recoveryScore >= 75
+  ) {
     return {
       title: "Progressive overload opportunity",
       detail: `${progressionEngine.strongestProgress.exercise} is moving well. Add a small rep or load progression if warm-ups feel clean.`,
@@ -202,7 +378,7 @@ function getNextBestMove(
 
 function getCoachSummary(intensity, limiters) {
   if (intensity === "Push") {
-    return "Green light. Recovery and training signals support a strong session today.";
+    return "Green light. Recovery, training, food and movement support a strong session today.";
   }
 
   if (intensity === "Build") {
@@ -220,29 +396,41 @@ function getCoachSummary(intensity, limiters) {
 export function buildDecisionEngine({
   history = HistoryRepository.getAll(),
   checkIns = CheckInRepository.getAll(),
+  nutrition = NutritionRepository.getAll(),
+  cardio = CardioRepository.getAll(),
   analytics = buildWorkoutAnalytics(history),
   prEngine = buildPrEngine(history),
   progressionEngine = buildProgressionEngine(history),
   recoveryEngine = buildRecoveryEngine(history, checkIns),
 } = {}) {
+  const nutritionSignal = buildNutritionSignal(nutrition);
+  const movementSignal = buildMovementSignal(cardio);
+
   const decisionScore = getDecisionScore({
     analytics,
     prEngine,
     progressionEngine,
     recoveryEngine,
+    nutritionSignal,
+    movementSignal,
   });
+
   const readinessBand = getReadinessBand(decisionScore);
   const trainingIntensity = getTrainingIntensity(decisionScore);
   const limiters = getPrimaryLimiters({
     analytics,
     progressionEngine,
     recoveryEngine,
+    nutritionSignal,
+    movementSignal,
   });
   const opportunities = getOpportunities({
     analytics,
     prEngine,
     progressionEngine,
     recoveryEngine,
+    nutritionSignal,
+    movementSignal,
   });
 
   return {
@@ -250,7 +438,13 @@ export function buildDecisionEngine({
     readinessBand,
     trainingIntensity,
     nextBestMove: getNextBestMove(
-      { analytics, progressionEngine, recoveryEngine },
+      {
+        analytics,
+        progressionEngine,
+        recoveryEngine,
+        nutritionSignal,
+        movementSignal,
+      },
       trainingIntensity,
     ),
     coachSummary: getCoachSummary(trainingIntensity, limiters),
@@ -276,25 +470,9 @@ export function buildDecisionEngine({
         status: recoveryEngine.status,
         trainingLoadPenalty: recoveryEngine.trainingLoadPenalty,
       },
+      nutrition: nutritionSignal,
+      movement: movementSignal,
     },
     generatedAt: new Date().toISOString(),
   };
 }
-
-/**
- * ============================================================================
- * DEVELOPER NOTES
- * ============================================================================
- *
- * The Decision Engine should not calculate raw workout stats itself.
- * It should combine outputs from other engines and return one plain object.
- *
- * Keep it predictable:
- *
- * - no UI
- * - no React
- * - no direct localStorage calls except through repository-backed defaults
- * - no fancy Unicode in comments
- *
- * ============================================================================
- */
