@@ -1,3 +1,20 @@
+/*
+ * TRACKFIT PAGE
+ *
+ * Purpose:
+ * Main responsibility of this page.
+ *
+ * Data:
+ * Repository and services used by this page.
+ *
+ * Features:
+ * - Feature 1
+ * - Feature 2
+ * - Feature 3
+ *
+ * Future:
+ * Planned improvements after MVP.
+ */
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {

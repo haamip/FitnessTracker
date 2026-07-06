@@ -25,6 +25,7 @@ const Workouts = lazy(() => import("./pages/Workouts"));
 const AIWorkoutBuilder = lazy(() => import("./pages/AIWorkoutBuilder"));
 const WorkoutDetail = lazy(() => import("./pages/WorkoutDetail"));
 const CoachIntelligence = lazy(() => import("./pages/CoachIntelligence"));
+const Nutrition = lazy(() => import("./pages/Nutrition"));
 const AIPlayground = lazy(() => import("./pages/AIPlayground"));
 
 function WorkoutDetailRoute() {
@@ -82,6 +83,7 @@ function App() {
               element={<CompletedWorkoutDetail />}
             />
             <Route path="/workouts/:id" element={<WorkoutDetailRoute />} />
+            <Route path="/nutrition" element={<Nutrition />} />
             <Route path="/exercises/:id" element={<ExerciseDetail />} />
           </Routes>
         </Suspense>

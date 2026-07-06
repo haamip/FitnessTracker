@@ -1,3 +1,20 @@
+/*
+ * TRACKFIT PAGE
+ *
+ * Purpose:
+ * Main responsibility of this page.
+ *
+ * Data:
+ * Repository and services used by this page.
+ *
+ * Features:
+ * - Feature 1
+ * - Feature 2
+ * - Feature 3
+ *
+ * Future:
+ * Planned improvements after MVP.
+ */
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -21,15 +38,17 @@ import { completeDailyCheckIn } from "../features/gamification/gamification";
 import { CheckInRepository } from "../services/repositories/trackfitDataLayer";
 import "./TrackFitScreens.css";
 
+const today = new Date().toISOString().slice(0, 10);
+
 const initialForm = {
-  weightKg: "",
-  proteinG: "",
-  waterL: "",
-  sleepHours: "",
+  weightKg: "104.2",
+  proteinG: "168",
+  waterL: "3.2",
+  sleepHours: "7.4",
   mood: "Good",
   energy: "7",
-  soreness: "Mild",
-  trained: "Yes",
+  bodyFeel: "Mild",
+  trainedToday: "yes",
   trainingNote: "Upper strength",
 };
 
@@ -38,118 +57,104 @@ function toNumber(value) {
   return Number.isFinite(number) ? number : 0;
 }
 
-function todayKey() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function getTodayLabel() {
-  return new Intl.DateTimeFormat("en-AU", {
-    weekday: "short",
-    day: "numeric",
-  }).format(new Date());
-}
-
-function normaliseCheckIn(checkIn) {
+function normaliseCheckIn(checkIn, index = 0) {
   return {
-    id: checkIn.id || `checkin-${checkIn.date || todayKey()}`,
-    date: checkIn.date || todayKey(),
+    id: checkIn.id || `legacy-checkin-${index}`,
+    date: checkIn.date || checkIn.completedAt || today,
     weightKg: toNumber(checkIn.weightKg ?? checkIn.weight),
     proteinG: Math.round(toNumber(checkIn.proteinG ?? checkIn.protein)),
     waterL: toNumber(checkIn.waterL ?? checkIn.water),
     sleepHours: toNumber(checkIn.sleepHours ?? checkIn.sleep),
-    mood: checkIn.mood || "Good",
-    energy: Math.round(toNumber(checkIn.energy || 7)),
-    soreness: checkIn.soreness || "Mild",
-    trained: checkIn.trained || "Yes",
-    trainingNote: checkIn.trainingNote || "Upper strength",
-    savedAt: checkIn.savedAt || new Date().toISOString(),
+    mood: checkIn.mood || "Okay",
+    energy: Math.round(toNumber(checkIn.energy ?? 5)),
+    bodyFeel: checkIn.bodyFeel || checkIn.soreness || "Mild",
+    trainedToday: Boolean(checkIn.trainedToday ?? checkIn.trained),
+    trainingNote: checkIn.trainingNote || "",
   };
 }
 
-function calculateReadiness(checkIn) {
-  const sleepScore = Math.min(30, (checkIn.sleepHours / 8) * 30);
-  const waterScore = Math.min(20, (checkIn.waterL / 4) * 20);
-  const proteinScore = Math.min(25, (checkIn.proteinG / 185) * 25);
-  const energyScore = Math.min(25, (checkIn.energy / 10) * 25);
-  return Math.round(sleepScore + waterScore + proteinScore + energyScore);
+function buildFormFromCheckIn(checkIn) {
+  if (!checkIn) return initialForm;
+
+  const saved = normaliseCheckIn(checkIn);
+
+  return {
+    weightKg: saved.weightKg ? String(saved.weightKg) : "",
+    proteinG: saved.proteinG ? String(saved.proteinG) : "",
+    waterL: saved.waterL ? String(saved.waterL) : "",
+    sleepHours: saved.sleepHours ? String(saved.sleepHours) : "",
+    mood: saved.mood,
+    energy: saved.energy ? String(saved.energy) : "5",
+    bodyFeel: saved.bodyFeel,
+    trainedToday: saved.trainedToday ? "yes" : "no",
+    trainingNote: saved.trainingNote,
+  };
 }
 
-function buildCheckItems(checkIn) {
-  return [
+function getScore(form) {
+  const sleep = Math.min(25, (toNumber(form.sleepHours) / 8) * 25);
+  const water = Math.min(20, (toNumber(form.waterL) / 4) * 20);
+  const protein = Math.min(20, (toNumber(form.proteinG) / 185) * 20);
+  const energy = Math.min(25, (toNumber(form.energy) / 10) * 25);
+  const body =
+    form.bodyFeel === "High" ? -12 : form.bodyFeel === "Moderate" ? -6 : 0;
+
+  return Math.max(
+    0,
+    Math.min(100, Math.round(sleep + water + protein + energy + body)),
+  );
+}
+
+function formatToday() {
+  const date = new Date();
+
+  return {
+    day: new Intl.DateTimeFormat("en-AU", { weekday: "short" }).format(date),
+    date: new Intl.DateTimeFormat("en-AU", { day: "numeric" }).format(date),
+  };
+}
+
+export default function DailyCheckIn() {
+  const [savedCheckIns, setSavedCheckIns] = useState(() =>
+    CheckInRepository.getAll().map(normaliseCheckIn),
+  );
+  const existingToday = savedCheckIns.find((checkIn) => checkIn.date === today);
+  const [form, setForm] = useState(() => buildFormFromCheckIn(existingToday));
+  const score = useMemo(() => getScore(form), [form]);
+  const todayLabel = formatToday();
+
+  const checkItems = [
     {
       icon: Scale,
       label: "Weight",
-      value: checkIn.weightKg ? `${checkIn.weightKg.toFixed(1)}kg` : "--",
-      note: "Daily bodyweight",
+      value: `${toNumber(form.weightKg).toFixed(1)}kg`,
+      note: existingToday ? "Saved today" : "Ready to save",
     },
     {
       icon: Utensils,
       label: "Protein",
-      value: `${checkIn.proteinG}g`,
-      note: `${Math.max(0, 185 - checkIn.proteinG)}g to target`,
+      value: `${Math.round(toNumber(form.proteinG))}g`,
+      note: `${Math.max(0, 185 - Math.round(toNumber(form.proteinG)))}g to target`,
     },
     {
       icon: Waves,
       label: "Water",
-      value: `${checkIn.waterL.toFixed(1)}L`,
+      value: `${toNumber(form.waterL).toFixed(1)}L`,
       note: "Goal 4L",
     },
     {
       icon: BedDouble,
       label: "Sleep",
-      value: `${checkIn.sleepHours.toFixed(1)}h`,
-      note: checkIn.sleepHours >= 7 ? "Good recovery" : "Needs attention",
+      value: `${toNumber(form.sleepHours).toFixed(1)}h`,
+      note: toNumber(form.sleepHours) >= 7 ? "Solid" : "Low",
     },
   ];
-}
 
-function buildRecovery(checkIn) {
-  return [
-    { label: "Mood", value: checkIn.mood, icon: SunMedium },
-    { label: "Energy", value: `${checkIn.energy}/10`, icon: Battery },
-    { label: "Soreness", value: checkIn.soreness, icon: HeartPulse },
+  const recovery = [
+    { label: "Mood", value: form.mood, icon: SunMedium },
+    { label: "Energy", value: `${form.energy}/10`, icon: Battery },
+    { label: "Body feel", value: form.bodyFeel, icon: HeartPulse },
   ];
-}
-
-/**
- * DailyCheckIn
- *
- * Stores daily health inputs through CheckInRepository so Coach Intelligence can
- * use recovery, nutrition and readiness signals later.
- */
-export default function DailyCheckIn() {
-  const [savedCheckIns, setSavedCheckIns] = useState(() =>
-    CheckInRepository.getAll().map(normaliseCheckIn),
-  );
-  const todayCheckIn = savedCheckIns.find((item) => item.date === todayKey());
-  const [form, setForm] = useState(() =>
-    todayCheckIn
-      ? {
-          weightKg: todayCheckIn.weightKg || "",
-          proteinG: todayCheckIn.proteinG || "",
-          waterL: todayCheckIn.waterL || "",
-          sleepHours: todayCheckIn.sleepHours || "",
-          mood: todayCheckIn.mood,
-          energy: todayCheckIn.energy || "7",
-          soreness: todayCheckIn.soreness,
-          trained: todayCheckIn.trained,
-          trainingNote: todayCheckIn.trainingNote,
-        }
-      : initialForm,
-  );
-
-  const previewCheckIn = useMemo(
-    () =>
-      normaliseCheckIn({
-        ...form,
-        date: todayKey(),
-      }),
-    [form],
-  );
-  const readiness = calculateReadiness(previewCheckIn);
-  const checkItems = buildCheckItems(previewCheckIn);
-  const recovery = buildRecovery(previewCheckIn);
-  const [dayName, dayNumber] = getTodayLabel().split(" ");
 
   function updateField(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -158,18 +163,28 @@ export default function DailyCheckIn() {
   function handleSubmit(event) {
     event.preventDefault();
 
-    const record = normaliseCheckIn({
-      ...form,
-      id: `checkin-${todayKey()}`,
-      date: todayKey(),
-      savedAt: new Date().toISOString(),
+    const newCheckIn = normaliseCheckIn({
+      id: existingToday?.id || `checkin-${Date.now()}`,
+      date: today,
+      weightKg: form.weightKg,
+      proteinG: form.proteinG,
+      waterL: form.waterL,
+      sleepHours: form.sleepHours,
+      mood: form.mood,
+      energy: form.energy,
+      bodyFeel: form.bodyFeel,
+      trainedToday: form.trainedToday === "yes",
+      trainingNote: form.trainingNote,
     });
-    const withoutToday = savedCheckIns.filter((item) => item.date !== record.date);
-    const nextCheckIns = [record, ...withoutToday];
+
+    const nextCheckIns = [
+      newCheckIn,
+      ...savedCheckIns.filter((checkIn) => checkIn.date !== today),
+    ];
 
     CheckInRepository.saveAll(nextCheckIns);
-    setSavedCheckIns(nextCheckIns);
     completeDailyCheckIn();
+    setSavedCheckIns(nextCheckIns);
   }
 
   return (
@@ -188,91 +203,31 @@ export default function DailyCheckIn() {
         </div>
 
         <div className="v4-checkin-date">
-          <span>{dayName}</span>
-          <strong>{dayNumber}</strong>
+          <span>{todayLabel.day}</span>
+          <strong>{todayLabel.date}</strong>
         </div>
       </section>
 
       <section className="v4-checkin-score">
         <div>
           <p className="eyebrow">Readiness</p>
-          <h2>{readiness}%</h2>
-          <span>
-            {readiness >= 75
-              ? "Good day to train, but keep recovery in mind."
-              : "Recovery needs attention. Train smart, not reckless."}
-          </span>
+          <h2>{score}%</h2>
+          <span>Based on today&apos;s logged inputs.</span>
         </div>
 
-        <div className="v4-checkin-ring" style={{ "--progress": `${readiness}%` }}>
+        <div className="v4-checkin-ring" style={{ "--progress": `${score}%` }}>
           <div>
             <CheckCircle2 size={24} />
           </div>
         </div>
       </section>
 
-      <section className="form-card form-grid">
-        <div>
-          <p className="eyebrow">Inputs</p>
-          <h2>Today's numbers</h2>
-          <p>These feed the coach, recovery and nutrition decisions later.</p>
-        </div>
-
-        <label>
-          Weight kg
-          <input
-            inputMode="decimal"
-            min="0"
-            placeholder="104.2"
-            type="number"
-            value={form.weightKg}
-            onChange={(event) => updateField("weightKg", event.target.value)}
-          />
-        </label>
-
-        <label>
-          Protein grams
-          <input
-            inputMode="numeric"
-            min="0"
-            placeholder="185"
-            type="number"
-            value={form.proteinG}
-            onChange={(event) => updateField("proteinG", event.target.value)}
-          />
-        </label>
-
-        <label>
-          Water litres
-          <input
-            inputMode="decimal"
-            min="0"
-            placeholder="4.0"
-            type="number"
-            value={form.waterL}
-            onChange={(event) => updateField("waterL", event.target.value)}
-          />
-        </label>
-
-        <label>
-          Sleep hours
-          <input
-            inputMode="decimal"
-            min="0"
-            placeholder="7.5"
-            type="number"
-            value={form.sleepHours}
-            onChange={(event) => updateField("sleepHours", event.target.value)}
-          />
-        </label>
-      </section>
-
       <div className="v4-section-heading">
         <div>
-          <p className="eyebrow">Summary</p>
-          <h2>Today so far</h2>
+          <p className="eyebrow">Inputs</p>
+          <h2>Today&apos;s numbers</h2>
         </div>
-        <span>{todayCheckIn ? "Saved" : "Live"}</span>
+        <span>{existingToday ? "Saved" : "Live"}</span>
       </div>
 
       <section className="v4-check-grid">
@@ -287,11 +242,101 @@ export default function DailyCheckIn() {
       </section>
 
       <section className="form-card form-grid">
+        <label>
+          Weight kg
+          <input
+            inputMode="decimal"
+            min="0"
+            type="number"
+            value={form.weightKg}
+            onChange={(event) => updateField("weightKg", event.target.value)}
+          />
+        </label>
+
+        <label>
+          Protein grams
+          <input
+            inputMode="numeric"
+            min="0"
+            type="number"
+            value={form.proteinG}
+            onChange={(event) => updateField("proteinG", event.target.value)}
+          />
+        </label>
+
+        <label>
+          Water litres
+          <input
+            inputMode="decimal"
+            min="0"
+            type="number"
+            value={form.waterL}
+            onChange={(event) => updateField("waterL", event.target.value)}
+          />
+        </label>
+
+        <label>
+          Sleep hours
+          <input
+            inputMode="decimal"
+            min="0"
+            type="number"
+            value={form.sleepHours}
+            onChange={(event) => updateField("sleepHours", event.target.value)}
+          />
+        </label>
+      </section>
+
+      <section className="v4-training-toggle">
+        <div>
+          <p className="eyebrow">Training today?</p>
+          <h2>{form.trainedToday === "yes" ? "Yes" : "No"}</h2>
+          <span>
+            {form.trainingNote || "Add a short training note if needed."}
+          </span>
+        </div>
+
+        <div className="v4-training-pill">
+          <Dumbbell size={17} />
+          {form.trainedToday === "yes" ? "Done" : "Rest"}
+        </div>
+      </section>
+
+      <section className="form-card form-grid">
+        <label>
+          Trained today
+          <select
+            value={form.trainedToday}
+            onChange={(event) =>
+              updateField("trainedToday", event.target.value)
+            }
+          >
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </label>
+
+        <label>
+          Training note
+          <input
+            placeholder="Upper strength, cardio, rest day..."
+            type="text"
+            value={form.trainingNote}
+            onChange={(event) =>
+              updateField("trainingNote", event.target.value)
+            }
+          />
+        </label>
+      </section>
+
+      <div className="v4-section-heading">
         <div>
           <p className="eyebrow">Recovery</p>
           <h2>How you feel</h2>
         </div>
+      </div>
 
+      <section className="form-card form-grid">
         <label>
           Mood
           <select
@@ -300,14 +345,14 @@ export default function DailyCheckIn() {
           >
             <option>Great</option>
             <option>Good</option>
+            <option>Okay</option>
             <option>Flat</option>
-            <option>Stressed</option>
-            <option>Cooked</option>
+            <option>Rough</option>
           </select>
         </label>
 
         <label>
-          Energy 1-10
+          Energy /10
           <input
             inputMode="numeric"
             max="10"
@@ -319,52 +364,16 @@ export default function DailyCheckIn() {
         </label>
 
         <label>
-          Soreness
+          Body feel
           <select
-            value={form.soreness}
-            onChange={(event) => updateField("soreness", event.target.value)}
+            value={form.bodyFeel}
+            onChange={(event) => updateField("bodyFeel", event.target.value)}
           >
-            <option>None</option>
+            <option>Low</option>
             <option>Mild</option>
             <option>Moderate</option>
             <option>High</option>
           </select>
-        </label>
-      </section>
-
-      <section className="v4-training-toggle">
-        <div>
-          <p className="eyebrow">Training today?</p>
-          <h2>{form.trained === "Yes" ? "Yes" : "No"}</h2>
-          <span>{form.trainingNote || "Add a short note for the coach."}</span>
-        </div>
-
-        <div className="v4-training-pill">
-          <Dumbbell size={17} />
-          {form.trained}
-        </div>
-      </section>
-
-      <section className="form-card form-grid">
-        <label>
-          Trained today
-          <select
-            value={form.trained}
-            onChange={(event) => updateField("trained", event.target.value)}
-          >
-            <option>Yes</option>
-            <option>No</option>
-          </select>
-        </label>
-
-        <label>
-          Training note
-          <input
-            placeholder="Upper strength, cardio, rest day..."
-            type="text"
-            value={form.trainingNote}
-            onChange={(event) => updateField("trainingNote", event.target.value)}
-          />
         </label>
       </section>
 
@@ -390,11 +399,10 @@ export default function DailyCheckIn() {
 
         <div>
           <p className="eyebrow">Coach note</p>
-          <h2>{previewCheckIn.proteinG >= 185 ? "Protein target hit." : "Protein is the next easy win."}</h2>
+          <h2>Daily data is now connected.</h2>
           <p>
-            {previewCheckIn.proteinG >= 185
-              ? "Good work. Keep water and sleep steady so the training engine can recover."
-              : "Hit another small protein meal and keep water moving. Boring basics, big result."}
+            Saved check-ins now feed the repository layer for future Coach and
+            nutrition decisions.
           </p>
         </div>
       </section>
@@ -406,7 +414,9 @@ export default function DailyCheckIn() {
 
       <section className="v4-mini-summary">
         <Moon size={18} />
-        <span>Track the simple stuff daily. That is how the app gets smart.</span>
+        <span>
+          Track the simple stuff daily. That is how the app gets smart.
+        </span>
         <Flame size={18} />
       </section>
     </motion.form>
