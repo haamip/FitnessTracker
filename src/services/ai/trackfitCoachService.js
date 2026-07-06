@@ -8,9 +8,8 @@
  * Prepares TrackFit coaching data for an AI provider.
  *
  * Important idea:
- * The AI is not the brain. TrackFit's repositories and engines make the real
- * decisions first. This service only turns those decisions into a clear prompt
- * and a mock response so we can build safely before paying for real AI calls.
+ * The AI is not the brain. TrackFit repositories and engines make the real
+ * decisions first. This service only turns those decisions into clear language.
  *
  * Data flow:
  * Repositories -> Engines -> Decision Engine -> Coach Intelligence -> Prompt -> AI
@@ -75,13 +74,6 @@ function safeList(items, fallback = "None detected") {
 }
 
 function getTokenEstimate(text) {
-  /**
-   * WHY THIS EXISTS
-   * ----------------
-   * Real AI providers charge by tokens, not by normal words.
-   * This is only a rough developer estimate. It is good enough for the MVP
-   * playground until we connect the real provider usage numbers later.
-   */
   return Math.max(1, Math.ceil(String(text || "").length / 4));
 }
 
@@ -103,18 +95,28 @@ function buildCostComparison({ inputTokens, outputTokens }) {
   ).sort((a, b) => a.totalCostUsd - b.totalCostUsd);
 }
 
-export function buildTrackFitCoachPrompt({ coachIntelligence, decisionEngine }) {
+function formatNumber(value) {
+  return Number.isFinite(Number(value)) ? Number(value) : 0;
+}
+
+export function buildTrackFitCoachPrompt({
+  coachIntelligence,
+  decisionEngine,
+}) {
   const readiness = coachIntelligence.readiness;
   const recommendation = coachIntelligence.recommendation;
   const weeklySummary = coachIntelligence.weeklySummary;
   const fatigue = coachIntelligence.fatigue;
   const plateau = coachIntelligence.plateau;
+  const nutrition = coachIntelligence.nutrition;
+  const movement = coachIntelligence.movement;
 
   return [
     "You are TrackFit Coach.",
     "Turn TrackFit's calculated coaching decision into clear, practical language.",
     "Do not invent numbers, workouts, medical advice, or safety claims.",
     "Use the app's decision as the source of truth.",
+    "The AI is the voice, not the brain.",
     "",
     "TRACKFIT DECISION ENGINE",
     `Decision score: ${decisionEngine.decisionScore}%`,
@@ -126,7 +128,7 @@ export function buildTrackFitCoachPrompt({ coachIntelligence, decisionEngine }) 
     `Limiters: ${safeList(decisionEngine.limiters)}`,
     `Opportunities: ${safeList(decisionEngine.opportunities)}`,
     "",
-    "COACH INTELLIGENCE",
+    "TRAINING SIGNALS",
     `Readiness: ${readiness.score}% - ${readiness.status}`,
     `Readiness reason: ${readiness.reason}`,
     `Recommendation: ${recommendation.workout}`,
@@ -138,16 +140,40 @@ export function buildTrackFitCoachPrompt({ coachIntelligence, decisionEngine }) 
     `Fatigue advice: ${fatigue.advice}`,
     `Plateau: ${plateau.message}`,
     "",
+    "NUTRITION SIGNALS",
+    `Nutrition score: ${nutrition.score}%`,
+    `Calories today: ${formatNumber(nutrition.calories)} / ${nutrition.calorieTarget}`,
+    `Protein today: ${formatNumber(nutrition.protein)}g / ${nutrition.proteinTarget}g`,
+    `Carbs today: ${formatNumber(nutrition.carbs)}g`,
+    `Fats today: ${formatNumber(nutrition.fats)}g`,
+    `Average protein this week: ${formatNumber(nutrition.averageProtein)}g`,
+    `Food logging days this week: ${formatNumber(nutrition.daysWithFood)}`,
+    `Nutrition message: ${nutrition.message}`,
+    "",
+    "MOVEMENT SIGNALS",
+    `Movement score: ${movement.score}%`,
+    `Steps today: ${formatNumber(movement.steps)} / ${movement.stepTarget}`,
+    `Distance today: ${formatNumber(movement.distanceKm)}km`,
+    `Movement minutes today: ${formatNumber(movement.durationMin)}`,
+    `Movement minutes this week: ${formatNumber(movement.weeklyMinutes)} / ${movement.weeklyMinutesTarget}`,
+    `Movement message: ${movement.message}`,
+    "",
     "RESPONSE RULES",
     "1. Start with one short coaching summary.",
-    "2. Explain why TrackFit made the decision.",
+    "2. Explain why TrackFit made the decision using training, food, recovery or movement signals.",
     "3. Give one practical next action.",
     "4. Keep it friendly, direct, and under 120 words.",
   ].join("\n");
 }
 
-export function buildMockTrackFitCoachResponse({ coachIntelligence, decisionEngine }) {
+export function buildMockTrackFitCoachResponse({
+  coachIntelligence,
+  decisionEngine,
+}) {
   const nextMove = decisionEngine.nextBestMove;
+  const nutrition = coachIntelligence.nutrition;
+  const movement = coachIntelligence.movement;
+
   const limiterText = decisionEngine.limiters[0]
     ? ` Main limiter: ${decisionEngine.limiters[0].toLowerCase()}.`
     : " No major limiter is standing out.";
@@ -156,10 +182,12 @@ export function buildMockTrackFitCoachResponse({ coachIntelligence, decisionEngi
     provider: "mock",
     status: "ready",
     responseTimeMs: 42,
-    message: `${decisionEngine.trainingIntensity} day: ${decisionEngine.coachSummary}${limiterText} Next move is ${nextMove.title.toLowerCase()}. ${nextMove.detail}`,
+    message: `${decisionEngine.trainingIntensity} day: ${decisionEngine.coachSummary}${limiterText} Protein is ${nutrition.protein}g today and movement is ${Math.round(movement.steps).toLocaleString()} steps. Next move is ${nextMove.title.toLowerCase()}. ${nextMove.detail}`,
     debug: {
       readinessScore: coachIntelligence.readiness.score,
       decisionScore: decisionEngine.decisionScore,
+      nutritionScore: nutrition.score,
+      movementScore: movement.score,
       route: nextMove.route,
     },
   };
@@ -167,7 +195,10 @@ export function buildMockTrackFitCoachResponse({ coachIntelligence, decisionEngi
 
 export function buildTrackFitAIPlaygroundSnapshot({ coachIntelligence }) {
   const decisionEngine = coachIntelligence.decision;
-  const prompt = buildTrackFitCoachPrompt({ coachIntelligence, decisionEngine });
+  const prompt = buildTrackFitCoachPrompt({
+    coachIntelligence,
+    decisionEngine,
+  });
   const mockResponse = buildMockTrackFitCoachResponse({
     coachIntelligence,
     decisionEngine,
