@@ -77,6 +77,19 @@ function toNumber(value) {
   return Number.isFinite(number) ? number : 0;
 }
 
+function normaliseSession(session, index = 0) {
+  return {
+    id: session.id || `legacy-cardio-${index}`,
+    date: session.date || session.completedAt || new Date().toISOString().slice(0, 10),
+    type: session.type || session.name || "Other",
+    distanceKm: toNumber(session.distanceKm ?? session.distance ?? session.km),
+    durationMin: toNumber(session.durationMin ?? session.duration ?? session.minutes ?? session.time),
+    steps: Math.round(toNumber(session.steps)),
+    calories: Math.round(toNumber(session.calories)),
+    zone: session.zone || "Zone 2",
+  };
+}
+
 function formatDateLabel(value) {
   const date = new Date(value);
 
@@ -134,7 +147,9 @@ function buildWeeklyChart(sessions) {
  * for real user data before wearable syncing is added later.
  */
 export default function CardioLog() {
-  const [savedSessions, setSavedSessions] = useState(() => CardioRepository.getAll());
+  const [savedSessions, setSavedSessions] = useState(() =>
+    CardioRepository.getAll().map(normaliseSession),
+  );
   const [form, setForm] = useState(initialForm);
   const [selectedType, setSelectedType] = useState("All");
 
@@ -151,10 +166,10 @@ export default function CardioLog() {
     () =>
       filteredSessions.reduce(
         (summary, session) => ({
-          distanceKm: summary.distanceKm + (session.distanceKm || 0),
-          durationMin: summary.durationMin + (session.durationMin || 0),
-          calories: summary.calories + (session.calories || 0),
-          steps: summary.steps + (session.steps || 0),
+          distanceKm: summary.distanceKm + session.distanceKm,
+          durationMin: summary.durationMin + session.durationMin,
+          calories: summary.calories + session.calories,
+          steps: summary.steps + session.steps,
         }),
         { distanceKm: 0, durationMin: 0, calories: 0, steps: 0 },
       ),
@@ -173,16 +188,16 @@ export default function CardioLog() {
   function handleSubmit(event) {
     event.preventDefault();
 
-    const newSession = {
+    const newSession = normaliseSession({
       id: `cardio-${Date.now()}`,
       date: new Date().toISOString().slice(0, 10),
       type: form.type,
-      distanceKm: toNumber(form.distanceKm),
-      durationMin: toNumber(form.durationMin),
-      steps: Math.round(toNumber(form.steps)),
-      calories: Math.round(toNumber(form.calories)),
+      distanceKm: form.distanceKm,
+      durationMin: form.durationMin,
+      steps: form.steps,
+      calories: form.calories,
       zone: form.zone,
-    };
+    });
 
     const nextSessions = [newSession, ...savedSessions];
     CardioRepository.saveAll(nextSessions);
