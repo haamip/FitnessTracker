@@ -83,7 +83,9 @@ function normaliseSession(session, index = 0) {
     date: session.date || session.completedAt || new Date().toISOString().slice(0, 10),
     type: session.type || session.name || "Other",
     distanceKm: toNumber(session.distanceKm ?? session.distance ?? session.km),
-    durationMin: toNumber(session.durationMin ?? session.duration ?? session.minutes ?? session.time),
+    durationMin: toNumber(
+      session.durationMin ?? session.duration ?? session.minutes ?? session.time,
+    ),
     steps: Math.round(toNumber(session.steps)),
     calories: Math.round(toNumber(session.calories)),
     zone: session.zone || "Zone 2",
@@ -143,7 +145,7 @@ function buildWeeklyChart(sessions) {
  * CardioLog
  *
  * Movement tracking surface for cardio and steps.
- * Cardio now reads and writes through the repository layer so the page is ready
+ * Cardio reads and writes through the repository layer so the page is ready
  * for real user data before wearable syncing is added later.
  */
 export default function CardioLog() {
@@ -340,27 +342,27 @@ export default function CardioLog() {
         </Button>
       </form>
 
-      <div className="v4-section-heading">
+      <section className="form-card form-grid">
         <div>
           <p className="eyebrow">Graph filter</p>
-          <h2>Cardio type</h2>
+          <h2>Activity view</h2>
+          <p>Choose one activity type or view all movement together.</p>
         </div>
-        <span>{selectedType}</span>
-      </div>
 
-      <section className="v4-quick-grid">
-        {["All", ...CARDIO_TYPES].map((type) => (
-          <button
-            className="v4-quick-card"
-            key={type}
-            onClick={() => setSelectedType(type)}
-            type="button"
+        <label>
+          Activity
+          <select
+            value={selectedType}
+            onChange={(event) => setSelectedType(event.target.value)}
           >
-            {type === "Bike" ? <Bike size={21} /> : <Activity size={21} />}
-            <strong>{type}</strong>
-            <span>{type === selectedType ? "Showing on graph" : "Tap to filter"}</span>
-          </button>
-        ))}
+            <option value="All">All activities</option>
+            {CARDIO_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+        </label>
       </section>
 
       <LineChartCard
@@ -382,7 +384,7 @@ export default function CardioLog() {
         {filteredSessions.map((session) => (
           <article className="v4-cardio-row" key={session.id}>
             <div className="v4-cardio-row-icon">
-              <Activity size={20} />
+              {session.type === "Bike" ? <Bike size={20} /> : <Activity size={20} />}
             </div>
 
             <div>
@@ -404,7 +406,7 @@ export default function CardioLog() {
         <div>
           <p className="eyebrow">Movement rule</p>
           <h2>Steps count. Cardio counts. Consistency wins.</h2>
-          <p>Use cardio type filters to see what is actually moving the needle.</p>
+          <p>Use the activity filter to see what is actually moving the needle.</p>
         </div>
 
         <div className="v4-zone-bars">
