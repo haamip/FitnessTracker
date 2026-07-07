@@ -30,11 +30,8 @@ import { generateDailyCoachBrief } from "../services/engines/aiCoachEngine";
 import { buildCoachDashboard } from "../services/engines/coachIntelligenceEngine";
 import { buildDecisionEngine } from "../services/engines/decisionEngine";
 import {
-  DEMO_ATHLETE_PROFILES,
-  generateDemoAthlete,
-} from "../services/generators/demoAthleteGenerator";
-import {
   clearDemoData,
+  DEMO_ATHLETE_PROFILES,
   seedDemoData,
 } from "../services/generators/demoSeedData";
 import { calculateWorkoutTotals, formatClock } from "../services/workoutEngine";
@@ -141,10 +138,20 @@ export default function DeveloperTools() {
     refreshSnapshot("Seeded demo data");
   }
 
-  function handleSeedDemoAthlete(profile) {
-    const result = generateDemoAthlete(profile);
-    setActiveProfile(result);
-    refreshSnapshot(`Seeded ${result.label}`);
+  function handleSeedDemoAthlete(profileId) {
+    const profile = DEMO_ATHLETE_PROFILES.find((item) => item.id === profileId);
+    const workouts = seedDemoData(profileId);
+
+    setActiveProfile({
+      label: profile?.label || "Demo athlete",
+      description: profile?.description || "Repository-backed demo profile.",
+      historyCount: workouts.length,
+      checkInCount: CheckInRepository.getAll().length,
+      cardioCount: CardioRepository.getAll().length,
+      nutritionCount: NutritionRepository.getAll().length,
+    });
+
+    refreshSnapshot(`Seeded ${profile?.label || profileId}`);
   }
 
   function handleClearDemoData() {
@@ -210,7 +217,7 @@ export default function DeveloperTools() {
               <UserRound size={20} />
               <div>
                 <strong>{profile.label}</strong>
-                <span>Generate repeatable testing history.</span>
+                <span>{profile.description}</span>
               </div>
             </button>
           ))}
@@ -224,6 +231,8 @@ export default function DeveloperTools() {
           <p>History: {activeProfile.historyCount} workouts</p>
           <p>Check-ins: {activeProfile.checkInCount}</p>
           <p>Cardio: {activeProfile.cardioCount}</p>
+          <p>Nutrition meals: {activeProfile.nutritionCount}</p>
+          <p>{activeProfile.description}</p>
         </section>
       )}
 
@@ -300,7 +309,41 @@ export default function DeveloperTools() {
         </p>
       </section>
 
-      <section className="tf-history-card">        <p className="eyebrow">Coach Intelligence Engine</p>
+      <section className="tf-history-card">
+        <p className="eyebrow">Recovery Habit Signal</p>
+        <strong>
+          {snapshot.decisionEngine.signals.recoveryHabits.score}% recovery habit score
+        </strong>
+        <p>
+          Average sleep: {snapshot.decisionEngine.signals.recoveryHabits.averageSleep}h
+        </p>
+        <p>
+          Average water: {snapshot.decisionEngine.signals.recoveryHabits.averageWater}L
+        </p>
+        <p>
+          Weight trend: {snapshot.decisionEngine.signals.recoveryHabits.weightChange}kg
+        </p>
+        <p>
+          Check-ins this week: {snapshot.decisionEngine.signals.recoveryHabits.checkInDays}
+        </p>
+      </section>
+
+      <section className="tf-history-card">
+        <p className="eyebrow">Adherence Signal</p>
+        <strong>
+          {snapshot.decisionEngine.signals.adherence.score}% adherence score
+        </strong>
+        <p>Workout: {snapshot.decisionEngine.signals.adherence.workoutScore}%</p>
+        <p>
+          Nutrition logging:{" "}
+          {snapshot.decisionEngine.signals.adherence.nutritionLoggingScore}%
+        </p>
+        <p>Check-ins: {snapshot.decisionEngine.signals.adherence.checkInScore}%</p>
+        <p>Movement: {snapshot.decisionEngine.signals.adherence.movementScore}%</p>
+      </section>
+
+      <section className="tf-history-card">
+        <p className="eyebrow">Coach Intelligence Engine</p>
         <strong>{snapshot.coachIntelligence.recommendation.workout}</strong>
         <p>{snapshot.coachIntelligence.recommendation.reason}</p>
         <p>Route: {snapshot.coachIntelligence.recommendation.route}</p>
