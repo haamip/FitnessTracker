@@ -110,6 +110,8 @@ export function buildTrackFitCoachPrompt({
   const plateau = coachIntelligence.plateau;
   const nutrition = coachIntelligence.nutrition;
   const movement = coachIntelligence.movement;
+  const recoveryHabits = coachIntelligence.recoveryHabits;
+  const adherence = coachIntelligence.adherence;
 
   return [
     "You are TrackFit Coach.",
@@ -158,6 +160,24 @@ export function buildTrackFitCoachPrompt({
     `Movement minutes this week: ${formatNumber(movement.weeklyMinutes)} / ${movement.weeklyMinutesTarget}`,
     `Movement message: ${movement.message}`,
     "",
+    "RECOVERY HABIT SIGNALS",
+    `Recovery habit score: ${recoveryHabits.score}%`,
+    `Average sleep: ${formatNumber(recoveryHabits.averageSleep)}h / ${recoveryHabits.sleepTarget}h`,
+    `Average water: ${formatNumber(recoveryHabits.averageWater)}L / ${recoveryHabits.waterTarget}L`,
+    `Latest weight: ${formatNumber(recoveryHabits.latestWeight)}kg`,
+    `7-day weight change: ${formatNumber(recoveryHabits.weightChange)}kg`,
+    `Check-in days this week: ${formatNumber(recoveryHabits.checkInDays)}`,
+    `Recovery habit message: ${recoveryHabits.message}`,
+    "",
+    "ADHERENCE SIGNALS",
+    `Adherence score: ${adherence.score}%`,
+    `Workout adherence: ${adherence.workoutScore}%`,
+    `Nutrition logging adherence: ${adherence.nutritionLoggingScore}%`,
+    `Check-in adherence: ${adherence.checkInScore}%`,
+    `Movement adherence: ${adherence.movementScore}%`,
+    `Adherence message: ${adherence.message}`,
+    "",
+    "RESPONSE RULES",
     "RESPONSE RULES",
     "1. Start with one short coaching summary.",
     "2. Explain why TrackFit made the decision using training, food, recovery or movement signals.",
@@ -173,7 +193,7 @@ export function buildMockTrackFitCoachResponse({
   const nextMove = decisionEngine.nextBestMove;
   const nutrition = coachIntelligence.nutrition;
   const movement = coachIntelligence.movement;
-
+  const adherence = coachIntelligence.adherence;
   const limiterText = decisionEngine.limiters[0]
     ? ` Main limiter: ${decisionEngine.limiters[0].toLowerCase()}.`
     : " No major limiter is standing out.";
@@ -182,12 +202,13 @@ export function buildMockTrackFitCoachResponse({
     provider: "mock",
     status: "ready",
     responseTimeMs: 42,
-    message: `${decisionEngine.trainingIntensity} day: ${decisionEngine.coachSummary}${limiterText} Protein is ${nutrition.protein}g today and movement is ${Math.round(movement.steps).toLocaleString()} steps. Next move is ${nextMove.title.toLowerCase()}. ${nextMove.detail}`,
+    message: `${decisionEngine.trainingIntensity} day: ${decisionEngine.coachSummary}${limiterText} Protein is ${nutrition.protein}g today, movement is ${Math.round(movement.steps).toLocaleString()} steps, and adherence is ${adherence.score}%. Next move is ${nextMove.title.toLowerCase()}. ${nextMove.detail}`,
     debug: {
       readinessScore: coachIntelligence.readiness.score,
       decisionScore: decisionEngine.decisionScore,
       nutritionScore: nutrition.score,
       movementScore: movement.score,
+      adherenceScore: adherence.score,
       route: nextMove.route,
     },
   };
