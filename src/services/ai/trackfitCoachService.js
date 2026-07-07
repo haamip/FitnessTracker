@@ -16,7 +16,7 @@
  *
  * ============================================================================
  */
-
+import { getAIProviderConfig } from "./aiProviderConfig";
 const AI_MODEL_PRICES = [
   {
     id: "gemini-2.5-flash-lite",
@@ -216,6 +216,7 @@ export function buildMockTrackFitCoachResponse({
 
 export function buildTrackFitAIPlaygroundSnapshot({ coachIntelligence }) {
   const decisionEngine = coachIntelligence.decision;
+  const providerConfig = getAIProviderConfig();
   const prompt = buildTrackFitCoachPrompt({
     coachIntelligence,
     decisionEngine,
@@ -231,9 +232,14 @@ export function buildTrackFitAIPlaygroundSnapshot({ coachIntelligence }) {
 
   return {
     provider: {
-      active: "MockProvider",
-      realProviderEnabled: false,
-      status: "Mock mode only - no API key or paid request used.",
+      active: providerConfig.activeProvider.label,
+      requested: providerConfig.requestedProvider,
+      realProviderEnabled: providerConfig.canUseLiveProvider,
+      status:
+        providerConfig.safetyMode === "live-ready"
+          ? "Live provider configured, but no request is sent from playground yet."
+          : "Mock mode only - no API key or paid request used.",
+      providers: providerConfig.providers,
     },
     prompt,
     mockResponse,
