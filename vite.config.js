@@ -16,15 +16,18 @@ export default defineConfig({
   },
 
   test: {
-    exclude: [
-      "node_modules/**",
-      "dist/**",
-      "build/**",
-      "coverage/**",
-      "external/**"
-    ],
     globals: true,
     environment: "jsdom",
     setupFiles: "./src/setupTests.js",
+    include: [
+      "src/**/*.{test,spec}.{js,jsx,ts,tsx}"
+    ],
+    exclude: [
+      "__tests__/**",
+      "node_modules/**",
+      "dist/**",
+      "test-results/**",
+      "playwright-report/**"
+    ]
   },
 });
