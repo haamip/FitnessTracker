@@ -5,15 +5,8 @@
  *
  * PURPOSE
  * -------
- * Combines training, recovery, movement and nutrition signals into one coaching
- * decision.
- *
- * Data flow:
- *
- * Repositories
- * Engines
- * Decision Engine
- * Coach Intelligence / Developer Tools / future AI layer
+ * Combines training, recovery, movement, nutrition and adherence signals into
+ * one coaching decision.
  *
  * ============================================================================
  */
@@ -34,6 +27,9 @@ const PROTEIN_TARGET = 185;
 const CALORIE_TARGET = 2600;
 const STEP_TARGET = 10000;
 const MOVEMENT_MINUTES_TARGET = 120;
+const WATER_TARGET = 4;
+const SLEEP_TARGET = 7;
+const WEEKLY_WORKOUT_TARGET = 4;
 
 function clampScore(value) {
   return Math.max(0, Math.min(100, Math.round(value)));
@@ -72,11 +68,12 @@ function getTrainingIntensity(score) {
 function getProgressionScore(progressionEngine) {
   if (progressionEngine.totalExercisesAnalysed === 0) return 65;
 
-  const improvingPoints = progressionEngine.improvingCount * 8;
-  const stablePoints = progressionEngine.stableCount * 3;
-  const decliningPenalty = progressionEngine.decliningCount * 10;
-
-  return clampScore(65 + improvingPoints + stablePoints - decliningPenalty);
+  return clampScore(
+    65 +
+      progressionEngine.improvingCount * 8 +
+      progressionEngine.stableCount * 3 -
+      progressionEngine.decliningCount * 10,
+  );
 }
 
 function getPrScore(prEngine) {
@@ -109,13 +106,13 @@ function buildNutritionSignal(nutrition) {
   );
 
   const recentMeals = nutrition.filter((meal) => isWithinDays(meal.date, 7));
+  const daysWithFood = new Set(
+    recentMeals.map((meal) => getDateOnly(meal.date)),
+  ).size;
   const recentProtein = recentMeals.reduce(
     (sum, meal) => sum + toNumber(meal.protein),
     0,
   );
-  const daysWithFood = new Set(
-    recentMeals.map((meal) => getDateOnly(meal.date)),
-  ).size;
   const averageProtein =
     daysWithFood > 0 ? Math.round(recentProtein / daysWithFood) : 0;
 
@@ -164,17 +161,93 @@ function buildMovementSignal(cardio) {
     0,
   );
 
-  const stepScore = clampScore((todayTotals.steps / STEP_TARGET) * 100);
-  const minutesScore = clampScore(
-    (weeklyMinutes / MOVEMENT_MINUTES_TARGET) * 100,
-  );
-
   return {
-    score: clampScore(stepScore * 0.45 + minutesScore * 0.55),
+    score: clampScore(
+      clampScore((todayTotals.steps / STEP_TARGET) * 100) * 0.45 +
+        clampScore((weeklyMinutes / MOVEMENT_MINUTES_TARGET) * 100) * 0.55,
+    ),
     today: todayTotals,
     weeklyMinutes,
     stepTarget: STEP_TARGET,
     weeklyMinutesTarget: MOVEMENT_MINUTES_TARGET,
+  };
+}
+
+function buildRecoveryHabitSignal(checkIns) {
+  const recent = checkIns.filter((checkIn) => isWithinDays(checkIn.date, 7));
+  const latest = checkIns[0] || null;
+
+  const averageWater =
+    recent.length > 0
+      ? recent.reduce(
+          (sum, checkIn) => sum + toNumber(checkIn.waterL ?? checkIn.water),
+          0,
+        ) / recent.length
+      : 0;
+
+  const averageSleep =
+    recent.length > 0
+      ? recent.reduce(
+          (sum, checkIn) => sum + toNumber(checkIn.sleepHours ?? checkIn.sleep),
+          0,
+        ) / recent.length
+      : 0;
+
+  const latestWeight = toNumber(latest?.weightKg ?? latest?.weight);
+  const oldestWithWeight = [...recent]
+    .reverse()
+    .find((checkIn) => toNumber(checkIn.weightKg ?? checkIn.weight) > 0);
+  const oldestWeight = toNumber(
+    oldestWithWeight?.weightKg ?? oldestWithWeight?.weight,
+  );
+  const weightChange =
+    latestWeight > 0 && oldestWeight > 0
+      ? Math.round((latestWeight - oldestWeight) * 10) / 10
+      : 0;
+
+  const hydrationScore = clampScore((averageWater / WATER_TARGET) * 100);
+  const sleepScore = clampScore((averageSleep / SLEEP_TARGET) * 100);
+
+  return {
+    score: clampScore(hydrationScore * 0.45 + sleepScore * 0.55),
+    hydrationScore,
+    sleepScore,
+    averageWater: Math.round(averageWater * 10) / 10,
+    averageSleep: Math.round(averageSleep * 10) / 10,
+    latestWeight,
+    weightChange,
+    checkInDays: recent.length,
+    waterTarget: WATER_TARGET,
+    sleepTarget: SLEEP_TARGET,
+  };
+}
+
+function buildAdherenceSignal({
+  analytics,
+  nutritionSignal,
+  movementSignal,
+  recoveryHabitSignal,
+}) {
+  const workoutScore = clampScore(
+    (analytics.weeklyWorkouts / WEEKLY_WORKOUT_TARGET) * 100,
+  );
+  const nutritionLoggingScore = clampScore(
+    (nutritionSignal.daysWithFood / 7) * 100,
+  );
+  const checkInScore = clampScore((recoveryHabitSignal.checkInDays / 7) * 100);
+
+  return {
+    score: clampScore(
+      workoutScore * 0.35 +
+        nutritionLoggingScore * 0.25 +
+        checkInScore * 0.25 +
+        movementSignal.score * 0.15,
+    ),
+    workoutScore,
+    nutritionLoggingScore,
+    checkInScore,
+    movementScore: movementSignal.score,
+    weeklyWorkoutTarget: WEEKLY_WORKOUT_TARGET,
   };
 }
 
@@ -185,19 +258,18 @@ function getDecisionScore({
   recoveryEngine,
   nutritionSignal,
   movementSignal,
+  recoveryHabitSignal,
+  adherenceSignal,
 }) {
-  const consistencyScore = getConsistencyScore(analytics);
-  const progressionScore = getProgressionScore(progressionEngine);
-  const prScore = getPrScore(prEngine);
-  const recoveryScore = recoveryEngine.recoveryScore || 0;
-
   return clampScore(
-    recoveryScore * 0.3 +
-      consistencyScore * 0.18 +
-      progressionScore * 0.2 +
-      prScore * 0.12 +
+    (recoveryEngine.recoveryScore || 0) * 0.22 +
+      getConsistencyScore(analytics) * 0.14 +
+      getProgressionScore(progressionEngine) * 0.18 +
+      getPrScore(prEngine) * 0.1 +
       nutritionSignal.score * 0.12 +
-      movementSignal.score * 0.08,
+      movementSignal.score * 0.08 +
+      recoveryHabitSignal.score * 0.1 +
+      adherenceSignal.score * 0.06,
   );
 }
 
@@ -207,28 +279,21 @@ function getPrimaryLimiters({
   recoveryEngine,
   nutritionSignal,
   movementSignal,
+  recoveryHabitSignal,
+  adherenceSignal,
 }) {
   const limiters = [];
 
-  if (analytics.weeklyWorkouts === 0) {
+  if (analytics.weeklyWorkouts === 0)
     limiters.push("No workouts logged this week");
-  }
-
-  if (analytics.weeklyWorkouts > 4) {
+  if (analytics.weeklyWorkouts > 4)
     limiters.push("High weekly training frequency");
-  }
-
-  if (recoveryEngine.recoveryScore < 70) {
+  if (recoveryEngine.recoveryScore < 70)
     limiters.push("Recovery score below normal training range");
-  }
-
-  if (progressionEngine.decliningCount > progressionEngine.improvingCount) {
+  if (progressionEngine.decliningCount > progressionEngine.improvingCount)
     limiters.push("More exercises declining than improving");
-  }
-
-  if (recoveryEngine.trainingLoadPenalty > 0) {
+  if (recoveryEngine.trainingLoadPenalty > 0)
     limiters.push("Training load penalty active");
-  }
 
   if (
     nutritionSignal.today.protein > 0 &&
@@ -237,13 +302,22 @@ function getPrimaryLimiters({
     limiters.push("Protein is low today");
   }
 
-  if (nutritionSignal.daysWithFood < 4) {
+  if (nutritionSignal.daysWithFood < 4)
     limiters.push("Nutrition logging is inconsistent");
-  }
-
-  if (movementSignal.weeklyMinutes < MOVEMENT_MINUTES_TARGET * 0.5) {
+  if (movementSignal.weeklyMinutes < MOVEMENT_MINUTES_TARGET * 0.5)
     limiters.push("Weekly movement is low");
-  }
+  if (
+    recoveryHabitSignal.averageSleep > 0 &&
+    recoveryHabitSignal.averageSleep < 6.5
+  )
+    limiters.push("Sleep average is low");
+  if (
+    recoveryHabitSignal.averageWater > 0 &&
+    recoveryHabitSignal.averageWater < 3
+  )
+    limiters.push("Hydration average is low");
+  if (adherenceSignal.score < 60)
+    limiters.push("Overall adherence is inconsistent");
 
   return limiters;
 }
@@ -255,12 +329,13 @@ function getOpportunities({
   recoveryEngine,
   nutritionSignal,
   movementSignal,
+  recoveryHabitSignal,
+  adherenceSignal,
 }) {
   const opportunities = [];
 
-  if (recoveryEngine.recoveryScore >= 85) {
+  if (recoveryEngine.recoveryScore >= 85)
     opportunities.push("Recovery is strong enough for normal progression");
-  }
 
   if (progressionEngine.strongestProgress) {
     opportunities.push(
@@ -274,17 +349,18 @@ function getOpportunities({
     );
   }
 
-  if (analytics.weeklyWorkouts > 0 && analytics.weeklyWorkouts <= 4) {
+  if (analytics.weeklyWorkouts > 0 && analytics.weeklyWorkouts <= 4)
     opportunities.push("Weekly training frequency is inside the target range");
-  }
-
-  if (nutritionSignal.today.protein >= PROTEIN_TARGET) {
+  if (nutritionSignal.today.protein >= PROTEIN_TARGET)
     opportunities.push("Protein target is hit today");
-  }
-
-  if (movementSignal.weeklyMinutes >= MOVEMENT_MINUTES_TARGET) {
+  if (movementSignal.weeklyMinutes >= MOVEMENT_MINUTES_TARGET)
     opportunities.push("Weekly movement target is on track");
-  }
+  if (recoveryHabitSignal.averageSleep >= SLEEP_TARGET)
+    opportunities.push("Sleep average supports training");
+  if (recoveryHabitSignal.averageWater >= WATER_TARGET)
+    opportunities.push("Hydration average is on target");
+  if (adherenceSignal.score >= 80)
+    opportunities.push("Overall adherence is strong");
 
   return opportunities;
 }
@@ -296,6 +372,8 @@ function getNextBestMove(
     recoveryEngine,
     nutritionSignal,
     movementSignal,
+    recoveryHabitSignal,
+    adherenceSignal,
   },
   intensity,
 ) {
@@ -316,6 +394,19 @@ function getNextBestMove(
         "Recovery is too low for heavy training. Use walking, mobility or light technique work today.",
       action: "Open movement",
       route: "/cardio",
+    };
+  }
+
+  if (
+    recoveryHabitSignal.averageSleep > 0 &&
+    recoveryHabitSignal.averageSleep < 6.5
+  ) {
+    return {
+      title: "Protect recovery",
+      detail:
+        "Sleep is low across recent check-ins. Keep training controlled and make recovery the win today.",
+      action: "Open check-in",
+      route: "/checkin",
     };
   }
 
@@ -342,6 +433,16 @@ function getNextBestMove(
         "Movement is low. Add a 20 minute walk to support recovery and fat-loss consistency.",
       action: "Open movement",
       route: "/cardio",
+    };
+  }
+
+  if (adherenceSignal.score < 55) {
+    return {
+      title: "Win the basics",
+      detail:
+        "Adherence is patchy. Log food, check in, and complete one simple session before chasing complexity.",
+      action: "Open check-in",
+      route: "/checkin",
     };
   }
 
@@ -405,6 +506,13 @@ export function buildDecisionEngine({
 } = {}) {
   const nutritionSignal = buildNutritionSignal(nutrition);
   const movementSignal = buildMovementSignal(cardio);
+  const recoveryHabitSignal = buildRecoveryHabitSignal(checkIns);
+  const adherenceSignal = buildAdherenceSignal({
+    analytics,
+    nutritionSignal,
+    movementSignal,
+    recoveryHabitSignal,
+  });
 
   const decisionScore = getDecisionScore({
     analytics,
@@ -413,17 +521,23 @@ export function buildDecisionEngine({
     recoveryEngine,
     nutritionSignal,
     movementSignal,
+    recoveryHabitSignal,
+    adherenceSignal,
   });
 
   const readinessBand = getReadinessBand(decisionScore);
   const trainingIntensity = getTrainingIntensity(decisionScore);
+
   const limiters = getPrimaryLimiters({
     analytics,
     progressionEngine,
     recoveryEngine,
     nutritionSignal,
     movementSignal,
+    recoveryHabitSignal,
+    adherenceSignal,
   });
+
   const opportunities = getOpportunities({
     analytics,
     prEngine,
@@ -431,6 +545,8 @@ export function buildDecisionEngine({
     recoveryEngine,
     nutritionSignal,
     movementSignal,
+    recoveryHabitSignal,
+    adherenceSignal,
   });
 
   return {
@@ -444,6 +560,8 @@ export function buildDecisionEngine({
         recoveryEngine,
         nutritionSignal,
         movementSignal,
+        recoveryHabitSignal,
+        adherenceSignal,
       },
       trainingIntensity,
     ),
@@ -472,6 +590,8 @@ export function buildDecisionEngine({
       },
       nutrition: nutritionSignal,
       movement: movementSignal,
+      recoveryHabits: recoveryHabitSignal,
+      adherence: adherenceSignal,
     },
     generatedAt: new Date().toISOString(),
   };
