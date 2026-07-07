@@ -8,3 +8,7 @@ dist
 # External exercise source repos
 external/
 scripts/*.log
+
+# Playwright
+test-results/
+playwright-report/
