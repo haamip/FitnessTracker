@@ -684,12 +684,32 @@ function saveDemoPlanWorkouts(plan) {
   });
 }
 
-function clearDemoPlanWorkouts(plan) {
-  plan.forEach((day) => {
-    WorkoutRepository.removeById(day.id);
-  });
-}
-function createDemoNutrition() {
+function createDemoNutrition(profile = "consistent") {
+  const profiles = {
+    consistent: {
+      calorieOffset: 0,
+      proteinOffset: 0,
+      days: 28,
+    },
+    overtrained: {
+      calorieOffset: -250,
+      proteinOffset: -20,
+      days: 28,
+    },
+    beginner: {
+      calorieOffset: -400,
+      proteinOffset: -45,
+      days: 14,
+    },
+    weightLoss: {
+      calorieOffset: -350,
+      proteinOffset: 5,
+      days: 28,
+    },
+  };
+
+  const profileSettings = profiles[profile] || profiles.consistent;
+
   const mealTemplates = [
     {
       type: "Breakfast",
@@ -733,82 +753,299 @@ function createDemoNutrition() {
     },
   ];
 
-  return Array.from({ length: 21 }, (_, dayIndex) =>
-    mealTemplates.map((meal, mealIndex) => ({
-      id: `demo-meal-${dayIndex}-${mealIndex}`,
-      date: daysAgo(dayIndex).slice(0, 10),
-      ...meal,
-      calories: meal.calories + ((dayIndex + mealIndex) % 3) * 25,
-      protein: meal.protein + ((dayIndex + mealIndex) % 2) * 4,
-    })),
+  return Array.from({ length: profileSettings.days }, (_, dayIndex) =>
+    mealTemplates
+      .filter((_, mealIndex) => {
+        if (profile === "beginner" && dayIndex % 3 === 0 && mealIndex > 2) {
+          return false;
+        }
+
+        if (
+          profile === "overtrained" &&
+          dayIndex % 4 === 0 &&
+          mealIndex === 4
+        ) {
+          return false;
+        }
+
+        return true;
+      })
+      .map((meal, mealIndex) => ({
+        id: `demo-${profile}-meal-${dayIndex}-${mealIndex}`,
+        date: daysAgo(dayIndex).slice(0, 10),
+        ...meal,
+        calories: Math.max(
+          80,
+          meal.calories +
+            profileSettings.calorieOffset / 5 +
+            ((dayIndex + mealIndex) % 3) * 25,
+        ),
+        protein: Math.max(
+          5,
+          meal.protein +
+            profileSettings.proteinOffset / 5 +
+            ((dayIndex + mealIndex) % 2) * 4,
+        ),
+      })),
   ).flat();
 }
-export function seedDemoData() {
-  const plan = createDemoPlan();
-  const workouts = createDemoWorkoutHistory();
-  const nutrition = createDemoNutrition();
 
-  const checkins = Array.from({ length: 28 }, (_, index) => ({
-    id: `demo-checkin-${index}`,
+function createDemoCheckIns(profile = "consistent") {
+  const profileSettings = {
+    consistent: {
+      sleepBase: 7.1,
+      waterBase: 3.7,
+      proteinBase: 178,
+      weightStart: 104.8,
+      weightStep: 0.05,
+      days: 28,
+    },
+    overtrained: {
+      sleepBase: 5.8,
+      waterBase: 2.6,
+      proteinBase: 145,
+      weightStart: 104.8,
+      weightStep: -0.02,
+      days: 28,
+    },
+    beginner: {
+      sleepBase: 6.4,
+      waterBase: 2.5,
+      proteinBase: 120,
+      weightStart: 108.2,
+      weightStep: 0.02,
+      days: 14,
+    },
+    weightLoss: {
+      sleepBase: 6.9,
+      waterBase: 3.8,
+      proteinBase: 188,
+      weightStart: 106.4,
+      weightStep: 0.11,
+      days: 28,
+    },
+  }[profile] || {
+    sleepBase: 7.1,
+    waterBase: 3.7,
+    proteinBase: 178,
+    weightStart: 104.8,
+    weightStep: 0.05,
+    days: 28,
+  };
+
+  return Array.from({ length: profileSettings.days }, (_, index) => ({
+    id: `demo-${profile}-checkin-${index}`,
     date: daysAgo(index),
-    protein: 170 + (index % 6) * 5,
-    water: Math.round((3 + (index % 5) * 0.2) * 10) / 10,
-    sleep: Math.round((6.1 + (index % 6) * 0.25) * 10) / 10,
+    protein: Math.round(profileSettings.proteinBase + (index % 5) * 4),
+    proteinG: Math.round(profileSettings.proteinBase + (index % 5) * 4),
+    water:
+      Math.round((profileSettings.waterBase + (index % 4) * 0.15) * 10) / 10,
+    waterL:
+      Math.round((profileSettings.waterBase + (index % 4) * 0.15) * 10) / 10,
+    sleep:
+      Math.round((profileSettings.sleepBase + (index % 5) * 0.18) * 10) / 10,
+    sleepHours:
+      Math.round((profileSettings.sleepBase + (index % 5) * 0.18) * 10) / 10,
     trained: [0, 2, 4, 6, 9, 12, 15, 18, 22, 25].includes(index),
-    weight: Math.round((104.8 - index * 0.06) * 10) / 10,
+    trainedToday: [0, 2, 4, 6, 9, 12, 15, 18, 22, 25].includes(index),
+    weight:
+      Math.round(
+        (profileSettings.weightStart - index * profileSettings.weightStep) * 10,
+      ) / 10,
+    weightKg:
+      Math.round(
+        (profileSettings.weightStart - index * profileSettings.weightStep) * 10,
+      ) / 10,
+    mood: profile === "overtrained" ? "Flat" : "Good",
+    energy: profile === "overtrained" ? 4 : profile === "beginner" ? 5 : 7,
+    bodyFeel: profile === "overtrained" ? "High" : "Mild",
   }));
+}
 
-  const cardio = [
+function createDemoCardio(profile = "consistent") {
+  const baseSessions = [
     {
-      id: "demo-cardio-1",
-      date: daysAgo(0),
+      daysBack: 0,
       type: "Incline Walk",
       distance: 3.4,
       duration: 28,
+      steps: 5200,
     },
+    { daysBack: 2, type: "Bike", distance: 8.8, duration: 24, steps: 1800 },
+    { daysBack: 4, type: "Walk", distance: 4.2, duration: 39, steps: 6400 },
     {
-      id: "demo-cardio-2",
-      date: daysAgo(2),
-      type: "Bike",
-      distance: 8.8,
-      duration: 24,
-    },
-    {
-      id: "demo-cardio-3",
-      date: daysAgo(4),
-      type: "Walk",
-      distance: 4.2,
-      duration: 39,
-    },
-    {
-      id: "demo-cardio-4",
-      date: daysAgo(7),
+      daysBack: 7,
       type: "Incline Walk",
       distance: 3.1,
       duration: 26,
+      steps: 4800,
     },
+    { daysBack: 10, type: "Rower", distance: 2.2, duration: 12, steps: 900 },
     {
-      id: "demo-cardio-5",
-      date: daysAgo(10),
-      type: "Rower",
-      distance: 2.2,
-      duration: 12,
-    },
-    {
-      id: "demo-cardio-6",
-      date: daysAgo(14),
+      daysBack: 14,
       type: "Incline Walk",
       distance: 3.8,
       duration: 32,
+      steps: 5600,
     },
-    {
-      id: "demo-cardio-7",
-      date: daysAgo(21),
-      type: "Walk",
-      distance: 4.6,
-      duration: 42,
-    },
+    { daysBack: 21, type: "Walk", distance: 4.6, duration: 42, steps: 6900 },
   ];
+
+  const sessions =
+    profile === "beginner"
+      ? baseSessions.filter((_, index) => index < 3)
+      : profile === "overtrained"
+        ? [
+            ...baseSessions,
+            {
+              daysBack: 1,
+              type: "Run",
+              distance: 5.2,
+              duration: 31,
+              steps: 7100,
+            },
+            {
+              daysBack: 3,
+              type: "Incline Walk",
+              distance: 4.5,
+              duration: 44,
+              steps: 7200,
+            },
+          ]
+        : profile === "weightLoss"
+          ? [
+              ...baseSessions,
+              {
+                daysBack: 1,
+                type: "Walk",
+                distance: 5.1,
+                duration: 47,
+                steps: 7600,
+              },
+              {
+                daysBack: 3,
+                type: "Walk",
+                distance: 4.8,
+                duration: 45,
+                steps: 7200,
+              },
+              {
+                daysBack: 5,
+                type: "Incline Walk",
+                distance: 3.9,
+                duration: 36,
+                steps: 6100,
+              },
+            ]
+          : baseSessions;
+
+  return sessions.map((session, index) => ({
+    id: `demo-${profile}-cardio-${index}`,
+    date: daysAgo(session.daysBack),
+    type: session.type,
+    distance: session.distance,
+    distanceKm: session.distance,
+    duration: session.duration,
+    durationMin: session.duration,
+    steps: session.steps,
+  }));
+}
+
+function createDemoWorkoutHistoryForProfile(profile = "consistent") {
+  const baseWorkouts = createDemoWorkoutHistory();
+
+  if (profile === "beginner") {
+    return baseWorkouts.filter((_, index) => index < 5);
+  }
+
+  if (profile === "overtrained") {
+    return [
+      createWorkout(
+        "demo-history-overtrained-extra-1",
+        1,
+        "Extra Push Session",
+        [
+          createExercise(
+            "demo-overtrained-bench",
+            "Barbell Bench Press",
+            "barbell-bench-press-medium-grip",
+            "horizontal_push",
+            82.5,
+            6,
+            5,
+          ),
+          createExercise(
+            "demo-overtrained-press",
+            "Barbell Shoulder Press",
+            "barbell-shoulder-pres",
+            "vertical_push",
+            45,
+            8,
+            4,
+          ),
+        ],
+      ),
+      createWorkout(
+        "demo-history-overtrained-extra-2",
+        3,
+        "Extra Pull Session",
+        [
+          createExercise(
+            "demo-overtrained-row",
+            "Barbell Rear Delt Row",
+            "barbell-rear-delt-row",
+            "horizontal_pull",
+            55,
+            10,
+            5,
+          ),
+          createExercise(
+            "demo-overtrained-curl",
+            "Barbell Curl",
+            "barbell-curl",
+            "elbow_flexion",
+            35,
+            10,
+            4,
+          ),
+        ],
+      ),
+      ...baseWorkouts,
+    ];
+  }
+
+  return baseWorkouts;
+}
+
+export const DEMO_ATHLETE_PROFILES = [
+  {
+    id: "consistent",
+    label: "Consistent athlete",
+    description: "Good training rhythm, solid food, decent recovery.",
+  },
+  {
+    id: "overtrained",
+    label: "Overtrained athlete",
+    description: "High workload, low sleep, weak recovery habits.",
+  },
+  {
+    id: "beginner",
+    label: "Beginner athlete",
+    description: "Patchy logging, fewer sessions, inconsistent food.",
+  },
+  {
+    id: "weightLoss",
+    label: "Weight loss athlete",
+    description: "High protein, consistent walking, weight trending down.",
+  },
+];
+
+export function seedDemoData(profile = "consistent") {
+  const plan = createDemoPlan();
+  const workouts = createDemoWorkoutHistoryForProfile(profile);
+  const nutrition = createDemoNutrition(profile);
+  const checkins = createDemoCheckIns(profile);
+  const cardio = createDemoCardio(profile);
 
   clearDemoData();
   AIPlanRepository.savePlan(plan);
@@ -819,6 +1056,11 @@ export function seedDemoData() {
   saveDemoPlanWorkouts(plan);
 
   return workouts;
+}
+function clearDemoPlanWorkouts(plan) {
+  plan.forEach((day) => {
+    WorkoutRepository.removeById(day.id);
+  });
 }
 
 export function clearDemoData() {
