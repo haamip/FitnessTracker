@@ -2,18 +2,19 @@
  * TRACKFIT PAGE
  *
  * Purpose:
- * Main responsibility of this page.
+ * Developer cockpit for checking the TrackFit AI pipeline.
  *
  * Data:
- * Repository and services used by this page.
+ * Uses Coach Intelligence and the AI playground service.
  *
  * Features:
- * - Feature 1
- * - Feature 2
- * - Feature 3
+ * - Refreshes the full coaching pipeline
+ * - Shows decision, nutrition, movement, recovery and adherence signals
+ * - Previews the exact AI prompt
+ * - Shows mock provider output and cost estimates
  *
  * Future:
- * Planned improvements after MVP.
+ * Add real provider readiness once API keys and cost guards are configured.
  */
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -194,15 +195,43 @@ export default function AIPlayground() {
             <strong>{decision.decisionScore}%</strong>
             <span>{decision.trainingIntensity} decision</span>
           </article>
+
           <article>
             <Bot size={20} />
             <strong>{ai.provider.active}</strong>
             <span>Real provider disabled</span>
           </article>
+
           <article>
             <Database size={20} />
             <strong>{ai.cost.totalTokens}</strong>
             <span>Estimated mock tokens</span>
+          </article>
+
+          <article>
+            <Database size={20} />
+            <strong>{decision.signals.nutrition.score}%</strong>
+            <span>{decision.signals.nutrition.today.protein}g protein today</span>
+          </article>
+
+          <article>
+            <Database size={20} />
+            <strong>{decision.signals.movement.score}%</strong>
+            <span>
+              {Math.round(decision.signals.movement.today.steps).toLocaleString()} steps
+            </span>
+          </article>
+
+          <article>
+            <Database size={20} />
+            <strong>{decision.signals.recoveryHabits.score}%</strong>
+            <span>{decision.signals.recoveryHabits.averageSleep}h sleep</span>
+          </article>
+
+          <article>
+            <Database size={20} />
+            <strong>{decision.signals.adherence.score}%</strong>
+            <span>Adherence score</span>
           </article>
         </section>
       </section>
@@ -219,6 +248,34 @@ export default function AIPlayground() {
           <p>Main limiter: {mainLimiter}</p>
           <p>Main opportunity: {mainOpportunity}</p>
           <p>Mock response time: {ai.mockResponse.responseTimeMs}ms</p>
+        </section>
+      </section>
+
+      <section className="tf-ai-section">
+        <SectionHeader
+          title="Recovery Overview"
+          detail="Everything the Decision Engine is using before AI speaks."
+        />
+        <section className="tf-dev-grid tf-ai-metric-grid">
+          <article>
+            <strong>{decision.signals.recoveryHabits.averageSleep}h</strong>
+            <span>Average sleep</span>
+          </article>
+
+          <article>
+            <strong>{decision.signals.recoveryHabits.averageWater}L</strong>
+            <span>Average water</span>
+          </article>
+
+          <article>
+            <strong>{decision.signals.recoveryHabits.weightChange}kg</strong>
+            <span>7-day weight trend</span>
+          </article>
+
+          <article>
+            <strong>{decision.signals.recoveryHabits.checkInDays}</strong>
+            <span>Check-ins this week</span>
+          </article>
         </section>
       </section>
 
@@ -246,8 +303,14 @@ export default function AIPlayground() {
           detail="The order TrackFit follows before any real AI provider gets involved."
         />
         <section className="tf-dev-grid tf-ai-pipeline-grid">
-          <PipelineStep title="Repositories" detail="History, check-ins, cardio" />
-          <PipelineStep title="Engines" detail="Analytics, PR, recovery" />
+          <PipelineStep
+            title="Repositories"
+            detail="History, check-ins, cardio, nutrition"
+          />
+          <PipelineStep
+            title="Engines"
+            detail="Analytics, PR, recovery, food, movement, adherence"
+          />
           <PipelineStep title="Decision" detail={decision.trainingIntensity} />
           <PipelineStep title="Coach" detail={coach.recommendation.workout} />
           <PipelineStep title="Prompt" detail={`${ai.cost.inputTokens} input tokens`} />
