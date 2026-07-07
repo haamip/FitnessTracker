@@ -237,7 +237,46 @@ function buildMovementSummary(decision) {
         : `${Math.max(0, signal.weeklyMinutesTarget - signal.weeklyMinutes)} movement minutes left this week.`,
   };
 }
+function buildRecoveryHabitSummary(decision) {
+  const signal = decision.signals.recoveryHabits;
 
+  return {
+    score: signal.score,
+    hydrationScore: signal.hydrationScore,
+    sleepScore: signal.sleepScore,
+    averageWater: signal.averageWater,
+    averageSleep: signal.averageSleep,
+    latestWeight: signal.latestWeight,
+    weightChange: signal.weightChange,
+    checkInDays: signal.checkInDays,
+    waterTarget: signal.waterTarget,
+    sleepTarget: signal.sleepTarget,
+    message:
+      signal.averageSleep >= signal.sleepTarget &&
+      signal.averageWater >= signal.waterTarget
+        ? "Sleep and hydration are supporting recovery."
+        : "Recovery habits need attention before pushing too hard.",
+  };
+}
+
+function buildAdherenceSummary(decision) {
+  const signal = decision.signals.adherence;
+
+  return {
+    score: signal.score,
+    workoutScore: signal.workoutScore,
+    nutritionLoggingScore: signal.nutritionLoggingScore,
+    checkInScore: signal.checkInScore,
+    movementScore: signal.movementScore,
+    weeklyWorkoutTarget: signal.weeklyWorkoutTarget,
+    message:
+      signal.score >= 80
+        ? "Adherence is strong across training, food, check-ins and movement."
+        : signal.score >= 60
+          ? "Adherence is decent, but one habit needs tightening."
+          : "Adherence is patchy. Win the basics first.",
+  };
+}
 function getBestEstimatedOneRepMax(exercise) {
   return (
     (exercise.sets || [])
@@ -344,6 +383,8 @@ export function buildCoachDashboard() {
     fatigue: calculateFatigue(analytics, checkIns, cardio),
     nutrition: buildNutritionSummary(decision),
     movement: buildMovementSummary(decision),
+    recoveryHabits: buildRecoveryHabitSummary(decision),
+    adherence: buildAdherenceSummary(decision),
     recommendation: mapDecisionToRecommendation(decision),
     decision,
     plateau: detectPlateau(history),
