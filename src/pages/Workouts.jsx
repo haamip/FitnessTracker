@@ -3,51 +3,33 @@ import { motion } from "framer-motion";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   ChevronRight,
-  Clock3,
   Dumbbell,
-  Flame,
   History,
   Plus,
   Sparkles,
 } from "lucide-react";
 import {
   AIPlanRepository,
-  CardioRepository,
-  CheckInRepository,
   HistoryRepository,
 } from "../services/repositories/trackfitDataLayer";
 import "./TrackFitScreens.css";
 import "../styles/TrackFitWorkoutFixes.css";
-
-const SHOW_WORKOUTS_DEBUG = true;
 
 const starterPlans = [
   {
     id: "workout-1",
     name: "Workout 1",
     detail: "Full body strength session",
-    exercises: "5 exercises",
-    sets: "12 sets",
-    time: "45 min",
-    progress: 18,
   },
   {
     id: "upper",
     name: "Upper Strength",
     detail: "Chest, back, shoulders and arms",
-    exercises: "6 exercises",
-    sets: "18 sets",
-    time: "60 min",
-    progress: 0,
   },
   {
     id: "lower",
     name: "Lower Strength",
     detail: "Quads, hamstrings, glutes and core",
-    exercises: "6 exercises",
-    sets: "18 sets",
-    time: "60 min",
-    progress: 0,
   },
 ];
 
@@ -55,29 +37,14 @@ function formatDate(value) {
   return new Intl.DateTimeFormat("en-AU", {
     day: "2-digit",
     month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
   }).format(new Date(value));
 }
 
-function countPlanSets(exercises = []) {
-  return exercises.reduce(
-    (total, exercise) => total + Number(exercise.sets || 0),
-    0,
-  );
-}
-
 function mapPlanDayToWorkoutCard(day) {
-  const exercises = day.exercises || [];
-
   return {
     id: day.id,
     name: day.name,
-    detail: `${day.focus || "Training"} - ${day.equipment || "Equipment"}`,
-    exercises: `${exercises.length} exercises`,
-    sets: `${countPlanSets(exercises)} sets`,
-    time: `${day.time || 45} min`,
-    progress: 0,
+    detail: day.focus || "Training session",
     generated: true,
   };
 }
@@ -86,26 +53,12 @@ export default function Workouts() {
   const [searchParams] = useSearchParams();
   const refreshToken = searchParams.get("refresh") || "initial";
 
-  /**
-   * Read workout overview data through repositories only.
-   *
-   * Referencing the refresh token inside the memo makes deliberate refresh query
-   * updates rebuild this snapshot without the page touching storage directly.
-   */
   const dataSnapshot = useMemo(() => {
     void refreshToken;
 
     return {
       savedTrainingPlan: AIPlanRepository.getPlan(),
-      workoutHistory: HistoryRepository.getRecent(6),
-      debug: {
-        planCount: AIPlanRepository.getPlan().length,
-        historyCount: HistoryRepository.getAll().length,
-        checkInCount: CheckInRepository.getAll().length,
-        cardioCount: CardioRepository.getAll().length,
-        refreshToken,
-        checkedAt: new Date().toLocaleTimeString(),
-      },
+      workoutHistory: HistoryRepository.getRecent(3),
     };
   }, [refreshToken]);
 
@@ -126,61 +79,20 @@ export default function Workouts() {
     >
       <section className="v4-workout-hero">
         <div>
-          <p className="eyebrow">Training</p>
-          <h1>Workouts</h1>
-          <p>
-            Build, save and log clean training sessions without the clutter.
-          </p>
+          <p className="eyebrow">Train</p>
+          <h1>Choose your workout</h1>
+          <p>Start today&apos;s session or open one of your saved workouts.</p>
         </div>
-
-        <span className="v4-hero-badge">
-          <Flame size={15} />
-          {hasTrainingPlan ? "Plan active" : "Quick start"}
-        </span>
-      </section>
-
-      {SHOW_WORKOUTS_DEBUG && (
-        <section
-          className="tf-history-card"
-          style={{ border: "2px dashed #f59e0b" }}
-        >
-          <strong>Temporary Workouts debug</strong>
-          <p>Plan days: {dataSnapshot.debug.planCount}</p>
-          <p>Workout history: {dataSnapshot.debug.historyCount}</p>
-          <p>Check-ins: {dataSnapshot.debug.checkInCount}</p>
-          <p>Cardio sessions: {dataSnapshot.debug.cardioCount}</p>
-          <p>Refresh token: {dataSnapshot.debug.refreshToken}</p>
-          <span>Checked {dataSnapshot.debug.checkedAt}</span>
-        </section>
-      )}
-
-      <section className="v4-quick-grid">
-        <Link className="v4-quick-card" to="/workouts/builder">
-          <Sparkles size={24} />
-          <strong>Workout Builder</strong>
-          <span>
-            {hasTrainingPlan ? "Edit or rebuild plan" : "Create a smart plan"}
-          </span>
-        </Link>
-
-        <Link className="v4-quick-card" to="/workouts/workout-1">
-          <Plus size={24} />
-          <strong>Empty Workout</strong>
-          <span>Start fresh and add exercises</span>
-        </Link>
       </section>
 
       <section className="v4-workout-list">
         <div className="v4-section-heading">
           <div>
             <p className="eyebrow">
-              {hasTrainingPlan ? "Smart Plan" : "Starter Templates"}
+              {hasTrainingPlan ? "Your plan" : "Quick start"}
             </p>
-            <h2>
-              {hasTrainingPlan ? "Your training plan" : "Choose a workout"}
-            </h2>
+            <h2>{hasTrainingPlan ? "Training days" : "Workouts"}</h2>
           </div>
-          <span>{visiblePlans.length} options</span>
         </div>
 
         {visiblePlans.map((plan) => (
@@ -189,13 +101,6 @@ export default function Workouts() {
             to={`/workouts/${plan.id}`}
             key={plan.id}
           >
-            <div className="v4-workout-card__top">
-              <span className="v4-chip">
-                {plan.generated ? "Smart Plan" : "Template"}
-              </span>
-              <span className="v4-time">{plan.time}</span>
-            </div>
-
             <div className="v4-workout-card__body">
               <div className="v4-workout-icon">
                 {plan.generated ? (
@@ -212,19 +117,22 @@ export default function Workouts() {
 
               <ChevronRight className="v4-chevron" size={22} />
             </div>
-
-            <div className="v4-workout-card__footer">
-              <span>
-                <Dumbbell size={15} />
-                {plan.exercises} - {plan.sets}
-              </span>
-
-              <div className="v4-workout-progress">
-                <i style={{ width: `${plan.progress}%` }} />
-              </div>
-            </div>
           </Link>
         ))}
+      </section>
+
+      <section className="v4-quick-grid">
+        <Link className="v4-quick-card" to="/workouts/workout-1">
+          <Plus size={24} />
+          <strong>Empty Workout</strong>
+          <span>Start a session from scratch</span>
+        </Link>
+
+        <Link className="v4-quick-card" to="/workouts/builder">
+          <Sparkles size={24} />
+          <strong>Manage Plan</strong>
+          <span>{hasTrainingPlan ? "Edit your workouts" : "Build a plan"}</span>
+        </Link>
       </section>
 
       {workoutHistory.length > 0 && (
@@ -234,7 +142,6 @@ export default function Workouts() {
               <p className="eyebrow">Recent</p>
               <h2>Workout history</h2>
             </div>
-            <span>{workoutHistory.length}</span>
           </div>
 
           {workoutHistory.map((workout) => (
@@ -253,19 +160,11 @@ export default function Workouts() {
                   <p>
                     {workout.completedAt
                       ? formatDate(workout.completedAt)
-                      : "No timestamp"}
+                      : "Completed session"}
                   </p>
                 </div>
-              </div>
 
-              <div className="v4-workout-card__footer">
-                <span>
-                  <Clock3 size={15} />
-                  {workout.completedSets || 0}/{workout.totalSets || 0} sets -{" "}
-                  {Math.round(workout.volume || 0)} kg
-                </span>
-
-                <span>{workout.prs?.length || 0} PRs</span>
+                <ChevronRight className="v4-chevron" size={22} />
               </div>
             </Link>
           ))}
