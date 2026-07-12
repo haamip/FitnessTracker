@@ -4,6 +4,7 @@ import { Beef, Flame, Plus, Utensils } from "lucide-react";
 
 import Button from "../components/ui/Button";
 import "./TrackFitScreens.css";
+import "./NutritionSimple.css";
 
 const CALORIE_TARGET = 2500;
 const PROTEIN_TARGET = 185;
