@@ -67,7 +67,8 @@ function App() {
         <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route path="/splash" element={<Splash />} />
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/" element={<Coach />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/plan" element={<PlanSetup />} />
             <Route path="/checkin" element={<DailyCheckIn />} />
             <Route path="/cardio" element={<CardioLog />} />
