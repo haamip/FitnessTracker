@@ -1,0 +1,56 @@
+.tf-food-summary {
+  display: grid;
+  gap: 12px;
+}
+
+.tf-food-target {
+  padding: 18px;
+  border: 1px solid rgba(235, 232, 223, 0.92);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 12px 30px rgba(24, 24, 24, 0.06);
+}
+
+.tf-food-target__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.tf-food-target__top div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.tf-food-target__top svg {
+  color: #1478ff;
+}
+
+.tf-food-target__top strong {
+  color: #111827;
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.tf-food-input-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.tf-food-meals {
+  display: grid;
+  gap: 12px;
+}
+
+@media (max-width: 380px) {
+  .tf-food-input-row {
+    grid-template-columns: 1fr;
+  }
+}
