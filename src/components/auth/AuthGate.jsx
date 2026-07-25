@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { isSupabaseConfigured, supabase } from "../../services/supabase";
 import { WorkoutCloudRepository } from "../../services/repositories/workoutCloudRepository";
+import { TrainingCloudRepository } from "../../services/repositories/trainingCloudRepository";
 import AuthScreen from "./AuthScreen";
 
 export default function AuthGate({ children }) {
@@ -10,25 +11,53 @@ export default function AuthGate({ children }) {
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) return undefined;
-
     let mounted = true;
 
-    supabase.auth.getSession().then(({ data, error }) => {
+    async function restoreSession() {
+      const { data, error } = await supabase.auth.getSession();
       if (!mounted) return;
-
       if (error) {
         setAuthError(error.message || "Unable to restore your TrackFit session.");
+        setLoading(false);
+        return;
       }
 
-      setSession(data?.session || null);
-      setLoading(false);
-    });
+      const restoredSession = data?.session || null;
+      setSession(restoredSession);
 
-    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (restoredSession) {
+        try {
+          await Promise.all([
+            WorkoutCloudRepository.getAll(),
+            TrainingCloudRepository.hydrate(),
+          ]);
+        } catch (hydrateError) {
+          console.warn("Cloud data restore failed; TrackFit will use its local cache.", hydrateError);
+        }
+      }
+
+      if (mounted) setLoading(false);
+    }
+
+    void restoreSession();
+
+    const { data } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
       if (!mounted) return;
       setSession(nextSession);
       setAuthError("");
-      setLoading(false);
+
+      if (nextSession) {
+        try {
+          await Promise.all([
+            WorkoutCloudRepository.getAll(),
+            TrainingCloudRepository.hydrate(),
+          ]);
+        } catch (hydrateError) {
+          console.warn("Cloud data restore failed; TrackFit will use its local cache.", hydrateError);
+        }
+      }
+
+      if (mounted) setLoading(false);
     });
 
     return () => {
@@ -37,42 +66,14 @@ export default function AuthGate({ children }) {
     };
   }, []);
 
-  useEffect(() => {
-    if (!session) return;
-    void WorkoutCloudRepository.getAll();
-  }, [session]);
-
   if (!isSupabaseConfigured) {
-    return (
-      <main className="screen" style={{ display: "grid", placeItems: "center", minHeight: "100vh", padding: 24 }}>
-        <section style={{ maxWidth: 460, textAlign: "center" }}>
-          <h1>TrackFit cloud setup missing</h1>
-          <p>
-            Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env.local, then restart the development server.
-          </p>
-        </section>
-      </main>
-    );
+    return <main className="screen" style={{ display: "grid", placeItems: "center", minHeight: "100vh", padding: 24 }}><section style={{ maxWidth: 460, textAlign: "center" }}><h1>TrackFit cloud setup missing</h1><p>Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env.local, then restart the development server.</p></section></main>;
   }
 
-  if (loading) {
-    return (
-      <main className="screen">
-        <p>Loading TrackFit...</p>
-      </main>
-    );
-  }
+  if (loading) return <main className="screen"><p>Loading TrackFit...</p></main>;
 
   if (authError) {
-    return (
-      <main className="screen" style={{ display: "grid", placeItems: "center", minHeight: "100vh", padding: 24 }}>
-        <section style={{ maxWidth: 460, textAlign: "center" }}>
-          <h1>Could not restore your login</h1>
-          <p>{authError}</p>
-          <p>Refresh the page or sign in again.</p>
-        </section>
-      </main>
-    );
+    return <main className="screen" style={{ display: "grid", placeItems: "center", minHeight: "100vh", padding: 24 }}><section style={{ maxWidth: 460, textAlign: "center" }}><h1>Could not restore your login</h1><p>{authError}</p><p>Refresh the page or sign in again.</p></section></main>;
   }
 
   if (!session) return <AuthScreen />;
