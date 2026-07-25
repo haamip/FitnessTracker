@@ -1,21 +1,9 @@
 /*
  * TRACKFIT PAGE
  *
- * Purpose:
- * Main responsibility of this page.
- *
- * Data:
- * Repository and services used by this page.
- *
- * Features:
- * - Feature 1
- * - Feature 2
- * - Feature 3
- *
- * Future:
- * Planned improvements after MVP.
+ * Cardio logging with Supabase persistence and a local cache fallback.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Activity,
@@ -32,7 +20,7 @@ import {
 
 import Button from "../components/ui/Button";
 import LineChartCard from "../components/LineChartCard";
-import { CardioRepository } from "../services/repositories/trackfitDataLayer";
+import { CardioCloudRepository } from "../services/repositories/cardioCloudRepository";
 import "./TrackFitScreens.css";
 
 const CARDIO_TYPES = [
@@ -96,10 +84,15 @@ function toNumber(value) {
 function normaliseSession(session, index = 0) {
   return {
     id: session.id || `legacy-cardio-${index}`,
-    date: session.date || session.completedAt || new Date().toISOString().slice(0, 10),
+    date:
+      session.date ||
+      session.completedAt ||
+      new Date().toISOString().slice(0, 10),
     type: session.type || session.name || "Other",
     distanceKm: toNumber(session.distanceKm ?? session.distance ?? session.km),
-    durationMin: toNumber(session.durationMin ?? session.duration ?? session.minutes ?? session.time),
+    durationMin: toNumber(
+      session.durationMin ?? session.duration ?? session.minutes ?? session.time,
+    ),
     steps: Math.round(toNumber(session.steps)),
     calories: Math.round(toNumber(session.calories)),
     zone: session.zone || "Zone 2",
@@ -108,19 +101,13 @@ function normaliseSession(session, index = 0) {
 
 function formatDateLabel(value) {
   const date = new Date(value);
-
   if (Number.isNaN(date.getTime())) return "Today";
-
-  return new Intl.DateTimeFormat("en-AU", {
-    weekday: "short",
-  }).format(date);
+  return new Intl.DateTimeFormat("en-AU", { weekday: "short" }).format(date);
 }
 
 function formatSessionDate(value) {
   const date = new Date(value);
-
   if (Number.isNaN(date.getTime())) return "Recently";
-
   return new Intl.DateTimeFormat("en-AU", {
     weekday: "short",
     day: "numeric",
@@ -130,44 +117,57 @@ function formatSessionDate(value) {
 
 function getPace(distanceKm, durationMin) {
   if (!distanceKm || !durationMin) return "Pace pending";
-
   const pace = durationMin / distanceKm;
   const minutes = Math.floor(pace);
   const seconds = Math.round((pace - minutes) * 60)
     .toString()
     .padStart(2, "0");
-
   return `${minutes}:${seconds}/km`;
 }
 
 function buildWeeklyChart(sessions) {
   const byDay = new Map();
-
   sessions.forEach((session) => {
     const label = formatDateLabel(session.date);
     const current = byDay.get(label) || 0;
     byDay.set(label, Math.round((current + session.distanceKm) * 10) / 10);
   });
-
   return [...byDay.entries()].reverse().map(([date, distance]) => ({
     date,
     distance,
   }));
 }
 
-/**
- * CardioLog
- *
- * Movement tracking surface for cardio and steps.
- * Cardio now reads and writes through the repository layer so the page is ready
- * for real user data before wearable syncing is added later.
- */
 export default function CardioLog() {
   const [savedSessions, setSavedSessions] = useState(() =>
-    CardioRepository.getAll().map(normaliseSession),
+    CardioCloudRepository.getCached().map(normaliseSession),
   );
   const [form, setForm] = useState(initialForm);
   const [selectedType, setSelectedType] = useState("All");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadSessions() {
+      try {
+        const sessions = await CardioCloudRepository.getAll();
+        if (active) setSavedSessions(sessions.map(normaliseSession));
+      } catch (error) {
+        console.error("Unable to load cardio sessions.", error);
+        if (active) setStatusMessage("Using saved offline cardio data.");
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    }
+
+    loadSessions();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const sessions = savedSessions.length > 0 ? savedSessions : demoSessions;
   const filteredSessions = useMemo(
@@ -201,8 +201,9 @@ export default function CardioLog() {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
+    if (isSaving) return;
 
     const newSession = normaliseSession({
       id: `cardio-${Date.now()}`,
@@ -215,11 +216,31 @@ export default function CardioLog() {
       zone: form.zone,
     });
 
-    const nextSessions = [newSession, ...savedSessions];
-    CardioRepository.saveAll(nextSessions);
-    setSavedSessions(nextSessions);
-    setSelectedType("All");
-    setForm(initialForm);
+    setIsSaving(true);
+    setStatusMessage("");
+
+    try {
+      const saved = normaliseSession(
+        await CardioCloudRepository.add(newSession),
+      );
+      setSavedSessions((current) => [
+        saved,
+        ...current.filter(
+          (session) => session.id !== newSession.id && session.id !== saved.id,
+        ),
+      ]);
+      setSelectedType("All");
+      setForm(initialForm);
+      setStatusMessage("Movement saved and synced.");
+    } catch (error) {
+      console.error("Unable to sync cardio session.", error);
+      setSavedSessions(
+        CardioCloudRepository.getCached().map(normaliseSession),
+      );
+      setStatusMessage("Saved on this device. Cloud sync will retry later.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -235,124 +256,63 @@ export default function CardioLog() {
           <h1>{totals.distanceKm.toFixed(1)}km</h1>
           <p>Cardio and steps in one place. Keep the engine ticking over.</p>
         </div>
-
         <div className="v4-cardio-icon">
           <HeartPulse size={28} />
         </div>
       </section>
 
       <section className="v4-cardio-stats">
-        <article>
-          <Route size={21} />
-          <strong>{totals.distanceKm.toFixed(1)}km</strong>
-          <span>Distance</span>
-        </article>
-
-        <article>
-          <Footprints size={21} />
-          <strong>{totals.steps.toLocaleString()}</strong>
-          <span>Steps</span>
-        </article>
-
-        <article>
-          <Clock size={21} />
-          <strong>{Math.round(totals.durationMin)}min</strong>
-          <span>Time</span>
-        </article>
-
-        <article>
-          <Flame size={21} />
-          <strong>{totals.calories}</strong>
-          <span>Calories</span>
-        </article>
+        <article><Route size={21} /><strong>{totals.distanceKm.toFixed(1)}km</strong><span>Distance</span></article>
+        <article><Footprints size={21} /><strong>{totals.steps.toLocaleString()}</strong><span>Steps</span></article>
+        <article><Clock size={21} /><strong>{Math.round(totals.durationMin)}min</strong><span>Time</span></article>
+        <article><Flame size={21} /><strong>{totals.calories}</strong><span>Calories</span></article>
       </section>
 
       <form className="form-card form-grid" onSubmit={handleSubmit}>
         <div>
           <p className="eyebrow">Log movement</p>
-          <h2>Add today's cardio</h2>
+          <h2>Add today&apos;s cardio</h2>
           <p>Pick the type, add steps if you have them, and TrackFit will build the graph.</p>
         </div>
 
         <label>
           Cardio type
-          <select
-            value={form.type}
-            onChange={(event) => updateField("type", event.target.value)}
-          >
-            {CARDIO_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
+          <select value={form.type} onChange={(event) => updateField("type", event.target.value)}>
+            {CARDIO_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
           </select>
         </label>
 
         <label>
           Distance km
-          <input
-            inputMode="decimal"
-            min="0"
-            placeholder="3.6"
-            type="number"
-            value={form.distanceKm}
-            onChange={(event) => updateField("distanceKm", event.target.value)}
-          />
+          <input inputMode="decimal" min="0" step="0.1" placeholder="3.6" type="number" value={form.distanceKm} onChange={(event) => updateField("distanceKm", event.target.value)} />
         </label>
 
         <label>
           Duration minutes
-          <input
-            inputMode="numeric"
-            min="0"
-            placeholder="32"
-            type="number"
-            value={form.durationMin}
-            onChange={(event) => updateField("durationMin", event.target.value)}
-          />
+          <input inputMode="decimal" min="0" step="0.1" placeholder="32" type="number" value={form.durationMin} onChange={(event) => updateField("durationMin", event.target.value)} />
         </label>
 
         <label>
           Steps
-          <input
-            inputMode="numeric"
-            min="0"
-            placeholder="6200"
-            type="number"
-            value={form.steps}
-            onChange={(event) => updateField("steps", event.target.value)}
-          />
+          <input inputMode="numeric" min="0" step="1" placeholder="6200" type="number" value={form.steps} onChange={(event) => updateField("steps", event.target.value)} />
         </label>
 
         <label>
           Calories
-          <input
-            inputMode="numeric"
-            min="0"
-            placeholder="280"
-            type="number"
-            value={form.calories}
-            onChange={(event) => updateField("calories", event.target.value)}
-          />
+          <input inputMode="decimal" min="0" step="0.1" placeholder="280" type="number" value={form.calories} onChange={(event) => updateField("calories", event.target.value)} />
         </label>
 
         <label>
           Effort zone
-          <select
-            value={form.zone}
-            onChange={(event) => updateField("zone", event.target.value)}
-          >
-            <option>Zone 1</option>
-            <option>Zone 2</option>
-            <option>Zone 3</option>
-            <option>Zone 4</option>
-            <option>Zone 5</option>
+          <select value={form.zone} onChange={(event) => updateField("zone", event.target.value)}>
+            <option>Zone 1</option><option>Zone 2</option><option>Zone 3</option><option>Zone 4</option><option>Zone 5</option>
           </select>
         </label>
 
-        <Button className="v4-save-checkin" type="submit">
+        {statusMessage && <p role="status">{statusMessage}</p>}
+        <Button className="v4-save-checkin" disabled={isSaving} type="submit">
           <Plus size={17} />
-          Save movement
+          {isSaving ? "Saving..." : "Save movement"}
         </Button>
       </form>
 
@@ -362,55 +322,31 @@ export default function CardioLog() {
           <h2>Activity view</h2>
           <p>Choose one activity type or view all movement together.</p>
         </div>
-
         <label>
           Activity
-          <select
-            value={selectedType}
-            onChange={(event) => setSelectedType(event.target.value)}
-          >
+          <select value={selectedType} onChange={(event) => setSelectedType(event.target.value)}>
             <option value="All">All activities</option>
-            {CARDIO_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
+            {CARDIO_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
           </select>
         </label>
       </section>
 
-      <LineChartCard
-        title={`${selectedType} Distance`}
-        data={chartData}
-        dataKey="distance"
-        unit="km"
-      />
+      <LineChartCard title={`${selectedType} Distance`} data={chartData} dataKey="distance" unit="km" />
 
       <div className="v4-section-heading">
-        <div>
-          <p className="eyebrow">Recent</p>
-          <h2>Movement sessions</h2>
-        </div>
-        <span>{filteredSessions.length} logged</span>
+        <div><p className="eyebrow">Recent</p><h2>Movement sessions</h2></div>
+        <span>{isLoading ? "Loading..." : `${filteredSessions.length} logged`}</span>
       </div>
 
       <section className="v4-cardio-list">
         {filteredSessions.map((session) => (
           <article className="v4-cardio-row" key={session.id}>
-            <div className="v4-cardio-row-icon">
-              <Activity size={20} />
-            </div>
-
+            <div className="v4-cardio-row-icon"><Activity size={20} /></div>
             <div>
               <strong>{session.type}</strong>
-              <p>
-                {session.distanceKm.toFixed(1)}km - {session.durationMin} min - {getPace(session.distanceKm, session.durationMin)}
-              </p>
-              <p>
-                {formatSessionDate(session.date)} - {session.steps.toLocaleString()} steps
-              </p>
+              <p>{session.distanceKm.toFixed(1)}km - {session.durationMin} min - {getPace(session.distanceKm, session.durationMin)}</p>
+              <p>{formatSessionDate(session.date)} - {session.steps.toLocaleString()} steps</p>
             </div>
-
             <span>{session.zone}</span>
           </article>
         ))}
@@ -422,26 +358,15 @@ export default function CardioLog() {
           <h2>Steps count. Cardio counts. Consistency wins.</h2>
           <p>Use the activity dropdown to see what is actually moving the needle.</p>
         </div>
-
-        <div className="v4-zone-bars">
-          <i style={{ height: "42%" }} />
-          <i style={{ height: "78%" }} />
-          <i style={{ height: "54%" }} />
-          <i style={{ height: "30%" }} />
-        </div>
+        <div className="v4-zone-bars"><i style={{ height: "42%" }} /><i style={{ height: "78%" }} /><i style={{ height: "54%" }} /><i style={{ height: "30%" }} /></div>
       </section>
 
       <section className="v4-ai-insight">
-        <div className="v4-icon-bubble">
-          <Sparkles size={22} />
-        </div>
-
+        <div className="v4-icon-bubble"><Sparkles size={22} /></div>
         <div>
           <p className="eyebrow">Coach note</p>
           <h2>Movement now has context.</h2>
-          <p>
-            Cardio type and steps are being saved together, so the coach can compare effort instead of only counting kilometres.
-          </p>
+          <p>Cardio type and steps are saved together, so the coach can compare effort instead of only counting kilometres.</p>
         </div>
       </section>
 
