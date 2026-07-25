@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useSearchParams } from "react-router-dom";
 import {
@@ -8,10 +8,12 @@ import {
   History,
   Plus,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 import {
   AIPlanRepository,
   HistoryRepository,
+  SavedWorkoutRepository,
 } from "../services/repositories/trackfitDataLayer";
 import "./TrackFitScreens.css";
 import "../styles/TrackFitWorkoutFixes.css";
@@ -53,6 +55,9 @@ function mapPlanDayToWorkoutCard(day) {
 export default function Workouts() {
   const [searchParams] = useSearchParams();
   const refreshToken = searchParams.get("refresh") || "initial";
+  const [savedWorkouts, setSavedWorkouts] = useState(() =>
+    SavedWorkoutRepository.getAll(),
+  );
 
   const dataSnapshot = useMemo(() => {
     void refreshToken;
@@ -71,6 +76,13 @@ export default function Workouts() {
     ? savedTrainingPlan.map(mapPlanDayToWorkoutCard)
     : starterPlans;
 
+  function deleteSavedWorkout(workout) {
+    const shouldDelete = window.confirm(`Delete “${workout.name}”?`);
+    if (!shouldDelete) return;
+
+    setSavedWorkouts(SavedWorkoutRepository.remove(workout.id));
+  }
+
   return (
     <motion.div
       className="screen workouts-v4"
@@ -85,6 +97,53 @@ export default function Workouts() {
           <p>Start today&apos;s session or open one of your saved workouts.</p>
         </div>
       </section>
+
+      {savedWorkouts.length > 0 && (
+        <section className="v4-workout-list">
+          <div className="v4-section-heading">
+            <div>
+              <p className="eyebrow">Saved</p>
+              <h2>Your workouts</h2>
+            </div>
+          </div>
+
+          {savedWorkouts.map((workout) => (
+            <div className="v4-workout-card" key={workout.id}>
+              <div className="v4-workout-card__body">
+                <Link
+                  to={`/workouts/${workout.id}`}
+                  style={{ display: "contents", color: "inherit", textDecoration: "none" }}
+                >
+                  <div className="v4-workout-icon">
+                    <Dumbbell size={22} />
+                  </div>
+
+                  <div>
+                    <h3>{workout.name}</h3>
+                    <p>{workout.detail || "Saved workout"}</p>
+                  </div>
+
+                  <ChevronRight className="v4-chevron" size={22} />
+                </Link>
+
+                <button
+                  aria-label={`Delete ${workout.name}`}
+                  onClick={() => deleteSavedWorkout(workout)}
+                  type="button"
+                  style={{
+                    border: 0,
+                    background: "transparent",
+                    padding: 8,
+                    cursor: "pointer",
+                  }}
+                >
+                  <Trash2 size={19} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
 
       <section className="v4-workout-list">
         <div className="v4-section-heading">
