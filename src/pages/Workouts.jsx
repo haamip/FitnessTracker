@@ -4,6 +4,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import {
   ChevronRight,
   Dumbbell,
+  FileUp,
   History,
   Plus,
   Sparkles,
@@ -126,6 +127,12 @@ export default function Workouts() {
           <Plus size={24} />
           <strong>Empty Workout</strong>
           <span>Start a session from scratch</span>
+        </Link>
+
+        <Link className="v4-quick-card" to="/workouts/import">
+          <FileUp size={24} />
+          <strong>Import Workout</strong>
+          <span>Paste text or upload a PDF</span>
         </Link>
 
         <Link className="v4-quick-card" to="/workouts/builder">
