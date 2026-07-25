@@ -6,13 +6,17 @@ const HEADING_PATTERNS = [
 ];
 
 const SET_REP_PATTERNS = [
-  /^(.*?)\s*(?:[-–—:|]\s*)?(\d+)\s*(?:x|×)\s*(\d+(?:\s*[-–—]\s*\d+)?|amrap|failure|max)(.*)$/i,
-  /^(.*?)\s*(?:[-–—:|]\s*)?(\d+)\s+(?:sets?|rounds?)\s+(?:of\s+)?(\d+(?:\s*[-–—]\s*\d+)?|amrap|failure|max)(.*)$/i,
-  /^(.*?)\s*(?:[-–—:|]\s*)?(\d+)\s*(?:sets?|rounds?)\s*[x×:]?\s*(\d+(?:\s*[-–—]\s*\d+)?|amrap|failure|max)(.*)$/i,
+  /^(.*?)\s*(?:[-–—:]?\s*)(\d+)\s*(?:x|×)\s*(\d+(?:\s*[-–—]\s*\d+)?|amrap|failure|max)(.*)$/i,
+  /^(.*?)\s*(?:[-–—:]?\s*)(\d+)\s+(?:sets?|rounds?)\s+(?:of\s+)?(\d+(?:\s*[-–—]\s*\d+)?|amrap|failure|max)(.*)$/i,
+  /^(.*?)\s*(?:[-–—:]?\s*)(\d+)\s*(?:sets?|rounds?)\s*[x×:]?\s*(\d+(?:\s*[-–—]\s*\d+)?|amrap|failure|max)(.*)$/i,
 ];
 
 const TABLE_PATTERN = /^(.*?)\s*[|,;\t]+\s*(\d+)\s*[|,;\t]+\s*(\d+(?:\s*[-–—]\s*\d+)?|amrap|failure|max)(.*)$/i;
 const DURATION_PATTERN = /^(.*?)\s*(?:[-–—:|]\s*)?(\d+)\s*(?:x|×)\s*(\d+)\s*(sec(?:ond)?s?|mins?|minutes?)(.*)$/i;
+
+// General fallback: everything before the first prescription number is the exercise name.
+// The first number is sets and the second number (or range) is reps.
+const NUMBER_ORDER_PATTERN = /^(.*?[A-Za-z])\s*(?:[-–—:|,;]\s*|\s+)(\d+)\s*(?:x|×|sets?(?:\s+of)?|rounds?(?:\s+of)?|[-–—:|,;]|\s)\s*(\d+(?:\s*[-–—]\s*\d+)?|amrap|failure|max)\b(.*)$/i;
 
 function cleanLine(value) {
   return value
@@ -24,13 +28,24 @@ function cleanLine(value) {
 
 function cleanName(value) {
   return value
-    .replace(/\s*[-:|]+\s*$/, "")
+    .replace(/\s*[-:|,;]+\s*$/, "")
     .replace(/^\s*(?:exercise|movement)\s*[:|-]\s*/i, "")
     .trim();
 }
 
+function midpointRepRange(value) {
+  const normalized = String(value).replace(/\s/g, "").replace(/[–—]/g, "-");
+  const rangeMatch = normalized.match(/^(\d+)-(\d+)$/);
+
+  if (!rangeMatch) return normalized.toUpperCase();
+
+  const low = Number.parseInt(rangeMatch[1], 10);
+  const high = Number.parseInt(rangeMatch[2], 10);
+  return String(Math.round((low + high) / 2));
+}
+
 function cleanReps(value) {
-  return value.replace(/\s/g, "").replace(/[–—]/g, "-").toUpperCase();
+  return midpointRepRange(value);
 }
 
 function cleanNote(value) {
@@ -98,6 +113,18 @@ function parseLine(line) {
     });
   }
 
+  const numberOrderMatch = line.match(NUMBER_ORDER_PATTERN);
+  if (numberOrderMatch && cleanName(numberOrderMatch[1])) {
+    return buildExercise({
+      name: numberOrderMatch[1],
+      sets: numberOrderMatch[2],
+      reps: numberOrderMatch[3],
+      note: numberOrderMatch[4],
+      source: line,
+      confidence: "high",
+    });
+  }
+
   const repOnlyMatch = line.match(/^(.*?)\s*(?:[-–—:|]\s*)?(\d+(?:\s*[-–—]\s*\d+)?|amrap|failure|max)\s*(?:reps?)?(.*)$/i);
   if (repOnlyMatch && cleanName(repOnlyMatch[1]) && /[a-z]/i.test(repOnlyMatch[1])) {
     return buildExercise({
@@ -122,7 +149,8 @@ function parseLine(line) {
 
 /**
  * Parse pasted or PDF-extracted workout text into an editable draft.
- * Unknown values stay blank so TrackFit never silently invents a prescription.
+ * The first prescription number is sets and the second is reps.
+ * Rep ranges are converted to their rounded midpoint.
  */
 export function parseWorkoutText(value) {
   const exercises = [];
