@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useParams } from "react-router-dom";
 import MobileShell from "./components/layout/MobileShell";
 import "./pages/WorkoutCompleteOverlay.css";
 import "./components/common/TrackFitCard.css";
+import "./styles/TrackFitNoExerciseImages.css";
 
 /**
  * TrackFit route-level code splitting.
