@@ -25,9 +25,34 @@ function newestFirst(left, right) {
   );
 }
 
+function freshWorkoutCopy(exercises = []) {
+  return exercises.map((exercise) => ({
+    ...exercise,
+    id: `${exercise.libraryId || exercise.id || "exercise"}-${crypto.randomUUID()}`,
+    sets: (exercise.sets || []).map((set) => ({
+      ...set,
+      id: crypto.randomUUID(),
+      done: false,
+      rpe: "",
+      rir: "",
+      failure: false,
+      note: "",
+    })),
+  }));
+}
+
 export const WorkoutRepository = {
   getById(workoutId) {
-    return readJson(`${WORKOUT_KEY_PREFIX}${workoutId}`, null);
+    const activeWorkout = readJson(`${WORKOUT_KEY_PREFIX}${workoutId}`, null);
+    if (activeWorkout) return activeWorkout;
+
+    // Saved workouts are reusable templates. When no active session exists,
+    // return a clean copy so completing a workout never deletes the template.
+    const template = readJson(SAVED_WORKOUTS_KEY, []).find(
+      (workout) => workout.id === workoutId,
+    );
+
+    return template?.exercises ? freshWorkoutCopy(template.exercises) : null;
   },
 
   saveById(workoutId, workout) {
@@ -44,6 +69,10 @@ export const SavedWorkoutRepository = {
     return readJson(SAVED_WORKOUTS_KEY, []).sort(newestFirst);
   },
 
+  getById(workoutId) {
+    return this.getAll().find((workout) => workout.id === workoutId) || null;
+  },
+
   saveAll(workouts) {
     writeJson(SAVED_WORKOUTS_KEY, workouts);
   },
@@ -53,6 +82,15 @@ export const SavedWorkoutRepository = {
     const next = [{ ...workout, updatedAt: new Date().toISOString() }, ...current];
     this.saveAll(next);
     return next;
+  },
+
+  createSession(workoutId) {
+    const template = this.getById(workoutId);
+    if (!template?.exercises) return null;
+
+    const session = freshWorkoutCopy(template.exercises);
+    WorkoutRepository.saveById(workoutId, session);
+    return session;
   },
 
   remove(workoutId) {
