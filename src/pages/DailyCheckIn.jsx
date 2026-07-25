@@ -62,7 +62,7 @@ function normaliseCheckIn(checkIn, index = 0) {
     id: checkIn.id || `legacy-checkin-${index}`,
     date: checkIn.date || checkIn.completedAt || today,
     weightKg: toNumber(checkIn.weightKg ?? checkIn.weight),
-    proteinG: Math.round(toNumber(checkIn.proteinG ?? checkIn.protein)),
+    proteinG: toNumber(checkIn.proteinG ?? checkIn.protein),
     waterL: toNumber(checkIn.waterL ?? checkIn.water),
     sleepHours: toNumber(checkIn.sleepHours ?? checkIn.sleep),
     mood: checkIn.mood || "Okay",
@@ -133,8 +133,8 @@ export default function DailyCheckIn() {
     {
       icon: Utensils,
       label: "Protein",
-      value: `${Math.round(toNumber(form.proteinG))}g`,
-      note: `${Math.max(0, 185 - Math.round(toNumber(form.proteinG)))}g to target`,
+      value: `${toNumber(form.proteinG).toFixed(1).replace(/\.0$/, "")}g`,
+      note: `${Math.max(0, 185 - toNumber(form.proteinG)).toFixed(1).replace(/\.0$/, "")}g to target`,
     },
     {
       icon: Waves,
@@ -247,6 +247,7 @@ export default function DailyCheckIn() {
           <input
             inputMode="decimal"
             min="0"
+            step="0.1"
             type="number"
             value={form.weightKg}
             onChange={(event) => updateField("weightKg", event.target.value)}
@@ -256,8 +257,9 @@ export default function DailyCheckIn() {
         <label>
           Protein grams
           <input
-            inputMode="numeric"
+            inputMode="decimal"
             min="0"
+            step="0.1"
             type="number"
             value={form.proteinG}
             onChange={(event) => updateField("proteinG", event.target.value)}
@@ -269,6 +271,7 @@ export default function DailyCheckIn() {
           <input
             inputMode="decimal"
             min="0"
+            step="0.1"
             type="number"
             value={form.waterL}
             onChange={(event) => updateField("waterL", event.target.value)}
@@ -280,6 +283,7 @@ export default function DailyCheckIn() {
           <input
             inputMode="decimal"
             min="0"
+            step="0.1"
             type="number"
             value={form.sleepHours}
             onChange={(event) => updateField("sleepHours", event.target.value)}
@@ -357,6 +361,7 @@ export default function DailyCheckIn() {
             inputMode="numeric"
             max="10"
             min="1"
+            step="1"
             type="number"
             value={form.energy}
             onChange={(event) => updateField("energy", event.target.value)}
@@ -392,33 +397,39 @@ export default function DailyCheckIn() {
         ))}
       </section>
 
-      <section className="v4-ai-insight">
+      <section className="v4-checkin-coach">
         <div className="v4-icon-bubble">
-          <Sparkles size={22} />
+          <Sparkles size={20} />
         </div>
-
         <div>
           <p className="eyebrow">Coach note</p>
-          <h2>Daily data is now connected.</h2>
+          <h2>
+            {score >= 80
+              ? "Good day to push"
+              : score >= 60
+                ? "Train, but stay honest"
+                : "Recovery comes first"}
+          </h2>
           <p>
-            Saved check-ins now feed the repository layer for future Coach and
-            nutrition decisions.
+            {score >= 80
+              ? "Readiness is strong. Keep the planned session and progress one key lift."
+              : score >= 60
+                ? "You can train, but keep one rep in reserve and avoid adding junk volume."
+                : "Keep intensity controlled, focus on movement quality, and get an early night."}
           </p>
         </div>
       </section>
 
       <Button className="v4-save-checkin" type="submit">
         <Save size={18} />
-        Save check-in
+        Save daily check-in
       </Button>
 
-      <section className="v4-mini-summary">
-        <Moon size={18} />
-        <span>
-          Track the simple stuff daily. That is how the app gets smart.
-        </span>
-        <Flame size={18} />
-      </section>
+      <footer className="v4-checkin-footer">
+        <Moon size={16} />
+        <span>Saved locally for now. Cloud sync comes next.</span>
+        <Flame size={16} />
+      </footer>
     </motion.form>
   );
 }
