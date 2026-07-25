@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, FileText, Upload } from "lucide-react";
+import { WorkoutRepository } from "../services/repositories/trackfitDataLayer";
 import "./TrackFitScreens.css";
 
 function parseWorkoutText(value) {
@@ -9,19 +10,21 @@ function parseWorkoutText(value) {
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line, index) => {
-      const match = line.match(/^(.+?)\s*[-–:]?\s*(\d+)\s*[x×]\s*(\d+(?:\s*[-–]\s*\d+)?)$/i);
+      const match = line.match(
+        /^(.+?)\s*[-–:]?\s*(\d+)\s*[x×]\s*(\d+(?:\s*[-–]\s*\d+)?)$/i,
+      );
 
       if (!match) {
         return {
-          id: `import-${index}`,
+          id: `import-${index}-${crypto.randomUUID()}`,
           name: line,
-          sets: "",
-          reps: "",
+          sets: "3",
+          reps: "10",
         };
       }
 
       return {
-        id: `import-${index}`,
+        id: `import-${index}-${crypto.randomUUID()}`,
         name: match[1].trim(),
         sets: match[2],
         reps: match[3].replace(/\s/g, ""),
@@ -29,16 +32,56 @@ function parseWorkoutText(value) {
     });
 }
 
+function createWorkoutExercise(exercise) {
+  const setCount = Math.max(1, Number.parseInt(exercise.sets, 10) || 1);
+  const reps = String(exercise.reps || "10");
+
+  return {
+    id: `imported-${crypto.randomUUID()}`,
+    name: exercise.name.trim() || "Exercise",
+    target: `${setCount} sets - ${reps} reps`,
+    primaryMuscles: [],
+    equipment: [],
+    movementPattern: "training",
+    defaultRestSeconds: 90,
+    exerciseNote: "",
+    sets: Array.from({ length: setCount }, () => ({
+      id: crypto.randomUUID(),
+      weight: "",
+      reps,
+      type: "S",
+      done: false,
+      rpe: "",
+      rir: "",
+      failure: false,
+      note: "",
+    })),
+  };
+}
+
 export default function WorkoutImport() {
+  const navigate = useNavigate();
+  const [workoutName, setWorkoutName] = useState("Imported Workout");
   const [sourceText, setSourceText] = useState("");
   const [draft, setDraft] = useState([]);
   const [fileName, setFileName] = useState("");
+  const [message, setMessage] = useState("");
 
   const canParse = sourceText.trim().length > 0;
   const exerciseCount = useMemo(() => draft.length, [draft]);
+  const canSave =
+    draft.length > 0 &&
+    draft.every(
+      (exercise) =>
+        exercise.name.trim() &&
+        Number.parseInt(exercise.sets, 10) > 0 &&
+        String(exercise.reps).trim(),
+    );
 
   function handleParse() {
-    setDraft(parseWorkoutText(sourceText));
+    const parsed = parseWorkoutText(sourceText);
+    setDraft(parsed);
+    setMessage(`${parsed.length} exercises ready to review.`);
   }
 
   function updateExercise(id, field, value) {
@@ -52,6 +95,26 @@ export default function WorkoutImport() {
   function handleFileChange(event) {
     const file = event.target.files?.[0];
     setFileName(file?.name || "");
+    setMessage(
+      file
+        ? "PDF selected. Automatic PDF reading is the next step; paste its workout text below for today."
+        : "",
+    );
+  }
+
+  function saveWorkout() {
+    if (!canSave) return;
+
+    const workoutId = `imported-${Date.now()}`;
+    const workout = draft.map(createWorkoutExercise);
+    WorkoutRepository.saveById(workoutId, workout);
+
+    sessionStorage.setItem(
+      `trackfit_workout_title_${workoutId}`,
+      workoutName.trim() || "Imported Workout",
+    );
+
+    navigate(`/workouts/${workoutId}`);
   }
 
   return (
@@ -63,8 +126,24 @@ export default function WorkoutImport() {
         <div>
           <p className="eyebrow">Train</p>
           <h1>Import workout</h1>
-          <p>Paste a workout now, or select a PDF ready for the extraction step.</p>
+          <p>Paste your program, review it, then open it straight in Gym Mode.</p>
         </div>
+      </section>
+
+      <section className="v4-workout-list">
+        <div className="v4-section-heading">
+          <div>
+            <p className="eyebrow">Workout name</p>
+            <h2>Name this session</h2>
+          </div>
+        </div>
+
+        <input
+          aria-label="Workout name"
+          value={workoutName}
+          onChange={(event) => setWorkoutName(event.target.value)}
+          style={{ width: "100%", padding: 16, borderRadius: 16 }}
+        />
       </section>
 
       <section className="v4-workout-list">
@@ -80,7 +159,9 @@ export default function WorkoutImport() {
           rows={10}
           value={sourceText}
           onChange={(event) => setSourceText(event.target.value)}
-          placeholder={"Bench Press - 4 x 8\nIncline Dumbbell Press - 3 x 10\nTricep Pushdown - 3 x 12"}
+          placeholder={
+            "Bench Press - 4 x 8\nIncline Dumbbell Press - 3 x 10\nTricep Pushdown - 3 x 12"
+          }
           style={{ width: "100%", resize: "vertical", padding: 16, borderRadius: 16 }}
         />
 
@@ -101,7 +182,7 @@ export default function WorkoutImport() {
         <label className="v4-quick-card" style={{ cursor: "pointer" }}>
           <Upload size={24} />
           <strong>{fileName || "Choose PDF"}</strong>
-          <span>PDF extraction will feed into the same editable review screen.</span>
+          <span>Select the file now. Automatic extraction is being wired next.</span>
           <input
             type="file"
             accept="application/pdf"
@@ -110,6 +191,8 @@ export default function WorkoutImport() {
           />
         </label>
       </section>
+
+      {message && <p aria-live="polite">{message}</p>}
 
       {exerciseCount > 0 && (
         <section className="v4-workout-list">
@@ -122,7 +205,10 @@ export default function WorkoutImport() {
 
           {draft.map((exercise) => (
             <div className="v4-workout-card" key={exercise.id}>
-              <div className="v4-workout-card__body" style={{ display: "grid", gap: 12 }}>
+              <div
+                className="v4-workout-card__body"
+                style={{ display: "grid", gap: 12 }}
+              >
                 <input
                   aria-label="Exercise name"
                   value={exercise.name}
@@ -130,7 +216,13 @@ export default function WorkoutImport() {
                     updateExercise(exercise.id, "name", event.target.value)
                   }
                 />
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 12,
+                  }}
+                >
                   <input
                     aria-label="Sets"
                     inputMode="numeric"
@@ -153,8 +245,8 @@ export default function WorkoutImport() {
             </div>
           ))}
 
-          <button type="button" disabled>
-            Save imported workout
+          <button type="button" disabled={!canSave} onClick={saveWorkout}>
+            Save and start workout
           </button>
         </section>
       )}
