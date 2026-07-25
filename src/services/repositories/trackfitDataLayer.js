@@ -5,6 +5,7 @@
  * offline-first. Pages should not touch localStorage directly.
  */
 import { readJson, writeJson } from "../utils/storage";
+import { supabase } from "../supabase";
 
 const WORKOUT_KEY_PREFIX = "trackfit_workout_";
 const SAVED_WORKOUTS_KEY = "trackfit_saved_workouts";
@@ -23,6 +24,53 @@ function newestFirst(left, right) {
     new Date(right.completedAt || right.updatedAt || right.date || 0) -
     new Date(left.completedAt || left.updatedAt || left.date || 0)
   );
+}
+
+async function syncCompletedWorkout(record) {
+  if (!supabase) return;
+
+  try {
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError) throw userError;
+    const userId = userData.user?.id;
+    if (!userId) return;
+
+    const completedAt = record.completedAt || new Date().toISOString();
+    const durationSeconds = Number(record.durationSeconds ?? record.seconds) || 0;
+    const startedAt = new Date(
+      new Date(completedAt).getTime() - durationSeconds * 1000,
+    ).toISOString();
+
+    const { data, error } = await supabase
+      .from("workout_sessions")
+      .insert({
+        user_id: userId,
+        title: record.title || "Completed workout",
+        started_at: startedAt,
+        completed_at: completedAt,
+        duration_seconds: durationSeconds,
+        exercises: record.exercises || [],
+        total_volume: Number(record.volume) || 0,
+        notes: record.notes || null,
+        prs: record.prs || [],
+        completed_sets: Number(record.completedSets ?? record.doneSets) || 0,
+        total_sets: Number(record.totalSets) || 0,
+      })
+      .select("id")
+      .single();
+
+    if (error) throw error;
+
+    if (data?.id) {
+      const current = readJson(WORKOUT_HISTORY_KEY, []);
+      const updated = current.map((item) =>
+        item.id === record.id ? { ...item, id: data.id } : item,
+      );
+      writeJson(WORKOUT_HISTORY_KEY, updated);
+    }
+  } catch (error) {
+    console.warn("Workout cloud save failed; session remains stored locally.", error);
+  }
 }
 
 function freshWorkoutCopy(exercises = []) {
@@ -46,8 +94,6 @@ export const WorkoutRepository = {
     const activeWorkout = readJson(`${WORKOUT_KEY_PREFIX}${workoutId}`, null);
     if (activeWorkout) return activeWorkout;
 
-    // Saved workouts are reusable templates. When no active session exists,
-    // return a clean copy so completing a workout never deletes the template.
     const template = readJson(SAVED_WORKOUTS_KEY, []).find(
       (workout) => workout.id === workoutId,
     );
@@ -115,8 +161,9 @@ export const HistoryRepository = {
   },
 
   add(record) {
-    const history = [record, ...this.getAll()];
+    const history = [record, ...this.getAll().filter((item) => item.id !== record.id)];
     this.saveAll(history);
+    void syncCompletedWorkout(record);
     return history;
   },
 
