@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { isSupabaseConfigured, supabase } from "../../services/supabase";
+import { WorkoutCloudRepository } from "../../services/repositories/workoutCloudRepository";
 import AuthScreen from "./AuthScreen";
 
 export default function AuthGate({ children }) {
@@ -35,6 +36,11 @@ export default function AuthGate({ children }) {
       data.subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (!session) return;
+    void WorkoutCloudRepository.getAll();
+  }, [session]);
 
   if (!isSupabaseConfigured) {
     return (
