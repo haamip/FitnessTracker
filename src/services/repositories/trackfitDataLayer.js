@@ -7,6 +7,7 @@
 import { readJson, writeJson } from "../utils/storage";
 
 const WORKOUT_KEY_PREFIX = "trackfit_workout_";
+const SAVED_WORKOUTS_KEY = "trackfit_saved_workouts";
 const WORKOUT_HISTORY_KEY = "trackfit_workout_history";
 const CHECKINS_KEY = "trackfit_checkins";
 const CARDIO_KEY = "trackfit_cardio";
@@ -19,8 +20,8 @@ function removeJson(key) {
 
 function newestFirst(left, right) {
   return (
-    new Date(right.completedAt || right.date || 0) -
-    new Date(left.completedAt || left.date || 0)
+    new Date(right.completedAt || right.updatedAt || right.date || 0) -
+    new Date(left.completedAt || left.updatedAt || left.date || 0)
   );
 }
 
@@ -35,6 +36,30 @@ export const WorkoutRepository = {
 
   removeById(workoutId) {
     removeJson(`${WORKOUT_KEY_PREFIX}${workoutId}`);
+  },
+};
+
+export const SavedWorkoutRepository = {
+  getAll() {
+    return readJson(SAVED_WORKOUTS_KEY, []).sort(newestFirst);
+  },
+
+  saveAll(workouts) {
+    writeJson(SAVED_WORKOUTS_KEY, workouts);
+  },
+
+  save(workout) {
+    const current = this.getAll().filter((item) => item.id !== workout.id);
+    const next = [{ ...workout, updatedAt: new Date().toISOString() }, ...current];
+    this.saveAll(next);
+    return next;
+  },
+
+  remove(workoutId) {
+    const next = this.getAll().filter((item) => item.id !== workoutId);
+    this.saveAll(next);
+    WorkoutRepository.removeById(workoutId);
+    return next;
   },
 };
 
