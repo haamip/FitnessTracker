@@ -19,6 +19,7 @@ const WorkoutImport = lazy(() => import("./pages/WorkoutImport"));
 const WorkoutDetail = lazy(() => import("./pages/WorkoutDetail"));
 const CoachIntelligence = lazy(() => import("./pages/CoachIntelligence"));
 const Nutrition = lazy(() => import("./pages/Nutrition"));
+const Profile = lazy(() => import("./pages/Profile"));
 const AIPlayground = lazy(() => import("./pages/AIPlayground"));
 const CompletedWorkoutDetail = lazy(() => import("./pages/CompletedWorkoutDetail"));
 const DeveloperTools = lazy(() => import("./pages/DeveloperTools"));
@@ -30,7 +31,7 @@ function RouteFallback() { return <div className="screen" style={{display:"grid"
 function AppRoutes() {
   const showDeveloperTools = import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEV_TOOLS === "true";
   return <MobileShell><Suspense fallback={<RouteFallback />}><Routes>
-    <Route path="/splash" element={<Splash />} /><Route path="/" element={<Coach />} /><Route path="/dashboard" element={<Dashboard />} /><Route path="/plan" element={<PlanSetup />} /><Route path="/checkin" element={<DailyCheckIn />} /><Route path="/cardio" element={<CardioLog />} /><Route path="/progress" element={<Progress />} /><Route path="/coach" element={<Coach />} /><Route path="/coach/intelligence" element={<CoachIntelligence />} /><Route path="/workouts" element={<Workouts />} /><Route path="/workouts/builder" element={<AIWorkoutBuilder />} /><Route path="/workouts/import" element={<WorkoutImport />} />
+    <Route path="/splash" element={<Splash />} /><Route path="/" element={<Coach />} /><Route path="/dashboard" element={<Dashboard />} /><Route path="/plan" element={<PlanSetup />} /><Route path="/checkin" element={<DailyCheckIn />} /><Route path="/cardio" element={<CardioLog />} /><Route path="/progress" element={<Progress />} /><Route path="/coach" element={<Coach />} /><Route path="/coach/intelligence" element={<CoachIntelligence />} /><Route path="/workouts" element={<Workouts />} /><Route path="/workouts/builder" element={<AIWorkoutBuilder />} /><Route path="/workouts/import" element={<WorkoutImport />} /><Route path="/profile" element={<Profile />} />
     {showDeveloperTools && <Route path="/dev-tools" element={<DeveloperTools />} />}{showDeveloperTools && <Route path="/dev-tools/ai" element={<AIPlayground />} />}
     <Route path="/workouts/history/:historyId" element={<CompletedWorkoutDetail />} /><Route path="/workouts/:id" element={<WorkoutDetailRoute />} /><Route path="/nutrition" element={<Nutrition />} /><Route path="/exercises/:id" element={<ExerciseDetail />} />
   </Routes></Suspense></MobileShell>;
