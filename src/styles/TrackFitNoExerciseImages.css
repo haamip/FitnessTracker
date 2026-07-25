@@ -1,0 +1,10 @@
+.gym-focus-card__art,
+.tf-exercise-image,
+.exercise-image,
+[data-exercise-image] {
+  display: none !important;
+}
+
+.gym-focus-card__title {
+  margin-top: 0;
+}
