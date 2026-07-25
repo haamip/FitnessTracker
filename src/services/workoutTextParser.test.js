@@ -19,8 +19,44 @@ describe("parseWorkoutText", () => {
       needsReview: false,
     });
     expect(result.exercises[1]).toMatchObject({ sets: "3", reps: "10" });
-    expect(result.exercises[2]).toMatchObject({ sets: "3", reps: "12-15" });
+    expect(result.exercises[2]).toMatchObject({ sets: "3", reps: "14" });
     expect(result.exercises[3]).toMatchObject({ sets: "2", reps: "AMRAP" });
+  });
+
+  it("uses the first prescription number as sets and the second as reps", () => {
+    const result = parseWorkoutText(`
+      Bench Press 4 8
+      Lat Pulldown, 3, 10
+      Back Squat 5 5 80kg
+    `);
+
+    expect(result.exercises).toHaveLength(3);
+    expect(result.exercises[0]).toMatchObject({
+      name: "Bench Press",
+      sets: "4",
+      reps: "8",
+    });
+    expect(result.exercises[1]).toMatchObject({
+      name: "Lat Pulldown",
+      sets: "3",
+      reps: "10",
+    });
+    expect(result.exercises[2]).toMatchObject({
+      name: "Back Squat",
+      sets: "5",
+      reps: "5",
+      note: "80kg",
+    });
+  });
+
+  it("converts rep ranges to the rounded midpoint", () => {
+    const result = parseWorkoutText(`
+      Bench Press 4 8-12
+      Cable Fly 3 12-15
+    `);
+
+    expect(result.exercises[0]).toMatchObject({ sets: "4", reps: "10" });
+    expect(result.exercises[1]).toMatchObject({ sets: "3", reps: "14" });
   });
 
   it("keeps uncertain prescriptions blank instead of inventing values", () => {
