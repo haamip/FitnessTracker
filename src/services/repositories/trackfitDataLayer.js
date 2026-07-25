@@ -57,6 +57,14 @@ export const HistoryRepository = {
     return history;
   },
 
+  update(recordId, changes) {
+    const history = this.getAll().map((record) =>
+      record.id === recordId ? { ...record, ...changes } : record,
+    );
+    this.saveAll(history);
+    return history.find((record) => record.id === recordId) || null;
+  },
+
   clear() {
     removeJson(WORKOUT_HISTORY_KEY);
   },
