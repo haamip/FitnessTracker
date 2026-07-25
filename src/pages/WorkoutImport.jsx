@@ -3,10 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, FileText, Upload } from "lucide-react";
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
-import {
-  SavedWorkoutRepository,
-  WorkoutRepository,
-} from "../services/repositories/trackfitDataLayer";
+import { SavedWorkoutRepository } from "../services/repositories/trackfitDataLayer";
 import "./TrackFitScreens.css";
 
 GlobalWorkerOptions.workerSrc = pdfWorker;
@@ -124,12 +121,16 @@ export default function WorkoutImport() {
     const exercises = createWorkoutExercises(draft);
     const name = workoutName.trim();
 
-    WorkoutRepository.saveById(workoutId, exercises);
     SavedWorkoutRepository.save({
       id: workoutId,
       name,
       detail: `${exercises.length} exercises`,
+      exercises,
     });
+
+    if (startAfterSaving) {
+      SavedWorkoutRepository.createSession(workoutId);
+    }
 
     navigate(startAfterSaving ? `/workouts/${workoutId}` : "/workouts?refresh=saved");
   }
