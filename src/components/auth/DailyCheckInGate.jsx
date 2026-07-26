@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { CloudCheckInRepository } from "../../services/repositories/cloudCheckInRepository";
 
+const COMPLETED_DAY_KEY = "trackfit_checkin_completed_local_day";
+
 function getLocalDateKey() {
   const now = new Date();
   const year = now.getFullYear();
@@ -16,26 +18,36 @@ export default function DailyCheckInGate({ children }) {
 
   useEffect(() => {
     let active = true;
+    const localToday = getLocalDateKey();
 
     async function checkToday() {
+      if (localStorage.getItem(COMPLETED_DAY_KEY) === localToday) {
+        if (active) setStatus("complete");
+        return;
+      }
+
       try {
         const checkIns = await CloudCheckInRepository.getAll();
         const hasCheckedIn = checkIns.some(
-          (checkIn) => checkIn.date === getLocalDateKey(),
+          (checkIn) => checkIn.date === localToday,
         );
 
+        if (hasCheckedIn) localStorage.setItem(COMPLETED_DAY_KEY, localToday);
         if (active) setStatus(hasCheckedIn ? "complete" : "required");
       } catch (error) {
         console.warn("Unable to verify today's check-in.", error);
         const cached = CloudCheckInRepository.getCached();
         const hasCachedCheckIn = cached.some(
-          (checkIn) => checkIn.date === getLocalDateKey(),
+          (checkIn) => checkIn.date === localToday,
         );
+
+        if (hasCachedCheckIn) localStorage.setItem(COMPLETED_DAY_KEY, localToday);
         if (active) setStatus(hasCachedCheckIn ? "complete" : "required");
       }
     }
 
     function handleSaved() {
+      localStorage.setItem(COMPLETED_DAY_KEY, getLocalDateKey());
       setStatus("complete");
     }
 
