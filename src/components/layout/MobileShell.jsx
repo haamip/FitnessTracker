@@ -1,5 +1,6 @@
 import { useLocation } from "react-router-dom";
 import BottomNav from "./BottomNav";
+import AccountMenu from "./AccountMenu";
 import logo from "../../assets/brand/trackfit-logo.png";
 import "./MobileShell.css";
 
@@ -28,6 +29,7 @@ export default function MobileShell({ children }) {
             {isDeveloperTools ? "Developer cockpit" : "Built to move"}
           </span>
         </div>
+        {!isDeveloperTools && <AccountMenu />}
       </header>
 
       <main className="mobile-content">{children}</main>
