@@ -88,8 +88,6 @@ async function syncDailyCheckIn(record) {
         current.map((item) => item.date === record.date ? { ...item, id: data.id } : item),
       );
     }
-
-    window.dispatchEvent(new CustomEvent("trackfit:checkin-saved", { detail: { date: record.date } }));
   } catch (error) {
     console.warn("Daily check-in cloud save failed; check-in remains cached locally.", error);
   }
@@ -179,7 +177,10 @@ export const CheckInRepository = {
   getAll() { return readJson(CHECKINS_KEY, []).sort(newestFirst); },
   saveAll(checkIns) {
     writeJson(CHECKINS_KEY, checkIns);
-    if (checkIns[0]) syncQuietly(syncDailyCheckIn(checkIns[0]));
+    if (checkIns[0]) {
+      window.dispatchEvent(new CustomEvent("trackfit:checkin-saved", { detail: { date: checkIns[0].date } }));
+      syncQuietly(syncDailyCheckIn(checkIns[0]));
+    }
   },
   clear() { removeJson(CHECKINS_KEY); },
 };
