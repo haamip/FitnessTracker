@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { LogOut, Menu, UserRound, X } from "lucide-react";
-import { supabase } from "../../services/supabase";
+import { supabase } from "../../services/supabaseClient";
 import "./AccountMenu.css";
 
 export default function AccountMenu() {
