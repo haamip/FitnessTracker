@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { LogOut, Menu, UserRound, X } from "lucide-react";
-import { supabase } from "../../services/supabaseClient";
+import { supabase } from "../../services/supabase";
 import "./AccountMenu.css";
 
 export default function AccountMenu() {
@@ -42,36 +42,19 @@ export default function AccountMenu() {
 
   return (
     <>
-      <button
-        className="account-menu-button"
-        onClick={() => setOpen(true)}
-        type="button"
-        aria-label="Open account menu"
-      >
+      <button className="account-menu-button" onClick={() => setOpen(true)} type="button" aria-label="Open account menu">
         <Menu size={23} />
       </button>
 
-      {open && (
-        <button
-          className="account-menu-backdrop"
-          onClick={() => setOpen(false)}
-          type="button"
-          aria-label="Close account menu"
-        />
-      )}
+      {open && <button className="account-menu-backdrop" onClick={() => setOpen(false)} type="button" aria-label="Close account menu" />}
 
-      <aside
-        className={open ? "account-drawer account-drawer--open" : "account-drawer"}
-        aria-hidden={!open}
-      >
+      <aside className={open ? "account-drawer account-drawer--open" : "account-drawer"} aria-hidden={!open}>
         <div className="account-drawer__header">
           <div>
             <strong>{name}</strong>
             <span>{email}</span>
           </div>
-          <button onClick={() => setOpen(false)} type="button" aria-label="Close menu">
-            <X size={22} />
-          </button>
+          <button onClick={() => setOpen(false)} type="button" aria-label="Close menu"><X size={22} /></button>
         </div>
 
         <nav>

@@ -6,7 +6,13 @@
  */
 
 import { NavLink } from "react-router-dom";
-import { Activity, Brain, Dumbbell, TrendingUp, Utensils } from "lucide-react";
+import {
+  Activity,
+  Brain,
+  Dumbbell,
+  TrendingUp,
+  Utensils,
+} from "lucide-react";
 import "./BottomNav.css";
 
 export default function BottomNav() {
