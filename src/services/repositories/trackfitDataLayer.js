@@ -68,7 +68,7 @@ async function syncDailyCheckIn(record) {
       mood: record.mood || "Okay",
       energy: Math.round(toNumber(record.energy ?? 5)),
       body_feel: record.bodyFeel || record.soreness || "Mild",
-      trained_today: Boolean(record.trainedToday ?? record.trained === true || record.trained === "Yes"),
+      trained_today: Boolean(record.trainedToday ?? (record.trained === true || record.trained === "Yes")),
       training_note: record.trainingNote || null,
       updated_at: new Date().toISOString(),
     };
