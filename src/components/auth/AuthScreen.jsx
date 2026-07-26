@@ -7,20 +7,18 @@ const shellStyle = {
   display: "grid",
   placeItems: "center",
   padding: "24px 16px",
-  background:
-    "radial-gradient(circle at top, rgba(59, 130, 246, 0.16), transparent 38%), var(--background, #080b12)",
+  background: "#080b12",
 };
 
 const cardStyle = {
-  width: "min(100%, 440px)",
+  width: "min(100%, 420px)",
   display: "grid",
-  gap: 24,
-  padding: "clamp(24px, 6vw, 36px)",
-  border: "1px solid rgba(148, 163, 184, 0.18)",
-  borderRadius: 28,
-  background: "rgba(15, 23, 42, 0.92)",
-  boxShadow: "0 24px 80px rgba(0, 0, 0, 0.38)",
-  backdropFilter: "blur(18px)",
+  gap: 22,
+  padding: "28px 24px",
+  border: "1px solid rgba(148, 163, 184, 0.16)",
+  borderRadius: 24,
+  background: "#111827",
+  boxShadow: "0 20px 60px rgba(0, 0, 0, 0.32)",
 };
 
 const fieldStyle = {
@@ -29,11 +27,11 @@ const fieldStyle = {
   alignItems: "center",
   gap: 10,
   width: "100%",
-  padding: "0 14px",
   minHeight: 52,
-  border: "1px solid rgba(148, 163, 184, 0.24)",
+  padding: "0 14px",
+  border: "1px solid rgba(148, 163, 184, 0.22)",
   borderRadius: 14,
-  background: "rgba(2, 6, 23, 0.52)",
+  background: "#0b1220",
 };
 
 const inputStyle = {
@@ -86,17 +84,17 @@ export default function AuthScreen() {
               placeItems: "center",
               borderRadius: 16,
               background: "linear-gradient(135deg, #2563eb, #14b8a6)",
-              boxShadow: "0 12px 34px rgba(37, 99, 235, 0.28)",
             }}
           >
             <Dumbbell size={26} color="white" aria-hidden="true" />
           </div>
+
           <div>
             <p className="eyebrow">TrackFit</p>
             <h1 id="auth-title" style={{ marginBottom: 8 }}>
               {isSignup ? "Create your account" : "Welcome back"}
             </h1>
-            <p style={{ margin: 0, color: "var(--muted-foreground, #94a3b8)" }}>
+            <p style={{ margin: 0, color: "#94a3b8" }}>
               Your workouts, check-ins and nutrition stay linked to you.
             </p>
           </div>
