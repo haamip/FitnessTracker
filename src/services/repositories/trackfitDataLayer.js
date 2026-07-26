@@ -13,6 +13,7 @@ const AI_PLAN_KEY = "trackfit_ai_workout_plan";
 function removeJson(key) { localStorage.removeItem(key); }
 function newestFirst(left, right) { return new Date(right.completedAt || right.updatedAt || right.date || 0) - new Date(left.completedAt || left.updatedAt || left.date || 0); }
 function syncQuietly(action) { Promise.resolve(action).catch((error) => console.warn("TrackFit cloud sync deferred:", error)); }
+function toNumber(value) { const number = Number.parseFloat(value); return Number.isFinite(number) ? number : 0; }
 
 async function syncCompletedWorkout(record) {
   if (!supabase) return;
@@ -45,6 +46,52 @@ async function syncCompletedWorkout(record) {
     }
   } catch (error) {
     console.warn("Workout cloud save failed; session remains stored locally.", error);
+  }
+}
+
+async function syncDailyCheckIn(record) {
+  if (!supabase || !record?.date) return;
+
+  try {
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError) throw userError;
+    const userId = userData.user?.id;
+    if (!userId) return;
+
+    const payload = {
+      user_id: userId,
+      checkin_date: record.date,
+      weight_kg: toNumber(record.weightKg ?? record.weight),
+      protein_g: toNumber(record.proteinG ?? record.protein),
+      water_l: toNumber(record.waterL ?? record.water),
+      sleep_hours: toNumber(record.sleepHours ?? record.sleep),
+      mood: record.mood || "Okay",
+      energy: Math.round(toNumber(record.energy ?? 5)),
+      body_feel: record.bodyFeel || record.soreness || "Mild",
+      trained_today: Boolean(record.trainedToday ?? record.trained === true || record.trained === "Yes"),
+      training_note: record.trainingNote || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase
+      .from("daily_checkins")
+      .upsert(payload, { onConflict: "user_id,checkin_date" })
+      .select("*")
+      .single();
+
+    if (error) throw error;
+
+    if (data?.id) {
+      const current = readJson(CHECKINS_KEY, []);
+      writeJson(
+        CHECKINS_KEY,
+        current.map((item) => item.date === record.date ? { ...item, id: data.id } : item),
+      );
+    }
+
+    window.dispatchEvent(new CustomEvent("trackfit:checkin-saved", { detail: { date: record.date } }));
+  } catch (error) {
+    console.warn("Daily check-in cloud save failed; check-in remains cached locally.", error);
   }
 }
 
@@ -128,5 +175,12 @@ export const AIPlanRepository = {
 };
 
 export const CardioRepository = { getAll() { return readJson(CARDIO_KEY, []).sort(newestFirst); }, saveAll(cardio) { writeJson(CARDIO_KEY, cardio); }, clear() { removeJson(CARDIO_KEY); } };
-export const CheckInRepository = { getAll() { return readJson(CHECKINS_KEY, []).sort(newestFirst); }, saveAll(checkIns) { writeJson(CHECKINS_KEY, checkIns); }, clear() { removeJson(CHECKINS_KEY); } };
+export const CheckInRepository = {
+  getAll() { return readJson(CHECKINS_KEY, []).sort(newestFirst); },
+  saveAll(checkIns) {
+    writeJson(CHECKINS_KEY, checkIns);
+    if (checkIns[0]) syncQuietly(syncDailyCheckIn(checkIns[0]));
+  },
+  clear() { removeJson(CHECKINS_KEY); },
+};
 export const NutritionRepository = { getAll() { return readJson(NUTRITION_KEY, []).sort(newestFirst); }, getToday(date = new Date().toISOString().slice(0, 10)) { return this.getAll().filter((meal) => meal.date === date); }, saveAll(meals) { writeJson(NUTRITION_KEY, meals); }, add(meal) { const meals = [meal, ...this.getAll()]; this.saveAll(meals); return meals; }, clear() { removeJson(NUTRITION_KEY); } };
