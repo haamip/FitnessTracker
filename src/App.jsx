@@ -1,6 +1,6 @@
 import "./services/backgroundTimerPatch";
 import { Suspense, lazy } from "react";
-import { BrowserRouter, Routes, Route, useParams } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route, useParams } from "react-router-dom";
 import MobileShell from "./components/layout/MobileShell";
 import AuthGate from "./components/auth/AuthGate";
 import DailyCheckInGate from "./components/auth/DailyCheckInGate";
@@ -69,6 +69,7 @@ function AppRoutes() {
             <Route path="/workouts/:id" element={<WorkoutDetailRoute />} />
             <Route path="/nutrition" element={<Nutrition />} />
             <Route path="/exercises/:id" element={<ExerciseDetail />} />
+            <Route path="*" element={<Navigate replace to="/" />} />
           </Routes>
         </Suspense>
       </MobileShell>
