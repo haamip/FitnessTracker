@@ -3,15 +3,10 @@
  *
  * Purpose:
  * Main bottom navigation for the mobile app shell.
- *
- * Product direction:
- * Keep the visible app simple. Coach is the home screen while cardio,
- * check-in, builders, and deeper tools remain available through the pages
- * that need them rather than competing for permanent navigation space.
  */
 
 import { NavLink } from "react-router-dom";
-import { Brain, Dumbbell, TrendingUp, Utensils } from "lucide-react";
+import { Activity, Brain, Dumbbell, TrendingUp, Utensils } from "lucide-react";
 import "./BottomNav.css";
 
 export default function BottomNav() {
@@ -25,6 +20,11 @@ export default function BottomNav() {
       <NavLink to="/workouts">
         <Dumbbell size={20} />
         <span>Train</span>
+      </NavLink>
+
+      <NavLink to="/cardio">
+        <Activity size={20} />
+        <span>Cardio</span>
       </NavLink>
 
       <NavLink to="/nutrition">
