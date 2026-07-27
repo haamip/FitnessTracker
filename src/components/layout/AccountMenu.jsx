@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { LogOut, Menu, UserRound, X } from "lucide-react";
+import { ClipboardList, LogOut, Menu, UserRound, X } from "lucide-react";
 import { supabase } from "../../services/supabase";
 import "./AccountMenu.css";
 
@@ -58,6 +58,10 @@ export default function AccountMenu() {
         </div>
 
         <nav>
+          <Link to="/logs" onClick={() => setOpen(false)}>
+            <ClipboardList size={20} />
+            <span>Daily logs</span>
+          </Link>
           <Link to="/profile" onClick={() => setOpen(false)}>
             <UserRound size={20} />
             <span>Profile setup</span>
