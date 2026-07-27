@@ -22,6 +22,8 @@ const CoachIntelligence = lazy(() => import("./pages/CoachIntelligence"));
 const Nutrition = lazy(() => import("./pages/Nutrition"));
 const Profile = lazy(() => import("./pages/Profile"));
 const AIPlayground = lazy(() => import("./pages/AIPlayground"));
+const AISuite = lazy(() => import("./pages/AISuite"));
+const MealScanner = lazy(() => import("./pages/MealScanner"));
 const CompletedWorkoutDetail = lazy(() => import("./pages/CompletedWorkoutDetail"));
 const DeveloperTools = lazy(() => import("./pages/DeveloperTools"));
 const ExerciseDetail = lazy(() => import("./pages/ExerciseDetail"));
@@ -59,6 +61,7 @@ function AppRoutes() {
             <Route path="/progress" element={<Progress />} />
             <Route path="/coach" element={<Coach />} />
             <Route path="/coach/intelligence" element={<CoachIntelligence />} />
+            <Route path="/ai" element={<AISuite />} />
             <Route path="/workouts" element={<Workouts />} />
             <Route path="/workouts/builder" element={<AIWorkoutBuilder />} />
             <Route path="/workouts/import" element={<WorkoutImport />} />
@@ -68,6 +71,7 @@ function AppRoutes() {
             <Route path="/workouts/history/:historyId" element={<CompletedWorkoutDetail />} />
             <Route path="/workouts/:id" element={<WorkoutDetailRoute />} />
             <Route path="/nutrition" element={<Nutrition />} />
+            <Route path="/nutrition/scan" element={<MealScanner />} />
             <Route path="/exercises/:id" element={<ExerciseDetail />} />
             <Route path="*" element={<Navigate replace to="/" />} />
           </Routes>
