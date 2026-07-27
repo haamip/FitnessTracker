@@ -7,62 +7,16 @@
   background: #f6f8fb;
 }
 
-.mobile-frame.dev-frame {
-  max-width: 1180px;
-  padding: 18px 22px 36px;
-  background: #f3f4f6;
-}
-
-.app-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 2px 14px;
-  background: #f6f8fb;
-}
-
-.dev-frame .app-topbar {
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-  background: rgba(243, 244, 246, 0.92);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-}
-
-.topbar-logo {
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
-  border-radius: 14px;
-}
-
-.app-topbar div {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.1;
-}
-
-.app-topbar strong {
-  font-size: 18px;
-  font-weight: 900;
-  color: #111827;
-}
-
-.app-topbar span {
-  margin-top: 4px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #6b7280;
-}
-
-.mobile-content {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.dev-frame .mobile-content {
-  display: block;
-}
+.mobile-frame.dev-frame { max-width: 1180px; padding: 18px 22px 36px; background: #f3f4f6; }
+.app-topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 10px; padding: 8px 2px 14px; background: #f6f8fb; }
+.dev-frame .app-topbar { border-bottom: 1px solid rgba(15,23,42,.08); background: rgba(243,244,246,.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.topbar-logo { width: 44px; height: 44px; object-fit: contain; border-radius: 14px; }
+.app-topbar > div:not(.app-topbar-actions) { display: flex; flex-direction: column; line-height: 1.1; }
+.app-topbar strong { font-size: 18px; font-weight: 900; color: #111827; }
+.app-topbar span { margin-top: 4px; font-size: 12px; font-weight: 700; color: #6b7280; }
+.app-topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+.shift-mode-toggle { display: inline-flex; align-items: center; gap: 5px; min-height: 36px; padding: 7px 9px; border: 1px solid rgba(15,23,42,.1); border-radius: 999px; background: #fff; color: #172033; font-weight: 900; cursor: pointer; }
+.shift-mode-toggle span { margin: 0; color: inherit; font-size: 11px; }
+.mobile-content { display: flex; flex-direction: column; gap: 14px; }
+.dev-frame .mobile-content { display: block; }
+@media (max-width: 370px) { .shift-mode-toggle span { display: none; } .shift-mode-toggle { width: 36px; justify-content: center; padding: 7px; } }
