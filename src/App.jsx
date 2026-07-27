@@ -24,6 +24,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 const AIPlayground = lazy(() => import("./pages/AIPlayground"));
 const AISuite = lazy(() => import("./pages/AISuite"));
 const MealScanner = lazy(() => import("./pages/MealScanner"));
+const DailyLogs = lazy(() => import("./pages/DailyLogs"));
 const CompletedWorkoutDetail = lazy(() => import("./pages/CompletedWorkoutDetail"));
 const DeveloperTools = lazy(() => import("./pages/DeveloperTools"));
 const ExerciseDetail = lazy(() => import("./pages/ExerciseDetail"));
@@ -59,6 +60,7 @@ function AppRoutes() {
             <Route path="/checkin" element={<DailyCheckIn />} />
             <Route path="/cardio" element={<CardioLog />} />
             <Route path="/progress" element={<Progress />} />
+            <Route path="/logs" element={<DailyLogs />} />
             <Route path="/coach" element={<Coach />} />
             <Route path="/coach/intelligence" element={<CoachIntelligence />} />
             <Route path="/ai" element={<AISuite />} />
