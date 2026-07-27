@@ -1,5 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+
+vi.mock("./components/auth/AuthGate", () => ({
+  default: ({ children }) => children,
+}));
+
+vi.mock("./components/auth/DailyCheckInGate", () => ({
+  default: ({ children }) => children,
+}));
+
 import App from "./App";
 
 describe("TrackFit app shell", () => {
