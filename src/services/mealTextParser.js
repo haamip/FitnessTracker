@@ -1,5 +1,20 @@
 const NUMBER_PATTERN = /(-?\d+(?:\.\d+)?)/;
 
+const MEAL_TYPE_ALIASES = [
+  { type: "Breakfast", aliases: ["breakfast", "brekkie"] },
+  { type: "Morning smoko", aliases: ["morning snack", "morning smoko", "am snack", "smoko"] },
+  { type: "Lunch", aliases: ["lunch", "midday meal"] },
+  { type: "Afternoon smoko", aliases: ["afternoon snack", "afternoon smoko", "pm snack"] },
+  { type: "Dinner", aliases: ["dinner", "tea", "evening meal", "main meal"] },
+  { type: "Shake", aliases: ["shake", "protein shake"] },
+  { type: "Snack", aliases: ["snack"] },
+  { type: "Drink", aliases: ["drink", "beverage"] },
+  { type: "Pre-shift meal", aliases: ["pre-shift meal", "pre shift meal"] },
+  { type: "Night smoko", aliases: ["night snack", "night smoko"] },
+  { type: "Main break", aliases: ["main break"] },
+  { type: "Post-shift meal", aliases: ["post-shift meal", "post shift meal"] },
+];
+
 function cleanLabel(value = "") {
   return value
     .replace(/^[-*•]\s*/, "")
@@ -19,6 +34,17 @@ function readValue(lines, labels) {
   return line ? readNumber(line) : 0;
 }
 
+function normaliseMealType(value = "") {
+  const cleaned = value.trim().toLowerCase();
+  if (!cleaned) return "";
+
+  const match = MEAL_TYPE_ALIASES.find(({ aliases }) =>
+    aliases.some((alias) => cleaned === alias || cleaned.includes(alias)),
+  );
+
+  return match?.type || value.trim();
+}
+
 export function parseMealText(sourceText = "") {
   const lines = sourceText
     .split(/\r?\n/)
@@ -34,7 +60,7 @@ export function parseMealText(sourceText = "") {
     const lower = line.toLowerCase();
 
     if (lower.startsWith("meal:")) {
-      mealType = line.slice(line.indexOf(":") + 1).trim();
+      mealType = normaliseMealType(line.slice(line.indexOf(":") + 1));
       return;
     }
 
