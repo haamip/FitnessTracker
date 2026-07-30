@@ -14,6 +14,42 @@ const CALORIE_TARGET = 2500;
 const PROTEIN_TARGET = 185;
 const toNumber = (value) => Number.isFinite(Number.parseFloat(value)) ? Number.parseFloat(value) : 0;
 const roundDisplay = (value) => Number.parseFloat(toNumber(value).toFixed(2));
+
+/**
+ * Convert generic imported labels such as Snack or Drink into one of the
+ * meal categories available for the user's current day/night shift mode.
+ */
+function resolveMealType(parsedType, mealTypes, shiftMode, fallback) {
+  const requested = parsedType.trim().toLowerCase();
+  const exactMatch = mealTypes.find((type) => type.toLowerCase() === requested);
+  if (exactMatch) return exactMatch;
+
+  const preferredLabels = shiftMode === "night"
+    ? {
+        breakfast: "Post-shift meal",
+        lunch: "Main break",
+        dinner: "Pre-shift meal",
+        snack: "Night smoko",
+        drink: "Night smoko",
+        shake: "Shake",
+        "morning smoko": "Morning smoko",
+        "afternoon smoko": "Night smoko",
+      }
+    : {
+        breakfast: "Breakfast",
+        lunch: "Lunch",
+        dinner: "Dinner",
+        snack: "Morning smoko",
+        drink: "Morning smoko",
+        shake: "Shake",
+        "morning smoko": "Morning smoko",
+        "afternoon smoko": "Afternoon smoko",
+      };
+
+  const preferred = preferredLabels[requested];
+  return mealTypes.find((type) => type === preferred) || fallback;
+}
+
 function fromDatabase(row) { return { id: row.id, date: row.entry_date, type: row.meal_type, name: row.name, calories: toNumber(row.calories), protein: toNumber(row.protein_g), carbs: toNumber(row.carbs_g), fats: toNumber(row.fats_g), createdAt: row.created_at }; }
 
 export default function Nutrition() {
@@ -63,16 +99,16 @@ export default function Nutrition() {
   function handlePasteParse() {
     const result = parseMealText(pasteText);
     if (!result.recognised) { setMessage("Could not recognise that meal. Use the MEAL, ITEMS and TOTALS format."); return; }
-    const matchingType = mealTypes.find((type) => type.toLowerCase() === result.mealType.toLowerCase());
+    const matchingType = resolveMealType(result.mealType, mealTypes, shiftMode, form.type);
     setForm({
-      type: matchingType || form.type,
+      type: matchingType,
       name: result.name || form.name,
       calories: result.calories || "",
       protein: result.protein || "",
       carbs: result.carbs || "",
       fats: result.fats || "",
     });
-    setMessage("Meal read. Check the numbers, then tap Add meal.");
+    setMessage(`${matchingType} selected. Check the numbers, then tap Add meal.`);
   }
 
   async function handleSubmit(event) {
