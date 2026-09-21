@@ -1,0 +1,267 @@
+/* TrackFit visual system. Loaded after feature styles so the app keeps its existing behaviour. */
+:root {
+  --bg: #f4f6f2;
+  --card: #ffffff;
+  --text: #16251d;
+  --line: #e1e7df;
+  --gold: #244937;
+  --gold-soft: #eaf3e2;
+  --radius: 20px;
+  --tf-ink: #16251d;
+  --tf-forest: #1d3b2d;
+  --tf-lime: #cbef91;
+  --tf-subtle: #637269;
+  --tf-shadow: 0 8px 28px rgba(24, 43, 31, 0.045);
+}
+
+html, body, #root {
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--tf-ink);
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-synthesis: none;
+}
+body { line-height: 1.5; }
+button, input, textarea, select { font: inherit; }
+p { color: var(--tf-subtle); }
+a { -webkit-tap-highlight-color: transparent; }
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 3px solid #78ac6b;
+  outline-offset: 3px;
+}
+button:disabled { opacity: .52; cursor: not-allowed; }
+
+.mobile-frame {
+  width: 100%;
+  max-width: 520px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: max(14px, env(safe-area-inset-top)) 18px calc(110px + env(safe-area-inset-bottom));
+  background: var(--bg);
+}
+.mobile-content, .mobile-content > .screen { min-width: 0; }
+.mobile-content { gap: 20px; }
+.app-topbar {
+  top: 0;
+  margin: -14px -18px 8px;
+  padding: 18px 20px 14px;
+  gap: 12px;
+  background: rgba(244, 246, 242, .94);
+  border-bottom: 1px solid rgba(39, 72, 49, .075);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.topbar-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  object-fit: contain;
+  background: #ffffff;
+  border: 1px solid var(--line);
+}
+.app-topbar strong { font-size: 17px; font-weight: 800; letter-spacing: -.035em; color: var(--tf-ink); }
+.app-topbar span { color: var(--tf-subtle); font-size: 10px; font-weight: 650; letter-spacing: .035em; }
+.app-topbar-actions { gap: 8px; }
+.shift-mode-toggle, .account-menu-button {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  background: white;
+  color: var(--tf-ink);
+  box-shadow: none;
+}
+.shift-mode-toggle { padding: 7px 11px; font-weight: 650; }
+.account-menu-button { width: 40px; height: 40px; flex-basis: 40px; border-radius: 13px; }
+.account-menu-button:hover, .shift-mode-toggle:hover { background: #edf2e8; }
+
+/* Calm, legible navigation on small screens. */
+.bottom-nav {
+  left: 50%;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  width: min(490px, calc(100% - 24px));
+  height: 72px;
+  gap: 2px;
+  padding: 6px;
+  border: 1px solid rgba(197, 218, 198, .22);
+  border-radius: 23px;
+  background: rgba(24, 43, 32, .97);
+  box-shadow: 0 13px 30px rgba(18, 43, 27, .16);
+  backdrop-filter: blur(18px);
+}
+.bottom-nav a {
+  min-width: 0;
+  flex: 1;
+  height: 58px;
+  gap: 4px;
+  border-radius: 16px;
+  color: #c0cfc3;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: .01em;
+  transition: background .18s ease, color .18s ease;
+}
+.bottom-nav a svg { stroke-width: 1.9; }
+.bottom-nav a.active {
+  color: #172c20;
+  background: var(--tf-lime);
+}
+.bottom-nav a:focus-visible { outline-offset: -2px; }
+
+/* Shared components across coach, training, nutrition and progress. */
+.screen { gap: 20px; }
+.screen h1, .page-title { letter-spacing: -.045em; font-weight: 800; line-height: 1.08; }
+.screen h2, .section-header h2 { letter-spacing: -.025em; font-weight: 750; }
+.screen .eyebrow, .coach-kicker {
+  color: #557461;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: .12em;
+  opacity: 1;
+}
+.card, .panel, .stat-card, .metric-card, .dashboard-card,
+.workout-card, .checkin-card, .tf-card, .chart-card, .form-card,
+.exercise-card, .achievement-card, .list-card, .action-card,
+.coach-focus-card, .coach-message-card, .coach-essentials, .coach-quick-links {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: var(--tf-shadow);
+}
+.card, .panel, .tf-card, .chart-card, .form-card { padding: 20px; }
+.card + .card, .panel + .panel { margin-top: 0; }
+input, textarea, select {
+  min-height: 44px;
+  border: 1px solid #d9e2d8;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--tf-ink);
+}
+input:focus, textarea:focus, select:focus { border-color: #699c6e; box-shadow: 0 0 0 3px rgba(113, 161, 107, .16); }
+button, .btn, .primary-btn, .tf-button, .primary-button {
+  min-height: 44px;
+  border-radius: 13px;
+  background: var(--tf-forest);
+  color: white;
+  font-weight: 700;
+  box-shadow: none;
+}
+button.secondary, .btn-secondary, .tf-button--ghost { background: #fff; color: var(--tf-ink); border: 1px solid var(--line); }
+.stat-pill, .pill, .set-pill.done { background: var(--gold-soft); color: var(--tf-forest); border-color: #d6e6ce; }
+.progress-line span { background: #75ad69; }
+.list-card, .exercise-card, .workout-card, .row, .list-item, .exercise-item, .workout-item { border-radius: 17px; }
+.list-card p, .exercise-card p, .list-card-end, .metric-card span, .stats-grid span { color: var(--tf-subtle); font-weight: 500; }
+.icon-bubble { background: var(--gold-soft); color: var(--tf-forest); border-radius: 14px; }
+.action-card svg, .tf-card svg, .stats-grid svg { color: #477552; }
+.action-card strong, .list-card h3, .metric-card strong, .stats-grid strong { font-weight: 750; }
+
+/* Coach is the landing page: lead with one clear decision, not decorative cards. */
+.coach-home { gap: 18px; }
+.coach-welcome, .hero-card, .screen-hero:not(.light), .hero-premium, .v4-workout-hero {
+  color: #fff;
+  border: 1px solid #2b4736;
+  border-radius: 23px;
+  background: linear-gradient(135deg, #172e22 0%, #234732 100%);
+  box-shadow: 0 14px 32px rgba(25, 53, 33, .12);
+}
+.coach-welcome { align-items: center; padding: 27px 23px; }
+.coach-welcome h1 { max-width: 250px; font-size: clamp(30px, 7.4vw, 40px); font-weight: 800; letter-spacing: -.055em; line-height: 1.02; }
+.coach-welcome .coach-kicker, .screen-hero:not(.light) .eyebrow { color: var(--tf-lime); }
+.coach-welcome > div:first-child > p:last-child { color: #d2e3d6; font-weight: 450; font-size: 13px; line-height: 1.55; }
+.coach-readiness { width: 78px; height: 78px; background: conic-gradient(var(--tf-lime) var(--readiness), rgba(255,255,255,.16) 0); }
+.coach-readiness > div { width: 61px; height: 61px; background: #203b2c; }
+.coach-readiness strong { font-size: 23px; font-weight: 800; }
+.coach-readiness span { color: #d5e5d7; font-size: 9px; font-weight: 650; }
+.coach-focus-card { gap: 15px; padding: 22px; }
+.coach-focus-icon, .coach-essential-icon, .coach-message-heading > span { color: var(--tf-forest); background: var(--gold-soft); border-radius: 13px; }
+.coach-focus-copy h2, .coach-message-card h2, .coach-section-heading h2 { color: var(--tf-ink); font-weight: 750; }
+.coach-focus-copy > p:last-child { font-weight: 450; color: var(--tf-subtle); line-height: 1.55; }
+.coach-primary-action { min-height: 50px; border-radius: 13px; background: var(--tf-forest); color: #fff; font-weight: 700; }
+.coach-primary-action:hover, .primary-button:hover { background: #315c44; }
+.coach-message-card, .coach-essentials { padding: 22px; }
+.coach-message-card h2 { font-size: 19px; font-weight: 650; line-height: 1.45; }
+.coach-essential-card { border: 1px solid #edf1e9; border-radius: 15px; background: #f7f9f5; }
+.coach-essential-card small { color: #557461; font-weight: 700; }
+.coach-essential-card strong { color: var(--tf-ink); font-weight: 750; }
+.coach-essential-card p { color: var(--tf-subtle); font-weight: 450; }
+.coach-quick-links > a { color: var(--tf-ink); }
+.coach-quick-links > a + a { border-top-color: var(--line); }
+.coach-quick-links > a > svg:first-child { color: #527d56; }
+.coach-quick-links strong { font-weight: 700; }
+.coach-quick-links small { color: var(--tf-subtle); font-weight: 450; }
+.hero-card { box-shadow: 0 14px 32px rgba(25, 53, 33, .12); }
+.start-button { border-radius: 13px; background: var(--tf-forest); font-weight: 700; }
+.fake-chart span, .fake-chart::after { border-bottom-color: #7eaa70; }
+
+/* A real desktop layout, without disturbing mobile routes or interactions. */
+@media (min-width: 900px) {
+  body { background: #edf1eb; }
+  .mobile-frame:not(.dev-frame) {
+    max-width: 1240px;
+    min-height: calc(100dvh - 32px);
+    margin: 16px auto;
+    padding: 0 24px 32px;
+    display: grid;
+    grid-template-columns: 90px minmax(0, 1fr);
+    grid-template-rows: 76px minmax(0, 1fr);
+    column-gap: 30px;
+    align-items: start;
+    background: var(--bg);
+    border: 1px solid #e0e7dc;
+    border-radius: 25px;
+    box-shadow: 0 24px 65px rgba(28, 49, 32, .055);
+  }
+  .mobile-frame:not(.dev-frame) .app-topbar {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    margin: 0 -24px;
+    padding: 14px 28px;
+    border-radius: 25px 25px 0 0;
+  }
+  .mobile-frame:not(.dev-frame) .mobile-content {
+    grid-column: 2;
+    grid-row: 2;
+    width: 100%;
+    max-width: 1000px;
+    padding: 26px 0;
+  }
+  .mobile-frame:not(.dev-frame) .bottom-nav {
+    grid-column: 1;
+    grid-row: 2;
+    position: sticky;
+    top: 102px;
+    left: auto;
+    bottom: auto;
+    transform: none;
+    width: 84px;
+    height: auto;
+    min-height: 0;
+    margin-top: 26px;
+    padding: 8px;
+    flex-direction: column;
+    gap: 6px;
+    border-radius: 20px;
+  }
+  .mobile-frame:not(.dev-frame) .bottom-nav a {
+    flex: none;
+    width: 66px;
+    height: 65px;
+    font-size: 10px;
+    border-radius: 13px;
+  }
+  .coach-welcome h1 { max-width: none; }
+  .coach-essential-grid, .stats-grid, .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .coach-quick-links { max-width: 100%; }
+  .mobile-frame.dev-frame { max-width: 1180px; }
+}
+@media (max-width: 370px) {
+  .mobile-frame { padding-left: 12px; padding-right: 12px; }
+  .app-topbar { margin-left: -12px; margin-right: -12px; padding-left: 14px; padding-right: 14px; }
+  .coach-welcome { padding: 20px 17px; gap: 8px; }
+  .coach-welcome h1 { font-size: 28px; }
+  .coach-readiness { width: 69px; height: 69px; }
+  .coach-readiness > div { width: 53px; height: 53px; }
+  .coach-focus-card { padding: 17px; }
+  .bottom-nav a { font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
