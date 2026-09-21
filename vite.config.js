@@ -9,6 +9,12 @@ export default defineConfig({
     tailwindcss(),
   ],
 
+  // Route components are lazy loaded; a single CSS bundle keeps their styles
+  // from being injected after the shared visual system on navigation.
+  build: {
+    cssCodeSplit: false,
+  },
+
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
