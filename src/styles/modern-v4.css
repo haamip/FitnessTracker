@@ -1,0 +1,96 @@
+/* Higher-specificity finishes keep the design consistent across lazy-loaded routes. */
+#root .dashboard-v4 .v4-hero,
+#root .v4-workout-hero,
+#root .v4-detail-hero {
+  border: 1px solid #2b4a35;
+  border-radius: 23px;
+  background: linear-gradient(135deg, #172e22, #254834);
+  color: #fff;
+  box-shadow: 0 14px 32px rgba(25, 53, 33, .12);
+}
+#root .v4-hero h1, #root .v4-workout-hero h1,
+#root .v4-detail-hero h1 {
+  color: #fff;
+  font-size: clamp(30px, 7vw, 42px);
+  font-weight: 800;
+  letter-spacing: -.05em;
+  line-height: 1.03;
+}
+#root .v4-hero p, #root .v4-workout-hero p,
+#root .v4-detail-hero p { color: #d2e3d6; font-weight: 450; line-height: 1.5; }
+#root .v4-hero .eyebrow, #root .v4-workout-hero .eyebrow,
+#root .v4-detail-hero .eyebrow { color: #cbef91; font-weight: 700; }
+#root .v4-ring { background: conic-gradient(#cbef91 var(--progress), rgba(255,255,255,.13) 0); }
+#root .v4-ring > div { background: #203b2c; }
+#root .v4-goal-strip div { border-radius: 14px; background: rgba(255,255,255,.08); }
+#root .v4-goal-strip span { font-weight: 600; }
+#root .v4-goal-strip strong { font-weight: 750; }
+#root .v4-today-card, #root .v4-stat-card, #root .v4-coach-card,
+#root .v4-achievement-card, #root .v4-mini-summary,
+#root .v4-quick-card, #root .v4-workout-card,
+#root .v4-current-exercise, #root .v4-rest-card,
+#root .v4-exercise-row, #root .v4-notes-card {
+  border: 1px solid #e1e7df;
+  border-radius: 19px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(24,43,31,.045);
+  backdrop-filter: none;
+}
+#root .v4-coach-card { background: #f3f7f0; }
+#root .v4-icon-bubble { border-radius: 13px; background: #eaf3e2; color: #244937; }
+#root .v4-today-card h2, #root .v4-section-heading h2,
+#root .v4-coach-card h2, #root .v4-workout-card h3,
+#root .v4-current-head h2, #root .v4-rest-card h2,
+#root .v4-notes-card h2 { color: #16251d; font-weight: 750; letter-spacing: -.025em; }
+#root .v4-today-card p, #root .v4-coach-card p,
+#root .v4-achievement-card p, #root .v4-workout-card p,
+#root .v4-quick-card span { color: #637269; font-weight: 450; line-height: 1.5; }
+#root .v4-stat-card strong { color: #16251d; font-weight: 750; }
+#root .v4-stat-card span, #root .v4-stat-card small { color: #637269; font-weight: 550; }
+#root .dashboard-v4 .eyebrow { color: #557461; font-weight: 750; }
+#root .v4-quick-card strong { color: #16251d; font-weight: 750; }
+#root .v4-workout-icon, #root .v4-current-icon,
+#root .v4-exercise-number { border-radius: 14px; background: #203e2e; color: #fff; }
+#root .v4-chip, #root .v4-section-heading span {
+  border-radius: 999px;
+  background: #eaf3e2;
+  color: #244937;
+  font-weight: 700;
+}
+#root .v4-workout-progress i, #root .v4-detail-progress b {
+  background: #a0c778;
+}
+#root .v4-workout-card__footer span, #root .v4-workout-card p,
+#root .v4-time, #root .v4-current-head span,
+#root .v4-notes-card span, #root .v4-rest-card span { color: #637269; font-weight: 500; }
+#root .v4-exercise-row.active { border-color: #b8d2ae; background: #f4f9f0; }
+#root .v4-set-tile { border-radius: 15px; color: #16251d; }
+#root .v4-set-tile strong { color: #16251d; font-weight: 700; }
+#root .v4-set-tile.done { border-color: #c9ddbd; background: #eaf3e2; }
+#root .v4-detail-progress strong, #root .v4-detail-progress span { color: #fff; }
+#root .v4-timer-btn { background: #244937; }
+#root .form-grid label { color: #344b3a; font-weight: 650; }
+#root .form-grid input, #root .form-grid select, #root .form-grid textarea {
+  border: 1px solid #d9e2d8;
+  border-radius: 12px;
+  background: #fff;
+}
+#root .screen-hero:not(.light), #root .hero-premium, #root .hero-card {
+  border: 1px solid #2b4a35;
+  border-radius: 23px;
+  background: linear-gradient(135deg,#172e22,#254834);
+  box-shadow: 0 14px 32px rgba(25,53,33,.12);
+}
+#root .screen-hero h1, #root .page-title { font-weight: 800; letter-spacing: -.05em; }
+#root .screen-hero p { font-weight: 450; }
+#root .action-card, #root .list-card { border: 1px solid #e1e7df; border-radius: 19px; box-shadow: 0 8px 28px rgba(24,43,31,.045); }
+#root .action-card svg, #root .tf-card svg { color: #477552; }
+#root .action-card strong, #root .list-card h3 { font-weight: 750; }
+#root .primary-button, #root .start-button { background: #1d3b2d; border-radius: 13px; font-weight: 700; }
+#root .pill { background: #eaf3e2; color: #244937; font-weight: 700; }
+#root .progress-line span { background: #83b671; }
+@media (min-width: 900px) {
+  #root .dashboard-v4 .v4-goal-strip { max-width: 650px; }
+  #root .v4-stat-grid { grid-template-columns: repeat(4,minmax(0,1fr)); }
+  #root .v4-quick-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
