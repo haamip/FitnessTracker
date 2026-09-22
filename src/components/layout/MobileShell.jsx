@@ -13,7 +13,7 @@ export default function MobileShell({ children }) {
       <a className="tf-skip-link" href="#trackfit-main">Skip to content</a>
       <header className="app-topbar tf-topbar">
         <Link className="tf-brand" to="/" aria-label="TrackFit home">
-          <span className="tf-brand-mark" aria-hidden="true">T<span>F</span></span>
+          <span className="tf-brand-mark" aria-hidden="true">TF</span>
           <span className="tf-brand-copy"><strong>TRACKFIT</strong><small>TRAINING, SIMPLIFIED.</small></span>
         </Link>
         {!isDeveloperTools && (
