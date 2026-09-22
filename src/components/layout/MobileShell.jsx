@@ -1,27 +1,21 @@
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import BottomNav from "./BottomNav";
 import AccountMenu from "./AccountMenu";
 import ShiftModeToggle from "./ShiftModeToggle";
-import logo from "../../assets/brand/trackfit-logo.png";
 import "./MobileShell.css";
 
-/**
- * Main phone-frame layout used across TrackFit.
- * The shift switch is global so nutrition dates, AI context and coaching all use
- * the same day-shift or night-shift interpretation.
- */
 export default function MobileShell({ children }) {
-  const location = useLocation();
-  const isDeveloperTools = location.pathname.startsWith("/dev-tools");
+  const { pathname } = useLocation();
+  const isDeveloperTools = pathname.startsWith("/dev-tools");
 
   return (
-    <div className={isDeveloperTools ? "mobile-frame dev-frame" : "mobile-frame"}>
-      <header className="app-topbar">
-        <img src={logo} alt="TrackFit" className="topbar-logo" />
-        <div>
-          <strong>TrackFit</strong>
-          <span>{isDeveloperTools ? "Developer cockpit" : "Built to move"}</span>
-        </div>
+    <div className={isDeveloperTools ? "mobile-frame tf-shell dev-frame" : "mobile-frame tf-shell"}>
+      <a className="tf-skip-link" href="#trackfit-main">Skip to content</a>
+      <header className="app-topbar tf-topbar">
+        <Link className="tf-brand" to="/" aria-label="TrackFit home">
+          <span className="tf-brand-mark" aria-hidden="true">T<span>F</span></span>
+          <span className="tf-brand-copy"><strong>TRACKFIT</strong><small>TRAINING, SIMPLIFIED.</small></span>
+        </Link>
         {!isDeveloperTools && (
           <div className="app-topbar-actions">
             <ShiftModeToggle />
@@ -29,7 +23,7 @@ export default function MobileShell({ children }) {
           </div>
         )}
       </header>
-      <main className="mobile-content">{children}</main>
+      <main className="mobile-content" id="trackfit-main">{children}</main>
       {!isDeveloperTools && <BottomNav />}
     </div>
   );
