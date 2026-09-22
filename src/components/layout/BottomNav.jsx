@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Activity, Dumbbell, House, TrendingUp, Utensils } from "lucide-react";
 import "./BottomNav.css";
 
@@ -18,16 +18,15 @@ export default function BottomNav() {
       {destinations.map(({ to, label, icon: Icon, matches }) => {
         const selected = matches.some((path) => pathname === path || (path !== "/" && pathname.startsWith(`${path}/`)));
         return (
-          <NavLink
+          <Link
             key={to}
             to={to}
-            end={to === "/"}
             className={selected ? "tf-nav-link tf-nav-link--active" : "tf-nav-link"}
             aria-current={selected ? "page" : undefined}
           >
             <Icon size={21} strokeWidth={selected ? 2.4 : 1.9} aria-hidden="true" />
             <span>{label}</span>
-          </NavLink>
+          </Link>
         );
       })}
     </nav>
