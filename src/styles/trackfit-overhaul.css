@@ -1,0 +1,58 @@
+/* TrackFit v2. Specific app-shell selectors beat legacy template styles, including lazy-loaded route CSS. */
+:root { --bg:#f5f5f1; --card:#fff; --text:#191b1a; --line:#e4e6df; --gold:#202321; --gold-soft:#eef2e4; --tf-ink:#191b1a; --tf-forest:#202321; --tf-lime:#dffa7d; --tf-subtle:#666e67; --tf-shadow:0 6px 22px rgba(27,33,25,.04); }
+html, body, #root { background:#f5f5f1; color:#191b1a; }
+#root .tf-shell { width:100%; max-width:100%; min-height:100dvh; margin:0; padding:0 16px calc(108px + env(safe-area-inset-bottom)); background:#f5f5f1; }
+#root .tf-shell .tf-skip-link { position:absolute; left:14px; top:-100px; z-index:1100; background:#dffa7d; color:#191b1a; padding:10px 14px; border-radius:8px; font-weight:800; }
+#root .tf-shell .tf-skip-link:focus { top:8px; }
+#root .tf-shell .tf-topbar { position:sticky; top:0; z-index:55; display:flex; align-items:center; gap:14px; margin:0 -16px 16px; padding:12px 16px; min-height:75px; border-bottom:1px solid #e3e6de; border-radius:0; background:rgba(245,245,241,.97); box-shadow:none; backdrop-filter:blur(15px); }
+#root .tf-shell .tf-brand { display:inline-flex; align-items:center; gap:9px; min-width:0; flex:1; text-decoration:none; color:#17191a; }
+#root .tf-shell .tf-brand-mark { display:grid; place-items:center; width:43px; height:43px; flex:0 0 43px; background:#191b1a; color:#e4fa86; border-radius:12px; font-size:19px; font-weight:950; letter-spacing:-.13em; margin:0; }
+#root .tf-shell .tf-brand-mark span { display:inline; margin:0; color:#e4fa86; font-size:inherit; font-weight:inherit; letter-spacing:inherit; }
+#root .tf-shell .tf-brand-copy { display:flex; min-width:0; flex-direction:column; gap:2px; margin:0; }
+#root .tf-shell .tf-brand-copy strong { font-size:17px; font-weight:900; line-height:1; color:#17191a; letter-spacing:-.055em; }
+#root .tf-shell .tf-brand-copy small { margin:0; color:#7c847b; font-size:8px; font-weight:750; letter-spacing:.09em; white-space:nowrap; }
+#root .tf-shell .app-topbar-actions { display:flex; align-items:center; gap:7px; margin-left:auto; flex:none; }
+#root .tf-shell .app-topbar-actions .shift-mode-toggle { display:inline-flex; align-items:center; justify-content:center; gap:5px; min-width:40px; min-height:42px; padding:7px 10px; background:#fff; border:1px solid #dfe3db; border-radius:12px; color:#293026; box-shadow:none; font-weight:700; }
+#root .tf-shell .app-topbar-actions .shift-mode-toggle span { font-size:10px; color:inherit; margin:0; }
+#root .tf-shell .account-menu-button { display:grid; place-items:center; width:43px; height:43px; flex:0 0 43px; min-height:43px; padding:0; border:1px solid #202321; border-radius:12px; background:#202321; color:#e5fa96; box-shadow:none; }
+#root .tf-shell .mobile-content { display:flex; flex-direction:column; gap:20px; width:100%; max-width:1080px; min-width:0; margin:0 auto; }
+#root .tf-shell .mobile-content > .screen { min-width:0; width:100%; }
+#root .tf-shell .bottom-nav { position:fixed; inset:auto 10px max(10px,env(safe-area-inset-bottom)); left:10px; transform:none; z-index:45; display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); justify-content:stretch; align-items:center; gap:3px; width:calc(100% - 20px); max-width:550px; height:74px; min-height:74px; margin:0 auto; padding:6px; border:1px solid #303330; border-radius:20px; background:#191b1a; box-shadow:0 10px 30px rgba(0,0,0,.18); }
+#root .tf-shell .bottom-nav .tf-nav-link { display:flex; flex-direction:column; justify-content:center; align-items:center; gap:4px; min-width:0; min-height:0; width:100%; height:60px; padding:4px 1px; border-radius:14px; color:#bbc2b9; background:transparent; font-size:10px; line-height:1; font-weight:650; text-decoration:none; }
+#root .tf-shell .bottom-nav .tf-nav-link svg { color:inherit; flex:none; }
+#root .tf-shell .bottom-nav .tf-nav-link span { color:inherit; white-space:nowrap; }
+#root .tf-shell .bottom-nav .tf-nav-link--active, #root .tf-shell .bottom-nav .tf-nav-link--active.active { background:#dffa7d; color:#192018; }
+#root .tf-shell .bottom-nav .tf-nav-link:focus-visible { outline:2px solid #e8ffad; outline-offset:-2px; }
+#root .account-menu-backdrop { position:fixed; inset:0; z-index:1000; margin:0; padding:0; border:0; border-radius:0; background:rgba(11,13,11,.60); cursor:pointer; }
+#root .account-drawer { position:fixed; top:0; right:0; bottom:0; left:auto; z-index:1001; display:flex; flex-direction:column; gap:0; width:min(100%,385px); min-height:100dvh; padding:22px 20px max(20px,env(safe-area-inset-bottom)); border-radius:0; background:#f8f9f5; box-shadow:-15px 0 60px rgba(0,0,0,.2); transform:translateX(0); overflow-y:auto; }
+#root .account-drawer__header { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:8px 0 20px; border-bottom:1px solid #dfe5da; }
+#root .account-drawer__header > div { display:flex; flex-direction:column; gap:6px; min-width:0; }
+#root .account-drawer__header .tf-menu-eyebrow { color:#6c7a64; font-size:10px; font-weight:850; letter-spacing:.13em; }
+#root .account-drawer__header strong { color:#17191a; font-size:22px; font-weight:840; line-height:1.2; }
+#root .account-drawer__header span:last-child { color:#667267; font-size:12px; font-weight:500; overflow-wrap:anywhere; }
+#root .account-drawer__header > button { display:grid; place-items:center; flex:0 0 39px; width:39px; height:39px; min-height:39px; margin:0; padding:0; border:1px solid #dce1d8; border-radius:11px; background:#fff; color:#1d231c; }
+#root .account-drawer .tf-menu-label { display:flex; align-items:center; gap:7px; margin:23px 0 9px; color:#727d6d; font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
+#root .account-drawer nav { display:flex; flex-direction:column; gap:5px; padding:0; }
+#root .account-drawer nav a { display:flex; align-items:center; gap:13px; width:100%; min-height:49px; padding:11px 13px; border:1px solid transparent; border-radius:12px; color:#252c23; background:transparent; font-size:14px; font-weight:690; text-decoration:none; }
+#root .account-drawer nav a:hover { background:#ebf0e5; }
+#root .account-drawer nav a.tf-menu-current, #root .account-drawer nav a.active { border-color:#d2dfb9; background:#e6f3cb; color:#25361d; }
+#root .account-drawer .account-drawer__logout { display:flex; align-items:center; gap:11px; margin-top:auto; min-height:48px; width:100%; padding:13px; background:#fff; border:1px solid #e0e4db; border-radius:12px; color:#a13229; font-size:14px; font-weight:740; text-align:left; }
+#root .tf-shell .screen h1, #root .tf-shell .screen h2 { text-wrap:balance; }
+#root .tf-shell .screen :is(.screen-hero:not(.light),.hero-premium,.v4-hero,.v4-workout-hero,.v4-detail-hero,.hero-card) { background:linear-gradient(135deg,#191b1a,#2a3029); border-color:#303830; border-radius:23px; box-shadow:0 12px 30px rgba(20,25,18,.10); }
+#root .tf-shell .screen :is(.screen-hero:not(.light),.hero-premium,.v4-hero,.v4-workout-hero,.v4-detail-hero) .eyebrow { color:#dffa7d; }
+#root .tf-shell .screen :is(.v4-quick-card,.v4-workout-card,.v4-today-card,.v4-stat-card,.v4-coach-card,.v4-achievement-card,.v4-current-exercise,.v4-exercise-row,.list-card,.action-card) { border:1px solid #e3e6df; border-radius:18px; box-shadow:0 5px 22px rgba(20,25,18,.035); }
+#root .tf-shell .screen :is(.v4-quick-card,.v4-workout-card,.v4-current-exercise,.v4-exercise-row) svg { color:#4d6040; }
+#root .tf-shell .screen :is(.primary-button,.start-button,.v4-start-btn,.v4-complete-btn) { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:43px; background:#242824; border-radius:12px; color:#fff; font-weight:740; text-decoration:none; }
+#root .tf-shell .screen :is(.v4-chip,.v4-section-heading span,.pill) { background:#edf2e3; color:#3a4b2e; }
+#root .tf-shell .screen :is(.v4-workout-icon,.v4-current-icon,.v4-exercise-number) { background:#242824; color:#e1fa85; }
+@media(min-width:920px) {
+  body { background:#ecede7; }
+  #root .tf-shell:not(.dev-frame) { display:grid; grid-template-columns:205px minmax(0,1fr); grid-template-rows:80px minmax(0,1fr); align-items:start; column-gap:25px; max-width:1460px; min-height:calc(100dvh - 32px); margin:16px auto; padding:0 26px 32px; border:1px solid #e1e4db; border-radius:25px; box-shadow:0 23px 60px rgba(20,25,18,.055); }
+  #root .tf-shell:not(.dev-frame) .tf-topbar { grid-column:1/-1; grid-row:1; margin:0 -26px; padding:16px 28px; border-radius:25px 25px 0 0; }
+  #root .tf-shell:not(.dev-frame) .mobile-content { grid-column:2; grid-row:2; max-width:none; padding:29px 0; margin:0; }
+  #root .tf-shell:not(.dev-frame) .bottom-nav { position:sticky; grid-column:1; grid-row:2; top:112px; right:auto; bottom:auto; left:auto; transform:none; display:flex; flex-direction:column; align-items:stretch; width:100%; max-width:none; height:auto; min-height:0; margin:29px 0 0; padding:9px; gap:5px; border-radius:18px; box-shadow:0 8px 22px rgba(20,25,18,.09); }
+  #root .tf-shell:not(.dev-frame) .bottom-nav .tf-nav-link { flex-direction:row; justify-content:flex-start; gap:13px; width:100%; height:54px; padding:10px 14px; font-size:13px; border-radius:11px; }
+  #root .tf-shell:not(.dev-frame) .bottom-nav .tf-nav-link svg { width:21px; }
+}
+@media(max-width:370px) { #root .tf-shell .tf-brand-copy small { display:none; } #root .tf-shell .tf-topbar { gap:8px; } #root .tf-shell .app-topbar-actions { gap:4px; } #root .tf-shell .app-topbar-actions .shift-mode-toggle { padding:7px 8px; } #root .tf-shell .app-topbar-actions .shift-mode-toggle span { display:none; } #root .tf-shell .bottom-nav .tf-nav-link { font-size:9px; } }
+@media(prefers-reduced-motion:reduce) { #root .tf-shell .tf-shortcut, #root .tf-shell .tf-nav-link { transition:none; } }

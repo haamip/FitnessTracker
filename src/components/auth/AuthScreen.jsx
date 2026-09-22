@@ -1,48 +1,7 @@
 import { useState } from "react";
-import { Dumbbell, LockKeyhole, Mail } from "lucide-react";
+import { ArrowRight, Dumbbell, LockKeyhole, Mail } from "lucide-react";
 import { supabase } from "../../services/supabase";
-
-const shellStyle = {
-  minHeight: "100dvh",
-  display: "grid",
-  placeItems: "center",
-  padding: "24px 16px",
-  background: "#080b12",
-};
-
-const cardStyle = {
-  width: "min(100%, 420px)",
-  display: "grid",
-  gap: 22,
-  padding: "28px 24px",
-  border: "1px solid rgba(148, 163, 184, 0.16)",
-  borderRadius: 24,
-  background: "#111827",
-  boxShadow: "0 20px 60px rgba(0, 0, 0, 0.32)",
-};
-
-const fieldStyle = {
-  display: "grid",
-  gridTemplateColumns: "22px minmax(0, 1fr)",
-  alignItems: "center",
-  gap: 10,
-  width: "100%",
-  minHeight: 52,
-  padding: "0 14px",
-  border: "1px solid rgba(148, 163, 184, 0.22)",
-  borderRadius: 14,
-  background: "#0b1220",
-};
-
-const inputStyle = {
-  width: "100%",
-  minWidth: 0,
-  border: 0,
-  outline: 0,
-  background: "transparent",
-  color: "inherit",
-  font: "inherit",
-};
+import "./AuthScreen.css";
 
 export default function AuthScreen() {
   const [email, setEmail] = useState("");
@@ -51,62 +10,69 @@ export default function AuthScreen() {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const isSignup = mode === "signup";
+
   async function submit(event) {
     event.preventDefault();
+    if (busy) return;
     setBusy(true);
     setMessage("");
 
-    const result = mode === "signup"
-      ? await supabase.auth.signUp({ email, password })
-      : await supabase.auth.signInWithPassword({ email, password });
+    try {
+      const result = isSignup
+        ? await supabase.auth.signUp({ email, password })
+        : await supabase.auth.signInWithPassword({ email, password });
 
-    setBusy(false);
-    setMessage(
-      result.error
-        ? result.error.message
-        : mode === "signup"
-          ? "Account created. Check your email if confirmation is enabled."
-          : "Signed in.",
-    );
+      setMessage(
+        result.error
+          ? result.error.message
+          : isSignup
+            ? "Account created. Check your email if confirmation is enabled."
+            : "Signed in.",
+      );
+    } catch {
+      setMessage("We couldn't connect right now. Check your connection and try again.");
+    } finally {
+      setBusy(false);
+    }
   }
 
-  const isSignup = mode === "signup";
+  function toggleMode() {
+    setMode(isSignup ? "signin" : "signup");
+    setMessage("");
+  }
 
   return (
-    <main style={shellStyle}>
-      <section style={cardStyle} aria-labelledby="auth-title">
-        <div style={{ display: "grid", gap: 16 }}>
-          <div
-            style={{
-              width: 52,
-              height: 52,
-              display: "grid",
-              placeItems: "center",
-              borderRadius: 16,
-              background: "linear-gradient(135deg, #2563eb, #14b8a6)",
-            }}
-          >
-            <Dumbbell size={26} color="white" aria-hidden="true" />
-          </div>
-
-          <div>
-            <p className="eyebrow">TrackFit</p>
-            <h1 id="auth-title" style={{ marginBottom: 8 }}>
-              {isSignup ? "Create your account" : "Welcome back"}
-            </h1>
-            <p style={{ margin: 0, color: "#94a3b8" }}>
-              Your workouts, check-ins and nutrition stay linked to you.
-            </p>
-          </div>
+    <main className="auth-layout">
+      <section className="auth-story" aria-label="TrackFit introduction">
+        <div className="auth-brand">
+          <span className="auth-brand-mark" aria-hidden="true"><Dumbbell size={25} strokeWidth={2} /></span>
+          <span>TRACKFIT</span>
         </div>
+        <div className="auth-story-content">
+          <span className="auth-overline">TRAIN WITH INTENT</span>
+          <h1>Show up.<br /><em>Get stronger.</em></h1>
+          <p>A clearer place for your training, recovery and nutrition. Focus on the next step and keep your progress moving.</p>
+        </div>
+        <span className="auth-story-foot">YOUR TRAINING. YOUR PACE.</span>
+      </section>
 
-        <form style={{ display: "grid", gap: 16 }} onSubmit={submit}>
-          <label style={{ display: "grid", gap: 8 }}>
-            <span>Email</span>
-            <span style={fieldStyle}>
-              <Mail size={18} aria-hidden="true" />
+      <section className="auth-panel" aria-labelledby="auth-title">
+        <div className="auth-panel-inner">
+          <span className="auth-panel-kicker">YOUR SPACE TO PROGRESS</span>
+          <h2 id="auth-title">{isSignup ? "Start your journey." : "Welcome back."}</h2>
+          <p className="auth-panel-description">
+            {isSignup
+              ? "Create an account to keep your training in one place."
+              : "Pick up where you left off. Your next session is waiting."}
+          </p>
+
+          <form className="auth-form" onSubmit={submit}>
+            <label htmlFor="trackfit-email">Email address</label>
+            <div className="auth-field">
+              <Mail size={19} aria-hidden="true" />
               <input
-                style={inputStyle}
+                id="trackfit-email"
                 type="email"
                 autoComplete="email"
                 placeholder="you@example.com"
@@ -114,15 +80,13 @@ export default function AuthScreen() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
               />
-            </span>
-          </label>
+            </div>
 
-          <label style={{ display: "grid", gap: 8 }}>
-            <span>Password</span>
-            <span style={fieldStyle}>
-              <LockKeyhole size={18} aria-hidden="true" />
+            <label htmlFor="trackfit-password">Password</label>
+            <div className="auth-field">
+              <LockKeyhole size={19} aria-hidden="true" />
               <input
-                style={inputStyle}
+                id="trackfit-password"
                 type="password"
                 autoComplete={isSignup ? "new-password" : "current-password"}
                 placeholder="At least 6 characters"
@@ -131,34 +95,24 @@ export default function AuthScreen() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
               />
-            </span>
-          </label>
+            </div>
 
-          <button
-            type="submit"
-            disabled={busy}
-            style={{ width: "100%", minHeight: 52, borderRadius: 14, fontWeight: 700 }}
-          >
-            {busy ? "Working..." : isSignup ? "Create account" : "Sign in"}
-          </button>
-        </form>
+            <button className="auth-submit" type="submit" disabled={busy}>
+              <span>{busy ? "Please wait..." : isSignup ? "Create account" : "Sign in"}</span>
+              {!busy && <ArrowRight size={20} aria-hidden="true" />}
+            </button>
+          </form>
 
-        {message && (
-          <p role="status" style={{ margin: 0, textAlign: "center" }}>
-            {message}
-          </p>
-        )}
+          {message && <p className="auth-status" role="status" aria-live="polite">{message}</p>}
 
-        <button
-          type="button"
-          onClick={() => {
-            setMode(isSignup ? "signin" : "signup");
-            setMessage("");
-          }}
-          style={{ width: "100%", background: "transparent", border: 0 }}
-        >
-          {isSignup ? "Already have an account? Sign in" : "New to TrackFit? Create an account"}
-        </button>
+          <div className="auth-switch">
+            <span>{isSignup ? "Already have an account?" : "New to TrackFit?"}</span>
+            <button type="button" onClick={toggleMode} disabled={busy}>
+              {isSignup ? "Sign in" : "Create an account"}
+            </button>
+          </div>
+          <p className="auth-footnote">Built to make every session count.</p>
+        </div>
       </section>
     </main>
   );
