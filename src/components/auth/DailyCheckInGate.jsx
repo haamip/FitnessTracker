@@ -1,76 +1,8 @@
-import { useEffect, useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
-import { CloudCheckInRepository } from "../../services/repositories/cloudCheckInRepository";
-
-const COMPLETED_DAY_KEY = "trackfit_checkin_completed_local_day";
-
-function getLocalDateKey() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
+// Daily check-ins are available from Home and the account menu, but must not
+// intercept every other route. The previous gate redirected every navigation
+// to /checkin until a browser-wide localStorage flag was set. That both broke
+// the menu and shared the flag between different accounts on one device.
+// Keep this compatibility wrapper so other code importing it remains stable.
 export default function DailyCheckInGate({ children }) {
-  const location = useLocation();
-  const [status, setStatus] = useState("checking");
-
-  useEffect(() => {
-    let active = true;
-    const localToday = getLocalDateKey();
-
-    async function checkToday() {
-      if (localStorage.getItem(COMPLETED_DAY_KEY) === localToday) {
-        if (active) setStatus("complete");
-        return;
-      }
-
-      try {
-        const checkIns = await CloudCheckInRepository.getAll();
-        const hasCheckedIn = checkIns.some(
-          (checkIn) => checkIn.date === localToday,
-        );
-
-        if (hasCheckedIn) localStorage.setItem(COMPLETED_DAY_KEY, localToday);
-        if (active) setStatus(hasCheckedIn ? "complete" : "required");
-      } catch (error) {
-        console.warn("Unable to verify today's check-in.", error);
-        const cached = CloudCheckInRepository.getCached();
-        const hasCachedCheckIn = cached.some(
-          (checkIn) => checkIn.date === localToday,
-        );
-
-        if (hasCachedCheckIn) localStorage.setItem(COMPLETED_DAY_KEY, localToday);
-        if (active) setStatus(hasCachedCheckIn ? "complete" : "required");
-      }
-    }
-
-    function handleSaved() {
-      localStorage.setItem(COMPLETED_DAY_KEY, getLocalDateKey());
-      setStatus("complete");
-    }
-
-    void checkToday();
-    window.addEventListener("trackfit:checkin-saved", handleSaved);
-
-    return () => {
-      active = false;
-      window.removeEventListener("trackfit:checkin-saved", handleSaved);
-    };
-  }, []);
-
-  if (status === "checking") {
-    return (
-      <main className="screen" style={{ display: "grid", minHeight: "100vh", placeItems: "center" }}>
-        <p>Loading TrackFit...</p>
-      </main>
-    );
-  }
-
-  if (status === "required" && location.pathname !== "/checkin") {
-    return <Navigate replace state={{ from: location.pathname }} to="/checkin" />;
-  }
-
   return children;
 }
