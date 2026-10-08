@@ -244,7 +244,7 @@ export default function DailyCheckIn() {
           <h2>Today&apos;s numbers</h2>
         </div>
         <span>{existingToday ? "Saved" : "Live"}</span>
-      </div>
+      </div>}
 
       {showDetails && <section className="v4-check-grid">
         {checkItems.map((item) => (
