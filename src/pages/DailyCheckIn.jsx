@@ -41,15 +41,15 @@ import "./TrackFitScreens.css";
 const today = new Date().toISOString().slice(0, 10);
 
 const initialForm = {
-  weightKg: "104.2",
-  proteinG: "168",
-  waterL: "3.2",
-  sleepHours: "7.4",
-  mood: "Good",
-  energy: "7",
+  weightKg: "",
+  proteinG: "",
+  waterL: "",
+  sleepHours: "",
+  mood: "Okay",
+  energy: "5",
   bodyFeel: "Mild",
-  trainedToday: "yes",
-  trainingNote: "Upper strength",
+  trainedToday: "no",
+  trainingNote: "",
 };
 
 function toNumber(value) {
