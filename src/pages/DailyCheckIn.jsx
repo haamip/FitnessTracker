@@ -38,7 +38,11 @@ import { completeDailyCheckIn } from "../features/gamification/gamification";
 import { CheckInRepository } from "../services/repositories/trackfitDataLayer";
 import "./TrackFitScreens.css";
 
-const today = new Date().toISOString().slice(0, 10);
+function getLocalDateKey() {
+  const date = new Date();
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
 
 const initialForm = {
   weightKg: "",
@@ -60,7 +64,7 @@ function toNumber(value) {
 function normaliseCheckIn(checkIn, index = 0) {
   return {
     id: checkIn.id || `legacy-checkin-${index}`,
-    date: checkIn.date || checkIn.completedAt || today,
+    date: checkIn.date || checkIn.completedAt || getLocalDateKey(),
     weightKg: toNumber(checkIn.weightKg ?? checkIn.weight),
     proteinG: toNumber(checkIn.proteinG ?? checkIn.protein),
     waterL: toNumber(checkIn.waterL ?? checkIn.water),
@@ -115,12 +119,15 @@ function formatToday() {
 }
 
 export default function DailyCheckIn() {
+  const today = getLocalDateKey();
+  const [showDetails, setShowDetails] = useState(false);
   const [savedCheckIns, setSavedCheckIns] = useState(() =>
     CheckInRepository.getAll().map(normaliseCheckIn),
   );
   const existingToday = savedCheckIns.find((checkIn) => checkIn.date === today);
   const [form, setForm] = useState(() => buildFormFromCheckIn(existingToday));
   const score = useMemo(() => getScore(form), [form]);
+  const hasReadinessInputs = Boolean(form.proteinG && form.waterL && form.sleepHours);
   const todayLabel = formatToday();
 
   const checkItems = [
@@ -198,8 +205,8 @@ export default function DailyCheckIn() {
       <section className="v4-checkin-hero">
         <div>
           <p className="eyebrow">Daily check-in</p>
-          <h1>Today</h1>
-          <p>Log the basics. The boring stuff is what moves the needle.</p>
+          <h1>Quick check-in</h1>
+          <p>Weight, energy and training. Extra details are optional.</p>
         </div>
 
         <div className="v4-checkin-date">
@@ -208,7 +215,7 @@ export default function DailyCheckIn() {
         </div>
       </section>
 
-      <section className="v4-checkin-score">
+      {showDetails && hasReadinessInputs && <section className="v4-checkin-score">
         <div>
           <p className="eyebrow">Readiness</p>
           <h2>{score}%</h2>
@@ -220,9 +227,18 @@ export default function DailyCheckIn() {
             <CheckCircle2 size={24} />
           </div>
         </div>
-      </section>
+      </section>}
 
-      <div className="v4-section-heading">
+      <button
+        type="button"
+        aria-expanded={showDetails}
+        onClick={() => setShowDetails((value) => !value)}
+        className="v4-save-checkin"
+      >
+        {showDetails ? "Hide extra details" : "Add more details (optional)"}
+      </button>
+
+      {showDetails && <div className="v4-section-heading">
         <div>
           <p className="eyebrow">Inputs</p>
           <h2>Today&apos;s numbers</h2>
@@ -230,7 +246,7 @@ export default function DailyCheckIn() {
         <span>{existingToday ? "Saved" : "Live"}</span>
       </div>
 
-      <section className="v4-check-grid">
+      {showDetails && <section className="v4-check-grid">
         {checkItems.map((item) => (
           <article className="v4-check-card" key={item.label}>
             <item.icon size={21} />
@@ -239,7 +255,7 @@ export default function DailyCheckIn() {
             <small>{item.note}</small>
           </article>
         ))}
-      </section>
+      </section>}
 
       <section className="form-card form-grid">
         <label>
@@ -254,6 +270,7 @@ export default function DailyCheckIn() {
           />
         </label>
 
+        {showDetails && <>
         <label>
           Protein grams
           <input
@@ -289,6 +306,7 @@ export default function DailyCheckIn() {
             onChange={(event) => updateField("sleepHours", event.target.value)}
           />
         </label>
+        </>}
       </section>
 
       <section className="v4-training-toggle">
@@ -320,7 +338,7 @@ export default function DailyCheckIn() {
           </select>
         </label>
 
-        <label>
+        {showDetails && <label>
           Training note
           <input
             placeholder="Upper strength, cardio, rest day..."
@@ -330,7 +348,8 @@ export default function DailyCheckIn() {
               updateField("trainingNote", event.target.value)
             }
           />
-        </label>
+        </label>}
+
       </section>
 
       <div className="v4-section-heading">
@@ -368,7 +387,7 @@ export default function DailyCheckIn() {
           />
         </label>
 
-        <label>
+        {showDetails && <label>
           Body feel
           <select
             value={form.bodyFeel}
@@ -379,10 +398,10 @@ export default function DailyCheckIn() {
             <option>Moderate</option>
             <option>High</option>
           </select>
-        </label>
+        </label>}
       </section>
 
-      <section className="v4-recovery-list">
+      {showDetails && <section className="v4-recovery-list">
         {recovery.map((item) => (
           <article className="v4-recovery-row" key={item.label}>
             <div className="v4-icon-bubble small">
@@ -395,9 +414,9 @@ export default function DailyCheckIn() {
             </div>
           </article>
         ))}
-      </section>
+      </section>}
 
-      <section className="v4-checkin-coach">
+      {showDetails && hasReadinessInputs && <section className="v4-checkin-coach">
         <div className="v4-icon-bubble">
           <Sparkles size={20} />
         </div>
@@ -418,11 +437,11 @@ export default function DailyCheckIn() {
                 : "Keep intensity controlled, focus on movement quality, and get an early night."}
           </p>
         </div>
-      </section>
+      </section>}
 
       <Button className="v4-save-checkin" type="submit">
         <Save size={18} />
-        Save daily check-in
+        {showDetails ? "Save detailed check-in" : "Save quick check-in"}
       </Button>
 
       <footer className="v4-checkin-footer">
