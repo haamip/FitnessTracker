@@ -6,13 +6,15 @@ import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { SavedWorkoutRepository } from "../services/repositories/trackfitDataLayer";
 import { parseWorkoutText } from "../services/workoutTextParser";
 import { parseWorkoutWithAI } from "../services/aiWorkoutImporter";
+import { isUsableWorkoutExercise } from "../services/workoutImportValidation";
 import "./TrackFitScreens.css";
 
 GlobalWorkerOptions.workerSrc = pdfWorker;
 
 async function extractPdfText(file) {
   const bytes = new Uint8Array(await file.arrayBuffer());
-  const pdf = await getDocument({ data: bytes }).promise;
+  const pdf = await getDocument({ data: bytes, isEvalSupported: false }).promise;
+  if (pdf.numPages > 50) throw new Error("Limit PDFs to 50 pages.");
   const pages = [];
 
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
@@ -33,7 +35,7 @@ async function extractPdfText(file) {
 
 function createWorkoutExercises(draft) {
   return draft
-    .filter((exercise) => exercise.name.trim() && exercise.sets && exercise.reps)
+    .filter(isUsableWorkoutExercise)
     .map((exercise) => {
       const setCount = Number.parseInt(exercise.sets, 10);
       const reps = exercise.reps.trim();
@@ -73,7 +75,7 @@ export default function WorkoutImport() {
   const [aiLoading, setAiLoading] = useState(false);
   const exerciseCount = useMemo(() => draft.length, [draft]);
   const reviewCount = useMemo(
-    () => draft.filter((exercise) => !exercise.sets || !exercise.reps).length,
+    () => draft.filter((exercise) => !isUsableWorkoutExercise(exercise)).length,
     [draft],
   );
   const canSave = workoutName.trim() && exerciseCount > 0 && reviewCount === 0;
@@ -142,6 +144,10 @@ export default function WorkoutImport() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    if (file.size > 10 * 1024 * 1024) {
+      setStatus("PDF is too large. Choose a file under 10 MB.");
+      return;
+    }
     setFileName(file.name);
     if (!workoutName.trim()) setWorkoutName(file.name.replace(/\.pdf$/i, ""));
     setStatus("Reading PDF...");
@@ -270,7 +276,7 @@ export default function WorkoutImport() {
                       aria-label="Sets"
                       inputMode="numeric"
                       value={exercise.sets}
-                      placeholder="e.g. 4"
+                      placeholder="1–30"
                       onChange={(event) => updateExercise(exercise.id, "sets", event.target.value)}
                       style={{ width: "100%" }}
                     />
@@ -296,7 +302,7 @@ export default function WorkoutImport() {
                     style={{ width: "100%" }}
                   />
                 </label>
-                {exercise.needsReview && <small>Check this one — both sets and reps are required.</small>}
+                {!isUsableWorkoutExercise(exercise) && <small>Check this one — enter an exercise name, 1–30 sets and the rep target.</small>}
               </div>
             </div>
           ))}
