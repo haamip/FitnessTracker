@@ -1,7 +1,7 @@
 /** Branded food lookups from the community-maintained Open Food Facts database. */
 /** Data source: Open Food Facts, ODbL — https://world.openfoodfacts.org/ */
 const fields = "code,product_name,brands,nutriments";
-const barcodePattern = /^\\d{8,14}$/;
+const barcodePattern = /^\d{8,14}$/;
 
 function nonNegative(value) {
   if (value === null || value === undefined || value === "") return null;
