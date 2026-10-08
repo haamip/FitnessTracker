@@ -127,6 +127,49 @@ export default function Nutrition() {
     NutritionRepository.add(localMeal); setMeals(NutritionRepository.getToday(operationalDate)); setForm({ type: mealTypes[0], name: "", calories: "", protein: "", carbs: "", fats: "" }); setPasteText(""); setSaving(false);
   }
 
+  async function repeatMeal(meal) {
+    setSaving(true);
+    setMessage("");
+    const copy = {
+      ...meal,
+      id: crypto.randomUUID(),
+      date: operationalDate,
+      shiftMode,
+      createdAt: new Date().toISOString(),
+    };
+    try {
+      if (isSupabaseConfigured && supabase) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData.session?.user?.id;
+        if (userId) {
+          const { data, error } = await supabase.from("nutrition_entries").insert({
+            user_id: userId,
+            entry_date: copy.date,
+            meal_type: copy.type,
+            name: copy.name,
+            calories: copy.calories,
+            protein_g: copy.protein,
+            carbs_g: copy.carbs,
+            fats_g: copy.fats,
+          }).select().single();
+          if (error) throw error;
+          const saved = fromDatabase(data);
+          NutritionRepository.add(saved);
+          setMeals((current) => [saved, ...current]);
+          setMessage(`Added ${saved.name} again.`);
+          return;
+        }
+      }
+      NutritionRepository.add(copy);
+      setMeals(NutritionRepository.getToday(operationalDate));
+      setMessage(`Added ${copy.name} again.`);
+    } catch (error) {
+      setMessage(`Could not repeat meal: ${error.message || "Please try again"}`);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function deleteMeal(id) {
     setMessage("");
     if (isSupabaseConfigured && supabase) { const { error } = await supabase.from("nutrition_entries").delete().eq("id", id); if (error) { setMessage(`Meal was not deleted: ${error.message}`); return; } }
@@ -141,6 +184,6 @@ export default function Nutrition() {
     <Link className="tf-ai-primary" to="/nutrition/scan"><Camera size={18}/> Scan a meal photo</Link>
     <section className="form-card form-grid"><div><p className="eyebrow">Paste log</p><h2>Import a meal</h2><p>Paste the meal format from ChatGPT and TrackFit will fill the log.</p></div><textarea rows={8} value={pasteText} onChange={(event)=>setPasteText(event.target.value)} placeholder={"MEAL: Dinner\n\nITEMS\n- Steak | 180 g\n- Rice | 1 cup\n\nTOTALS\nCalories: 980\nProtein: 80 g\nCarbs: 55 g\nFat: 40 g"} style={{width:"100%",resize:"vertical",padding:16,borderRadius:16}}/><Button type="button" onClick={handlePasteParse} disabled={!pasteText.trim()}><ClipboardPaste size={17}/> Read meal</Button></section>
     <form className="form-card form-grid" onSubmit={handleSubmit}><div><p className="eyebrow">Quick log</p><h2>Add a meal</h2></div><label>Meal<select value={form.type} onChange={(e)=>updateField("type",e.target.value)}>{mealTypes.map((type)=><option key={type}>{type}</option>)}</select></label><label>What did you eat?<input placeholder="Chicken, rice and veg" value={form.name} onChange={(e)=>updateField("name",e.target.value)}/></label><div className="tf-food-input-row"><label>Calories<input type="number" inputMode="decimal" step="0.1" min="0" required value={form.calories} onChange={(e)=>updateField("calories",e.target.value)}/></label><label>Protein<input type="number" inputMode="decimal" step="0.1" min="0" required value={form.protein} onChange={(e)=>updateField("protein",e.target.value)}/></label></div><div className="tf-food-input-row"><label>Carbs<input type="number" inputMode="decimal" step="0.1" min="0" value={form.carbs} onChange={(e)=>updateField("carbs",e.target.value)}/></label><label>Fat<input type="number" inputMode="decimal" step="0.1" min="0" value={form.fats} onChange={(e)=>updateField("fats",e.target.value)}/></label></div><Button className="v4-save-checkin" type="submit" disabled={saving}><Plus size={17}/>{saving ? "Saving..." : "Add meal"}</Button>{message && <p role="status">{message}</p>}</form>
-    {meals.length ? <section className="tf-food-meals"><div className="v4-section-heading"><div><p className="eyebrow">{operationalDate}</p><h2>Meals</h2></div></div><div className="v4-recovery-list">{meals.map((meal)=><article className="v4-recovery-row" key={meal.id}><div className="v4-icon-bubble small"><Utensils size={18}/></div><div><strong>{meal.name}</strong><span>{meal.type} · {roundDisplay(meal.calories)} cal · {roundDisplay(meal.protein)}g protein</span></div><button type="button" aria-label={`Delete ${meal.name}`} onClick={()=>deleteMeal(meal.id)}><Trash2 size={18}/></button></article>)}</div></section> : <section className="form-card"><p>No meals logged for this shift day.</p></section>}
+    {meals.length ? <section className="tf-food-meals"><div className="v4-section-heading"><div><p className="eyebrow">{operationalDate}</p><h2>Meals</h2></div></div><div className="v4-recovery-list">{meals.map((meal)=><article className="v4-recovery-row" key={meal.id}><div className="v4-icon-bubble small"><Utensils size={18}/></div><div><strong>{meal.name}</strong><span>{meal.type} · {roundDisplay(meal.calories)} cal · {roundDisplay(meal.protein)}g protein</span></div><button type="button" aria-label={`Repeat ${meal.name}`} title="Log this meal again" disabled={saving} onClick={()=>repeatMeal(meal)}><Plus size={18}/></button><button type="button" aria-label={`Delete ${meal.name}`} disabled={saving} onClick={()=>deleteMeal(meal.id)}><Trash2 size={18}/></button></article>)}</div></section> : <section className="form-card"><p>No meals logged for this shift day.</p></section>}
   </motion.div>;
 }
