@@ -226,6 +226,14 @@ export default function Workouts() {
                     </div>
                   )}
                 </div>
+                {!selectMode && editingId !== workout.id && (
+                  <Link
+                    to={`/workouts/create?edit=${encodeURIComponent(workout.id)}`}
+                    style={{ display: "inline-block", padding: "0 16px 12px", textDecoration: "underline" }}
+                  >
+                    Edit exercises
+                  </Link>
+                )}
                 {editingId === workout.id && (
                   <form onSubmit={(event) => saveRename(event, workout)} style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: 12 }}>
                     <input
