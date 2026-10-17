@@ -16,6 +16,7 @@
  * Planned improvements after MVP.
  */
 import { useMemo } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Activity,
@@ -32,29 +33,9 @@ import {
 import LineChartCard from "../components/LineChartCard";
 import { getAllTimePRs } from "../services/prEngine";
 import { readWorkoutHistory } from "../services/workoutEngine";
+import { CheckInRepository } from "../services/repositories/trackfitDataLayer";
 import { getWeeklyTrainingSummary } from "../services/workoutSummaryEngine";
 import "./TrackFitScreens.css";
-
-const weightData = [
-  { date: "Week 1", weight: 106.8 },
-  { date: "Week 2", weight: 106.1 },
-  { date: "Week 3", weight: 105.4 },
-  { date: "Week 4", weight: 104.9 },
-  { date: "Week 5", weight: 104.2 },
-];
-
-const measurements = [
-  { label: "Waist", value: "102cm", change: "-3cm" },
-  { label: "Chest", value: "116cm", change: "+1cm" },
-  { label: "Arms", value: "39cm", change: "+0.5cm" },
-  { label: "Legs", value: "62cm", change: "steady" },
-];
-
-const fallbackPrs = [
-  { exercise: "Bench Press", e1rm: 100, set: "100kg" },
-  { exercise: "Squat", e1rm: 80, set: "80kg" },
-  { exercise: "Deadlift", e1rm: 100, set: "100kg" },
-];
 
 export default function Progress() {
   const workoutHistory = useMemo(() => readWorkoutHistory(), []);
@@ -63,7 +44,13 @@ export default function Progress() {
     [workoutHistory],
   );
   const prData = useMemo(() => getAllTimePRs(workoutHistory), [workoutHistory]);
-  const displayedPrs = prData.length > 0 ? prData : fallbackPrs;
+  const displayedPrs = prData;
+  const weightData = useMemo(() => CheckInRepository.getAll()
+    .filter((item) => Number(item.weightKg ?? item.weight) > 0)
+    .sort((a,b) => a.date.localeCompare(b.date))
+    .map((item) => ({ date:item.date.slice(5), weight:Number(item.weightKg ?? item.weight) })), []);
+  const latestWeight = weightData.length ? weightData.at(-1).weight : null;
+  const weightChange = weightData.length > 1 ? Math.round((latestWeight - weightData[0].weight) * 10)/10 : null;
 
   return (
     <motion.div
@@ -75,26 +62,18 @@ export default function Progress() {
       <section className="v4-progress-hero">
         <div>
           <p className="eyebrow">Progress</p>
-          <h1>104.2kg</h1>
-          <p>
-            Down 2.6kg from your starting point. Still moving in the right
-            direction.
-          </p>
+          <h1>{latestWeight === null ? "No weight logged" : `${latestWeight.toFixed(1)}kg`}</h1>
+          <p>{weightChange === null ? "Log your weight in a daily check-in to start a real trend." : `${weightChange > 0 ? "+" : ""}${weightChange}kg since your first saved weigh-in.`}</p>
         </div>
 
-        <div className="v4-progress-ring" style={{ "--progress": "62%" }}>
-          <div>
-            <strong>62%</strong>
-            <span>goal</span>
-          </div>
-        </div>
+        <div style={{ alignSelf: "center" }}><Link to="/coach/weekly">Weekly review + photos →</Link></div>
       </section>
 
       {/* These cards now include live workout intelligence from saved sessions. */}
       <section className="v4-progress-summary">
         <article>
           <TrendingDown size={21} />
-          <strong>-2.6kg</strong>
+          <strong>{weightChange === null ? "—" : `${weightChange > 0 ? "+" : ""}${weightChange}kg`}</strong>
           <span>Total lost</span>
         </article>
 
@@ -111,12 +90,12 @@ export default function Progress() {
         </article>
       </section>
 
-      <LineChartCard
+      {weightData.length > 1 && <LineChartCard
         title="Weight Trend"
         data={weightData}
         dataKey="weight"
         unit="kg"
-      />
+      />}
 
       <div className="v4-section-heading">
         <div>
@@ -127,6 +106,7 @@ export default function Progress() {
       </div>
 
       <section className="v4-pr-grid">
+        {displayedPrs.length === 0 && <p>No real personal records logged yet.</p>}
         {displayedPrs.slice(0, 3).map((item, index) => {
           const Icon = index === 0 ? Trophy : index === 1 ? Medal : Dumbbell;
 
@@ -141,23 +121,10 @@ export default function Progress() {
         })}
       </section>
 
-      <div className="v4-section-heading">
-        <div>
-          <p className="eyebrow">Body tracking</p>
-          <h2>Measurements</h2>
-        </div>
-      </div>
-
-      <section className="v4-measure-list">
-        {measurements.map((item) => (
-          <article className="v4-measure-row" key={item.label}>
-            <div>
-              <strong>{item.label}</strong>
-              <span>{item.value}</span>
-            </div>
-            <small>{item.change}</small>
-          </article>
-        ))}
+      <section className="v4-workout-list">
+        <div className="v4-section-heading"><div><p className="eyebrow">Body tracking</p><h2>Weekly progress photos</h2></div></div>
+        <p>Compare your own weekly photos privately, and see your coach's feedback from logged training and daily check-ins.</p>
+        <Link to="/coach/weekly">Open weekly review and photos →</Link>
       </section>
 
       <section className="v4-ai-insight">
