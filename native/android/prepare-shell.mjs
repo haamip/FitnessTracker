@@ -1,3 +1,4 @@
+/* global process, console */
 /**
  * Finish "npx cap add android" with TrackFit's Kotlin Health Connect plugin.
  * Checks all expected structure and fails instead of silently dropping permissions.
