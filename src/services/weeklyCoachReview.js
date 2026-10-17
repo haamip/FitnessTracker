@@ -1,7 +1,6 @@
 import { readJson, writeJson } from "./utils/storage";
 
 const REVIEW_KEY = "trackfit_weekly_reviews_v1";
-const DAY_MS = 86400000;
 
 function number(value) {
   const n = Number(value);
@@ -27,6 +26,7 @@ export function getWeeklyFacts({ checkIns = [], workouts = [], cardio = [], meal
   const localToday = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
   const through = end < localToday ? end : localToday;
   const days = checkIns.filter((x) => dateWithin(x.date, start, through));
+  const lowMoodDays = days.filter((x) => ["Flat", "Rough"].includes(x.mood)).length;
   const lifts = workouts.filter((x) => dateWithin(x.completedAt, start, through));
   const movement = cardio.filter((x) => dateWithin(x.date, start, through));
   const food = meals.filter((x) => dateWithin(x.date, start, through));
@@ -42,6 +42,7 @@ export function getWeeklyFacts({ checkIns = [], workouts = [], cardio = [], meal
   return {
     start, end, through,
     checkInDays: days.length,
+    lowMoodDays,
     workouts: lifts.length,
     strengthVolumeKg: Math.round(volume),
     prs,
@@ -72,6 +73,15 @@ export function buildWeeklyFeedback(facts, answers = {}) {
   } else {
     evidence.push("Not enough daily step entries to calculate a step average.");
     nextSteps.push("Add steps during your quick daily check-in.");
+  }
+  if (facts.lowMoodDays > 0) {
+    evidence.push(`${facts.lowMoodDays} daily check-in${facts.lowMoodDays === 1 ? "" : "s"} reported feeling flat or rough.`);
+    if (answers.recovery !== "good") nextSteps.push("Keep recovery manageable; consider an easier day when needed.");
+  }
+  if (answers.nutrition === "on-track") {
+    evidence.push(facts.nutritionLoggedDays > 0
+      ? `You reported nutrition on track; food was logged on ${facts.nutritionLoggedDays} day(s).`
+      : "You reported nutrition on track; meal logs are unavailable to verify it.");
   }
   if (facts.cardioSessions > 0) evidence.push(`${facts.cardioMinutes} minutes of logged cardio across ${facts.cardioSessions} sessions.`);
   else if (answers.cardio === "less") nextSteps.push("Plan one easy cardio session.");
