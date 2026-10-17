@@ -9,7 +9,8 @@ import "./Coach.css";
 
 const shortcuts = [
   { to: "/workouts", label: "Workouts", detail: "Start or build a session", icon: Dumbbell },
-  { to: "/checkin", label: "Daily check-in", detail: "Sleep, weight and recovery", icon: CalendarCheck2 },
+  { to: "/checkin", label: "Daily check-in", detail: "Steps, feeling, workout or rest", icon: CalendarCheck2 },
+  { to: "/coach/weekly", label: "Weekly review", detail: "Progress photos and coaching feedback", icon: HeartPulse },
   { to: "/nutrition", label: "Nutrition", detail: "Log meals and targets", icon: Utensils },
   { to: "/progress", label: "Progress", detail: "See your training trend", icon: TrendingUp },
 ];
@@ -77,6 +78,7 @@ export default function Coach() {
         </div>
       </section>
 
+      <p style={{margin:"16px 0"}}><Link to="/coach/weekly">Check in with your coach this week <ArrowRight size={16} /></Link></p>
       <section className="tf-home-note">
         <div className="tf-home-note-icon"><HeartPulse size={24} aria-hidden="true" /></div>
         <div><p className="tf-overline">COACH'S NOTE</p><h2>Work with your body, not against it.</h2><p>{coach.fatigue.advice}</p><Link to="/coach/intelligence">Explore your insights <ArrowUpRight size={16} aria-hidden="true" /></Link></div>
