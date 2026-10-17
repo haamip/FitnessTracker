@@ -1,5 +1,6 @@
 import { readJson, writeJson } from "../utils/storage";
 import { supabase } from "../supabase";
+import { toDailyCheckInCloudPayload } from "../checkInCloudMapper";
 import { TrainingCloudRepository } from "./trainingCloudRepository";
 
 const WORKOUT_KEY_PREFIX = "trackfit_workout_";
@@ -13,7 +14,6 @@ const AI_PLAN_KEY = "trackfit_ai_workout_plan";
 function removeJson(key) { localStorage.removeItem(key); }
 function newestFirst(left, right) { return new Date(right.completedAt || right.updatedAt || right.date || 0) - new Date(left.completedAt || left.updatedAt || left.date || 0); }
 function syncQuietly(action) { Promise.resolve(action).catch((error) => console.warn("TrackFit cloud sync deferred:", error)); }
-function toNumber(value) { const number = Number.parseFloat(value); return Number.isFinite(number) ? number : 0; }
 
 async function syncCompletedWorkout(record) {
   if (!supabase) return;
@@ -58,20 +58,7 @@ async function syncDailyCheckIn(record) {
     const userId = userData.user?.id;
     if (!userId) return;
 
-    const payload = {
-      user_id: userId,
-      checkin_date: record.date,
-      weight_kg: toNumber(record.weightKg ?? record.weight),
-      protein_g: toNumber(record.proteinG ?? record.protein),
-      water_l: toNumber(record.waterL ?? record.water),
-      sleep_hours: toNumber(record.sleepHours ?? record.sleep),
-      mood: record.mood || "Okay",
-      energy: Math.round(toNumber(record.energy ?? 5)),
-      body_feel: record.bodyFeel || record.soreness || "Mild",
-      trained_today: Boolean(record.trainedToday ?? (record.trained === true || record.trained === "Yes")),
-      training_note: record.trainingNote || null,
-      updated_at: new Date().toISOString(),
-    };
+    const payload = toDailyCheckInCloudPayload(record, userId);
 
     const { data, error } = await supabase
       .from("daily_checkins")
