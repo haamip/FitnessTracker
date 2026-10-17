@@ -1,9 +1,17 @@
+import { supabase } from "./supabase";
 // Progress pictures stay on the user's device. Do not store images in localStorage
 // or send them to a server without explicit user consent and private storage.
 const DB = "trackfit-private-photos";
 const STORE = "weekly-progress";
 const MAX_BYTES = 8 * 1024 * 1024;
 const TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+async function accountNamespace() {
+  if (!supabase) return "offline-device";
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session?.user?.id) throw new Error("Sign in to keep progress photos separated by account.");
+  return data.session.user.id;
+}
 
 function openDb() {
   if (typeof indexedDB === "undefined") return Promise.reject(new Error("Photo storage is unavailable on this device."));
@@ -34,7 +42,7 @@ async function transaction(mode, callback) {
 export async function putWeeklyPhoto(weekStart, angle, file) {
   if (!TYPES.has(file?.type)) throw new Error("Choose a JPEG, PNG or WebP photo.");
   if (!file.size || file.size > MAX_BYTES) throw new Error("Photo must be under 8MB.");
-  const id = `${weekStart}:${angle}`;
+  const id = `${await accountNamespace()}:${weekStart}:${angle}`;
   await transaction("readwrite", (store) => store.put({
     id, weekStart, angle, image: file, updatedAt: new Date().toISOString(),
   }));
@@ -42,9 +50,11 @@ export async function putWeeklyPhoto(weekStart, angle, file) {
 }
 
 export async function getWeeklyPhoto(weekStart, angle) {
-  return (await transaction("readonly", (store) => store.get(`${weekStart}:${angle}`))) || null;
+  const id = `${await accountNamespace()}:${weekStart}:${angle}`;
+  return (await transaction("readonly", (store) => store.get(id))) || null;
 }
 
 export async function deleteWeeklyPhoto(weekStart, angle) {
-  await transaction("readwrite", (store) => store.delete(`${weekStart}:${angle}`));
+  const id = `${await accountNamespace()}:${weekStart}:${angle}`;
+  await transaction("readwrite", (store) => store.delete(id));
 }
