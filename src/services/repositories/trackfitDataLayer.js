@@ -1,5 +1,6 @@
 import { readJson, writeJson } from "../utils/storage";
 import { supabase } from "../supabase";
+import { toDailyCheckInCloudPayload } from "../checkInCloudMapper";
 import { TrainingCloudRepository } from "./trainingCloudRepository";
 
 const WORKOUT_KEY_PREFIX = "trackfit_workout_";
@@ -58,20 +59,7 @@ async function syncDailyCheckIn(record) {
     const userId = userData.user?.id;
     if (!userId) return;
 
-    const payload = {
-      user_id: userId,
-      checkin_date: record.date,
-      weight_kg: toNumber(record.weightKg ?? record.weight),
-      protein_g: toNumber(record.proteinG ?? record.protein),
-      water_l: toNumber(record.waterL ?? record.water),
-      sleep_hours: toNumber(record.sleepHours ?? record.sleep),
-      mood: record.mood || "Okay",
-      energy: Math.round(toNumber(record.energy ?? 5)),
-      body_feel: record.bodyFeel || record.soreness || "Mild",
-      trained_today: Boolean(record.trainedToday ?? (record.trained === true || record.trained === "Yes")),
-      training_note: record.trainingNote || null,
-      updated_at: new Date().toISOString(),
-    };
+    const payload = toDailyCheckInCloudPayload(record, userId);
 
     const { data, error } = await supabase
       .from("daily_checkins")
