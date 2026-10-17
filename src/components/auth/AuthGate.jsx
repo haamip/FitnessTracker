@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { isSupabaseConfigured, supabase } from "../../services/supabase";
 import { WorkoutCloudRepository } from "../../services/repositories/workoutCloudRepository";
 import { TrainingCloudRepository } from "../../services/repositories/trainingCloudRepository";
+import { CheckInRepository } from "../../services/repositories/trackfitDataLayer";
 import AuthScreen from "./AuthScreen";
 
 export default function AuthGate({ children }) {
@@ -26,14 +27,18 @@ export default function AuthGate({ children }) {
       setSession(restoredSession);
 
       if (restoredSession) {
+        CheckInRepository.setActiveUser(restoredSession.user.id);
         try {
           await Promise.all([
             WorkoutCloudRepository.getAll(),
             TrainingCloudRepository.hydrate(),
+            CheckInRepository.hydrateForUser(restoredSession.user.id),
           ]);
         } catch (hydrateError) {
           console.warn("Cloud data restore failed; TrackFit will use its local cache.", hydrateError);
         }
+      } else {
+        CheckInRepository.setActiveUser(null);
       }
 
       if (mounted) setLoading(false);
@@ -43,18 +48,23 @@ export default function AuthGate({ children }) {
 
     const { data } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
       if (!mounted) return;
+      setLoading(true);
       setSession(nextSession);
       setAuthError("");
 
       if (nextSession) {
+        CheckInRepository.setActiveUser(nextSession.user.id);
         try {
           await Promise.all([
             WorkoutCloudRepository.getAll(),
             TrainingCloudRepository.hydrate(),
+            CheckInRepository.hydrateForUser(nextSession.user.id),
           ]);
         } catch (hydrateError) {
           console.warn("Cloud data restore failed; TrackFit will use its local cache.", hydrateError);
         }
+      } else {
+        CheckInRepository.setActiveUser(null);
       }
 
       if (mounted) setLoading(false);
