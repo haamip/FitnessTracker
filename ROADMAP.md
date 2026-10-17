@@ -22,13 +22,15 @@
 - Note: weekly feedback is currently rules-based, not LLM text generation
 - Note: photos and weekly questionnaire are local-only, not yet cross-device cloud synced
 
-## Next: Wearable/Health Connect (Android)
-- Choose target watches and make a native Android app wrapper
-- Read permitted steps and exercise sessions through Health Connect (user opt-in)
-- Prevent double counting total daily steps with recorded cardio sessions
-- Sync only the user-approved aggregates and dates with their TrackFit account
-- Handle missing permission, device offline and watch-not-connected gracefully
-- On-watch short check-in requires a separate Wear OS companion; not in the web build
+## Next: Multi-brand watch syncing (Android & iPhone)
+- Build native Android and iOS application wrappers; browser/PWA cannot access health stores
+- Android Health Connect: Galaxy Watch/Samsung Health, Pixel/Fitbit, Garmin Connect, Polar Flow and other apps that actually share data
+- Apple HealthKit: Apple Watch, Garmin/Polar and other watches whose companion apps share compatible metrics
+- Shared wearable adapter contract drafted in PR #21; **native plugins not yet implemented**
+- Start with opt-in total daily steps; then import exercise/cardio with stable IDs and deduplication
+- Sync only consented aggregates/dates; do not double-count watch, phone and workout steps
+- Separate Wear OS/watchOS companion apps for on-watch check-in only if demand justifies it
+- Support permission denial, missing data, offline devices and multiple account isolation
 - Privacy: no watch data access until permissions are explicitly granted
 
 ## After watch and review stabilise: Nutrition
