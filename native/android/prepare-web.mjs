@@ -1,3 +1,4 @@
+/* global console */
 /**
  * Add Health Connect bridge registration to the native-only Vite entrypoint.
  * CI runs this after npm ci and installing Capacitor dependencies, before build.
