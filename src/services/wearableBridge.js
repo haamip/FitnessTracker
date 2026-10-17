@@ -9,7 +9,7 @@
  * readTodaySteps. Browser/PWA use manual steps; don't show a fake Connected state.
  * No watch or Health Connect/HealthKit plugin is bundled in the web build yet.
  */
-import { getHealthConnectBridge, readGalaxyDailySteps } from "./healthConnectBridge";
+import { getHealthConnectBridge, readAndroidHealthSteps } from "./healthConnectBridge";
 
 function getNativeCapacitor() {
   if (typeof window === "undefined") return null;
@@ -39,7 +39,7 @@ export function getWearableBridge() {
 export async function readWearableSteps(date, provider = getWearableBridge()) {
   if (!provider) throw new Error("Watch syncing needs the native TrackFit app. Enter steps manually for now.");
   if (provider.platform === "android") {
-    return readGalaxyDailySteps(date, provider.bridge);
+    return readAndroidHealthSteps(date, provider.bridge);
   }
   if (provider.platform !== "ios") throw new Error("Unsupported health provider.");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error("Invalid day requested.");
