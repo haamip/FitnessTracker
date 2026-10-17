@@ -1,5 +1,5 @@
 /**
- * Health Connect hand-off for a future native Android TrackFit build.
+ * Health Connect hand-off for a future native Android TrackFit build, regardless of watch brand.
  * Browser sessions deliberately cannot request Health Connect data.
  *
  * Native Capacitor plugin contract (not yet shipped):
@@ -39,7 +39,7 @@ export function validateHealthConnectSteps(record, requestedDate) {
   };
 }
 
-export async function readGalaxyDailySteps(date, bridge = getHealthConnectBridge()) {
+export async function readAndroidHealthSteps(date, bridge = getHealthConnectBridge()) {
   if (!bridge) throw new Error("Galaxy Watch sync needs the TrackFit Android app. Enter steps manually for now.");
   const status = await bridge.getStatus();
   if (!status?.available) throw new Error("Health Connect isn't available on this phone.");
@@ -50,3 +50,6 @@ export async function readGalaxyDailySteps(date, bridge = getHealthConnectBridge
   const result = await bridge.readTodaySteps({ date });
   return validateHealthConnectSteps(result, date);
 }
+
+// Backward-compatible alias while existing Galaxy-specific callers transition.
+export const readGalaxyDailySteps = readAndroidHealthSteps;
