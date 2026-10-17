@@ -70,7 +70,7 @@ class TrackFitHealthConnectPlugin : Plugin() {
     }
 
     @PluginMethod
-    fun requestPermissions(call: PluginCall) {
+    override fun requestPermissions(call: PluginCall) {
         val types = call.getArray("dataTypes")
         if (types == null || types.length() != 1 || types.optString(0) != "steps") {
             call.reject("TrackFit currently requests read access to steps only.", "INVALID_SCOPE")
