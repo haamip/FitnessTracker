@@ -4,9 +4,11 @@ import { Link, useSearchParams } from "react-router-dom";
 import {
   CheckSquare,
   ChevronRight,
+  Copy,
   Dumbbell,
   FileUp,
   History,
+  Pencil,
   Plus,
   Sparkles,
   Square,
@@ -41,6 +43,8 @@ export default function Workouts() {
   const [savedWorkouts, setSavedWorkouts] = useState(() => SavedWorkoutRepository.getAll());
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+  const [editingName, setEditingName] = useState("");
 
   const dataSnapshot = useMemo(() => {
     void refreshToken;
@@ -72,6 +76,45 @@ export default function Workouts() {
     const shouldDelete = window.confirm(`Delete “${workout.name}”?`);
     if (!shouldDelete) return;
     setSavedWorkouts(SavedWorkoutRepository.remove(workout.id));
+  }
+
+  function startRename(workout) {
+    setEditingId(workout.id);
+    setEditingName(workout.name);
+  }
+
+  function cancelRename() {
+    setEditingId(null);
+    setEditingName("");
+  }
+
+  function saveRename(event, workout) {
+    event.preventDefault();
+    const name = editingName.trim();
+    if (!name || name === workout.name) {
+      cancelRename();
+      return;
+    }
+    setSavedWorkouts(SavedWorkoutRepository.save({ ...workout, name }));
+    cancelRename();
+  }
+
+  function duplicateSavedWorkout(workout) {
+    const copy = {
+      ...workout,
+      id: `saved-${crypto.randomUUID()}`,
+      name: `${workout.name} (copy)`,
+      exercises: (workout.exercises || []).map((exercise) => ({
+        ...exercise,
+        id: `${exercise.libraryId || "exercise"}-${crypto.randomUUID()}`,
+        sets: (exercise.sets || []).map((set) => ({
+          ...set,
+          id: crypto.randomUUID(),
+          done: false,
+        })),
+      })),
+    };
+    setSavedWorkouts(SavedWorkoutRepository.save(copy));
   }
 
   function deleteSelectedWorkouts() {
@@ -170,16 +213,43 @@ export default function Workouts() {
                   )}
 
                   {!selectMode && (
-                    <button
-                      aria-label={`Delete ${workout.name}`}
-                      onClick={() => deleteSavedWorkout(workout)}
-                      type="button"
-                      style={{ border: 0, background: "transparent", padding: 8, cursor: "pointer" }}
-                    >
-                      <Trash2 size={19} />
-                    </button>
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 2 }}>
+                      <button aria-label={`Rename ${workout.name}`} title="Rename" onClick={() => startRename(workout)} type="button" style={{ border: 0, background: "transparent", padding: 8, cursor: "pointer" }}>
+                        <Pencil size={18} />
+                      </button>
+                      <button aria-label={`Duplicate ${workout.name}`} title="Duplicate" onClick={() => duplicateSavedWorkout(workout)} type="button" style={{ border: 0, background: "transparent", padding: 8, cursor: "pointer" }}>
+                        <Copy size={18} />
+                      </button>
+                      <button aria-label={`Delete ${workout.name}`} title="Delete" onClick={() => deleteSavedWorkout(workout)} type="button" style={{ border: 0, background: "transparent", padding: 8, cursor: "pointer" }}>
+                        <Trash2 size={19} />
+                      </button>
+                    </div>
                   )}
                 </div>
+                {!selectMode && editingId !== workout.id && (
+                  <Link
+                    to={`/workouts/create?edit=${encodeURIComponent(workout.id)}`}
+                    style={{ display: "inline-block", padding: "0 16px 12px", textDecoration: "underline" }}
+                  >
+                    Edit exercises
+                  </Link>
+                )}
+                {editingId === workout.id && (
+                  <form onSubmit={(event) => saveRename(event, workout)} style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: 12 }}>
+                    <input
+                      aria-label="New workout name"
+                      autoFocus
+                      maxLength={80}
+                      required
+                      value={editingName}
+                      onChange={(event) => setEditingName(event.target.value)}
+                      onKeyDown={(event) => { if (event.key === "Escape") cancelRename(); }}
+                      style={{ flex: "1 1 190px", minWidth: 0, padding: 10, borderRadius: 10 }}
+                    />
+                    <button type="submit" disabled={!editingName.trim()}>Save name</button>
+                    <button type="button" onClick={cancelRename}>Cancel</button>
+                  </form>
+                )}
               </div>
             );
           })}
@@ -208,8 +278,8 @@ export default function Workouts() {
       </section>
 
       <section className="v4-quick-grid">
-        <Link className="v4-quick-card" to="/workouts/workout-1">
-          <Plus size={24} /><strong>Empty Workout</strong><span>Start a session from scratch</span>
+        <Link className="v4-quick-card" to="/workouts/create">
+          <Plus size={24} /><strong>Build a Workout</strong><span>Choose exercises, name and save your routine</span>
         </Link>
         <Link className="v4-quick-card" to="/workouts/import">
           <FileUp size={24} /><strong>Import Workout</strong><span>Paste text or upload a PDF</span>

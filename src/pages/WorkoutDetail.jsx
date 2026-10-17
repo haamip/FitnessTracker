@@ -35,6 +35,7 @@ import {
   WorkoutRepository,
   AIPlanRepository,
   HistoryRepository,
+  SavedWorkoutRepository,
 } from "../services/repositories/trackfitDataLayer";
 import "./TrackFitScreens.css";
 
@@ -210,6 +211,8 @@ export default function WorkoutDetail() {
   const { id = "workout-1" } = useParams();
   const navigate = useNavigate();
   const aiDay = findAiDay(id);
+  const savedTemplate = SavedWorkoutRepository.getById(id);
+  const workoutTitle = savedTemplate?.name || aiDay?.name || "Workout 1";
 
   const [seconds, setSeconds] = useState(0);
   const [restSeconds, setRestSeconds] = useState(DEFAULT_REST_SECONDS);
@@ -426,7 +429,7 @@ export default function WorkoutDetail() {
 
         const finishedWorkout = buildCompletedWorkout({
           id,
-          title: aiDay?.name || "Workout 1",
+          title: workoutTitle,
           seconds,
           notes,
           exercises: nextExercises,
@@ -626,7 +629,6 @@ export default function WorkoutDetail() {
     goToExercise(-1);
   }
 
-  const workoutTitle = aiDay?.name || "Workout 1";
   const canFinish = totals.doneSets > 0;
   const isWorkoutComplete =
     totals.totalSets > 0 && totals.doneSets === totals.totalSets;

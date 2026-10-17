@@ -17,6 +17,7 @@ const Coach = lazy(() => import("./pages/Coach"));
 const Workouts = lazy(() => import("./pages/Workouts"));
 const AIWorkoutBuilder = lazy(() => import("./pages/AIWorkoutBuilder"));
 const WorkoutImport = lazy(() => import("./pages/WorkoutImport"));
+const CreateWorkout = lazy(() => import("./pages/CreateWorkout"));
 const WorkoutDetail = lazy(() => import("./pages/WorkoutDetail"));
 const CoachIntelligence = lazy(() => import("./pages/CoachIntelligence"));
 const Nutrition = lazy(() => import("./pages/Nutrition"));
@@ -67,6 +68,7 @@ function AppRoutes() {
             <Route path="/workouts" element={<Workouts />} />
             <Route path="/workouts/builder" element={<AIWorkoutBuilder />} />
             <Route path="/workouts/import" element={<WorkoutImport />} />
+            <Route path="/workouts/create" element={<CreateWorkout />} />
             <Route path="/profile" element={<Profile />} />
             {showDeveloperTools && <Route path="/dev-tools" element={<DeveloperTools />} />}
             {showDeveloperTools && <Route path="/dev-tools/ai" element={<AIPlayground />} />}
