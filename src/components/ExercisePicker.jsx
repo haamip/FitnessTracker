@@ -109,7 +109,6 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
   useEffect(() => {
     if (!isOpen) return undefined;
     let active = true;
-    setFreeLibraryStatus("Loading free exercise library...");
     loadFreeExerciseCatalog()
       .then((exercises) => {
         if (!active) return;
