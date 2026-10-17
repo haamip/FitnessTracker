@@ -28,6 +28,18 @@ describe("weekly coaching from genuine logs", () => {
     });
   });
 
+  it("identifies improved comparable working sets versus prior week", () => {
+    const facts = getWeeklyFacts({
+      workouts: [
+        { completedAt: "2026-10-07T08:00:00Z", exercises: [{ name:"Bench Press", sets:[{ done:true, weight:80, reps:5 }] }] },
+        { completedAt: "2026-10-14T08:00:00Z", exercises: [{ name:"Bench Press", sets:[{ done:true, weight:85, reps:5 }] }] },
+      ],
+    }, "2026-10-12", now);
+    expect(facts.improvedExercises).toEqual(["Bench Press"]);
+    const feedback = buildWeeklyFeedback(facts, {progression:"improved"});
+    expect(feedback.evidence.join(" ")).toContain("Bench Press");
+  });
+
   it("does not invent missing step averages or declare a failed week", () => {
     const facts = getWeeklyFacts({checkIns:[{date:"2026-10-12", mood:"Okay"}]}, "2026-10-12", now);
     expect(facts.averageSteps).toBe(null);
