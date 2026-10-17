@@ -185,7 +185,7 @@ export const CheckInRepository = {
   getAll() {
     const key = currentCheckInKey();
     if (!key) return [];
-    return readJson(key, []).sort(newestFirst);
+    return readJson(key, []).sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
   },
   getLegacyCount() {
     if (!activeCheckInAccountId || localStorage.getItem(LEGACY_CLAIM_KEY)) return 0;
