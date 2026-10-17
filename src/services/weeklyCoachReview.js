@@ -19,6 +19,27 @@ function dateWithin(date, start, end) {
   return Boolean(key && key >= start && key <= end);
 }
 
+function bestWorkingSets(workouts) {
+  const best = new Map();
+  for (const session of workouts) {
+    for (const exercise of session.exercises || []) {
+      const scores = (exercise.sets || [])
+        .filter((set) => set.done)
+        .map((set) => {
+          const weight = Number(set.weight);
+          const reps = Number(set.reps);
+          return Number.isFinite(weight) && Number.isFinite(reps) && weight > 0 && reps >= 1 && reps <= 30
+            ? weight * (1 + reps / 30)
+            : 0;
+        });
+      const score = Math.max(0, ...scores);
+      const key = String(exercise.name || "").trim().toLowerCase();
+      if (key && score > (best.get(key)?.score || 0)) best.set(key, { name: exercise.name, score });
+    }
+  }
+  return best;
+}
+
 export function getWeeklyFacts({ checkIns = [], workouts = [], cardio = [], meals = [] }, start, today = new Date()) {
   const endDate = new Date(start + "T12:00:00");
   endDate.setDate(endDate.getDate() + 6);
@@ -28,6 +49,16 @@ export function getWeeklyFacts({ checkIns = [], workouts = [], cardio = [], meal
   const days = checkIns.filter((x) => dateWithin(x.date, start, through));
   const lowMoodDays = days.filter((x) => ["Flat", "Rough"].includes(x.mood)).length;
   const lifts = workouts.filter((x) => dateWithin(x.completedAt, start, through));
+  const previousWeek = new Date(start + "T12:00:00");
+  previousWeek.setDate(previousWeek.getDate() - 7);
+  const previousStart = getWeekStart(previousWeek);
+  const prior = workouts.filter((x) => dateWithin(x.completedAt, previousStart, start) && dateKey(x.completedAt) !== start);
+  const currentBest = bestWorkingSets(lifts);
+  const previousBest = bestWorkingSets(prior);
+  const improvedExercises = [...currentBest.entries()]
+    .filter(([name, value]) => previousBest.has(name) && value.score > previousBest.get(name).score * 1.01)
+    .map(([, value]) => value.name)
+    .slice(0, 3);
   const movement = cardio.filter((x) => dateWithin(x.date, start, through));
   const food = meals.filter((x) => dateWithin(x.date, start, through));
   const stepDays = days.filter((x) => x.steps !== null && x.steps !== "" && Number.isFinite(Number(x.steps)) && Number(x.steps) >= 0);
@@ -46,6 +77,7 @@ export function getWeeklyFacts({ checkIns = [], workouts = [], cardio = [], meal
     workouts: lifts.length,
     strengthVolumeKg: Math.round(volume),
     prs,
+    improvedExercises,
     cardioSessions: movement.length,
     cardioMinutes: Math.round(minutes),
     loggedStepDays: stepDays.length,
@@ -65,6 +97,9 @@ export function buildWeeklyFeedback(facts, answers = {}) {
   } else {
     evidence.push("No completed strength sessions recorded this week.");
     nextSteps.push("Start with one manageable strength session.");
+  }
+  if (facts.improvedExercises?.length) {
+    evidence.push(`Estimated strength improved versus last week for: ${facts.improvedExercises.join(", ")}.`);
   }
   if (facts.prs > 0) evidence.push(`${facts.prs} personal-record signal${facts.prs === 1 ? "" : "s"} recorded.`);
   if (facts.loggedStepDays > 0) {
