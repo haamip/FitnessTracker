@@ -21,17 +21,20 @@ function getNativeCapacitor() {
 export function getWearableBridge() {
   const capacitor = getNativeCapacitor();
   if (!capacitor) return null;
-  // Actual native implementations register these plugins. Availability is a
-  // capability check, not a claim that any specific watch has been paired.
-  const healthConnect = getHealthConnectBridge();
-  if (healthConnect) return { platform: "android", name: "Health Connect", bridge: healthConnect };
-  const healthKit = capacitor.Plugins?.TrackFitHealthKit;
-  if (
-    typeof healthKit?.getStatus === "function" &&
-    typeof healthKit?.requestPermissions === "function" &&
-    typeof healthKit?.readTodaySteps === "function"
-  ) {
-    return { platform: "ios", name: "Apple Health", bridge: healthKit };
+  const platform = typeof capacitor.getPlatform === "function" ? capacitor.getPlatform() : null;
+  if (platform === "android" || platform === null) {
+    const healthConnect = getHealthConnectBridge();
+    if (healthConnect) return { platform: "android", name: "Health Connect", bridge: healthConnect };
+  }
+  if (platform === "ios" || platform === null) {
+    const healthKit = capacitor.Plugins?.TrackFitHealthKit;
+    if (
+      typeof healthKit?.getStatus === "function" &&
+      typeof healthKit?.requestPermissions === "function" &&
+      typeof healthKit?.readTodaySteps === "function"
+    ) {
+      return { platform: "ios", name: "Apple Health", bridge: healthKit };
+    }
   }
   return null;
 }
