@@ -1,0 +1,61 @@
+name: TrackFit Android Debug APK
+on:
+  pull_request:
+    paths:
+      - "native/android/**"
+      - "capacitor.config.json"
+      - ".github/workflows/android-debug.yml"
+      - "src/services/healthConnectBridge.js"
+      - "src/services/wearableBridge.js"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android-debug:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install Android platform 36
+        run: |
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -maxdepth 3 -type f -name sdkmanager | head -n 1)"
+          test -n "$SDKMANAGER" || { echo "Android sdkmanager missing"; exit 1; }
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+      - name: Install web dependencies
+        run: npm ci
+      - name: Install Capacitor for isolated debug build
+        run: npm install --no-save --package-lock=false @capacitor/core@8.3.0 @capacitor/android@8.3.0 @capacitor/cli@8.3.0
+      - name: Register native-only Health Connect bridge
+        run: node native/android/prepare-web.mjs
+      - name: Build web application into Android assets
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.TRACKFIT_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.TRACKFIT_SUPABASE_ANON_KEY }}
+        run: npm run build
+      - name: Generate native Android shell
+        run: npx cap add android
+      - name: Apply Health Connect native code and permissions
+        run: node native/android/prepare-shell.mjs
+      - name: Copy web assets into native project
+        run: npx cap sync android
+      - name: Build debug APK
+        run: cd android && chmod +x gradlew && ./gradlew --no-daemon assembleDebug
+      - name: Upload development-only debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: trackfit-android-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
