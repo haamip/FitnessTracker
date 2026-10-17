@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Check, Clock3, Info, Search, Star, X } from "lucide-react";
 import { exerciseLibrary } from "../data/exerciseLibrary";
+import { getCachedFreeExercises, loadFreeExerciseCatalog } from "../services/freeExerciseCatalog";
 import "../pages/TrackFitScreens.css";
 
 const muscleFilters = [
@@ -102,6 +103,24 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
   const [selectedEquipment, setSelectedEquipment] = useState("all");
   const [viewMode, setViewMode] = useState("all");
   const [previewExercise, setPreviewExercise] = useState(null);
+  const [freeExercises, setFreeExercises] = useState(getCachedFreeExercises);
+  const [freeLibraryStatus, setFreeLibraryStatus] = useState("");
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    let active = true;
+    setFreeLibraryStatus("Loading free exercise library...");
+    loadFreeExerciseCatalog()
+      .then((exercises) => {
+        if (!active) return;
+        setFreeExercises(exercises);
+        setFreeLibraryStatus("");
+      })
+      .catch(() => {
+        if (active) setFreeLibraryStatus("Free library is offline. Your built-in exercises are still available.");
+      });
+    return () => { active = false; };
+  }, [isOpen]);
   const [favouriteIds, setFavouriteIds] = useState(() =>
     readStoredList("trackfit_favourite_exercises"),
   );
@@ -115,7 +134,9 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
   const filteredExercises = useMemo(() => {
     const search = query.trim().toLowerCase();
 
-    return exerciseLibrary
+    const names = new Set(exerciseLibrary.map((exercise) => exercise.name.trim().toLowerCase()));
+    const extraExercises = freeExercises.filter((exercise) => !names.has(exercise.name.trim().toLowerCase()));
+    return [...exerciseLibrary, ...extraExercises]
       .filter((exercise) => {
         const muscles = [
           ...(exercise.primaryMuscles || []),
@@ -167,6 +188,7 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
       .slice(0, 80);
   }, [
     favouriteIdSet,
+    freeExercises,
     query,
     recentIdSet,
     recentIds,
@@ -302,9 +324,20 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
               </small>
             </div>
             <div className="tf-picker-preview-actions">
-              <Link to={`/exercises/${preview.id}`} onClick={onClose}>
-                <Info size={17} /> Details
-              </Link>
+              {preview.source === "free-exercise-db" ? (
+                <details style={{ maxWidth: 290 }}>
+                  <summary style={{ cursor: "pointer" }}><Info size={16} /> Instructions</summary>
+                  <ol style={{ paddingLeft: 20 }}>
+                    {(preview.instructions || []).slice(0, 6).map((instruction, index) => (
+                      <li key={index} style={{ marginTop: 7 }}>{instruction}</li>
+                    ))}
+                  </ol>
+                </details>
+              ) : (
+                <Link to={`/exercises/${preview.id}`} onClick={onClose}>
+                  <Info size={17} /> Details
+                </Link>
+              )}
               <button onClick={() => selectExercise(preview)} type="button">
                 <Check size={18} /> Add
               </button>
@@ -313,7 +346,17 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
         )}
 
         <div className="tf-picker-count">
-          {filteredExercises.length} exercises found
+          {filteredExercises.length} matching exercises shown
+          {freeLibraryStatus && <small role="status" style={{ display: "block" }}>{freeLibraryStatus}</small>}
+          {freeExercises.length > 0 && (
+            <small style={{ display: "block" }}>
+              Free exercise data by{" "}
+              <a href="https://github.com/yuhonas/free-exercise-db" target="_blank" rel="noreferrer">
+                Free Exercise DB
+              </a>{" "}
+              (Unlicense). Images need internet unless already cached.
+            </small>
+          )}
         </div>
 
         <div className="tf-picker-list">
