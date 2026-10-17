@@ -13,3 +13,5 @@ This is the default working agreement for TrackFit.
 Standard order: fix critical vulnerabilities → merge dependency updates → merge workout improvements → merge daily/weekly coaching → merge wearable foundation → native integrations → nutrition.
 
 Default branch: `ui-app-shell`; production deploys from the reviewed mainline.
+
+Dependency updates should be merged ahead of feature work when they block CI. Re-run PR checks against the updated base before merging features.
