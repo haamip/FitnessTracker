@@ -196,14 +196,17 @@ export const CheckInRepository = {
     if (!account || localStorage.getItem(LEGACY_CLAIM_KEY)) return 0;
     const records = readJson(CHECKINS_KEY, []);
     if (!records.length) return 0;
-    const merged = mergeCloudCheckIns(records, this.getAll(), []);
+    const current = this.getAll();
+    const existingDates = new Set(current.map((item) => item.date));
+    const imported = records.filter((record) => record?.date && !existingDates.has(record.date));
+    const merged = mergeCloudCheckIns(records, current, []);
     writeJson(checkInCacheKey(account), merged);
     localStorage.setItem(LEGACY_CLAIM_KEY, account);
     const pendingKey = pendingCheckInsKey(account);
-    const dates = new Set([...readJson(pendingKey, []), ...records.map((x) => x.date).filter(Boolean)]);
+    const dates = new Set([...readJson(pendingKey, []), ...imported.map((x) => x.date)]);
     writeJson(pendingKey, [...dates]);
-    records.forEach((record) => syncQuietly(syncDailyCheckIn(record)));
-    return records.length;
+    imported.forEach((record) => syncQuietly(syncDailyCheckIn(record)));
+    return imported.length;
   },
   async hydrateForUser(userId) {
     this.setActiveUser(userId);
@@ -219,6 +222,16 @@ export const CheckInRepository = {
     const remote = (data || []).map(fromDailyCheckInCloudRow);
     const merged = mergeCloudCheckIns(local, remote, pending);
     writeJson(key, merged);
+    // Deferred to the next event loop turn to avoid interacting with auth
+    // APIs synchronously from Supabase's onAuthStateChange callback.
+    if (pending.length && typeof window !== "undefined") {
+      window.setTimeout(() => {
+        if (activeCheckInAccountId !== userId) return;
+        const pendingSet = new Set(readJson(pendingCheckInsKey(userId), []));
+        merged.filter((x) => pendingSet.has(x.date))
+          .forEach((record) => syncQuietly(syncDailyCheckIn(record)));
+      }, 0);
+    }
     return merged;
   },
   saveAll(checkIns) {
