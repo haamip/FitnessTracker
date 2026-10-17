@@ -14,7 +14,6 @@ const AI_PLAN_KEY = "trackfit_ai_workout_plan";
 function removeJson(key) { localStorage.removeItem(key); }
 function newestFirst(left, right) { return new Date(right.completedAt || right.updatedAt || right.date || 0) - new Date(left.completedAt || left.updatedAt || left.date || 0); }
 function syncQuietly(action) { Promise.resolve(action).catch((error) => console.warn("TrackFit cloud sync deferred:", error)); }
-function toNumber(value) { const number = Number.parseFloat(value); return Number.isFinite(number) ? number : 0; }
 
 async function syncCompletedWorkout(record) {
   if (!supabase) return;
