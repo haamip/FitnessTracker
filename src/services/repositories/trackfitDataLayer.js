@@ -196,7 +196,7 @@ export const CheckInRepository = {
     if (!account || localStorage.getItem(LEGACY_CLAIM_KEY)) return 0;
     const records = readJson(CHECKINS_KEY, []);
     if (!records.length) return 0;
-    const merged = mergeCloudCheckIns(this.getAll(), records, []);
+    const merged = mergeCloudCheckIns(records, this.getAll(), []);
     writeJson(checkInCacheKey(account), merged);
     localStorage.setItem(LEGACY_CLAIM_KEY, account);
     const pendingKey = pendingCheckInsKey(account);
