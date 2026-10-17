@@ -1,60 +1,47 @@
 # TrackFit Roadmap
 
-## Completed milestones
+## Shipped foundation (v0.4–v0.7)
+- Searchable exercise library and exercise picker
+- Workout logging, history, timers, PRs and progression engine
+- AI Workout Builder and readiness/coach intelligence foundation
+- Copy/paste and PDF workout imports
 
-### v0.4 — Exercise Engine Foundation
-- Exercise library import pipeline
-- Normalised TrackFit exercise schema
-- Searchable exercise picker
-- AI Builder foundation
+## Review branch: easy workout builder (PR #19)
+- Rename, edit, duplicate and reuse saved workouts
+- Pick exercises directly from the library to build your own routine
+- Free public-domain exercise instructions and image catalogue
+- No paid exercise API
 
-### v0.5 — Workout Intelligence Engine
-- Previous workout targets
-- Progression recommendations
-- Warm-up generator
-- PR detection
-- Estimated 1RM tracking
-- Live workout stats
-- Dashboard intelligence cards
+## Review branch: check-ins + weekly coaching (PR #20)
+- Daily quick check-in: steps, feeling, workout/cardio/both/rest
+- Optional detailed sleep, water, weight and notes
+- Weekly questions on nutrition, steps, cardio, strength progression and recovery
+- Evidence-based weekly recap from actual logs and prior-week lifts
+- Weekly front/side/back comparison photos in local private device storage
+- Sunday in-app weekly review prompt
+- Note: weekly feedback is currently rules-based, not LLM text generation
+- Note: photos and weekly questionnaire are local-only, not yet cross-device cloud synced
 
-### v0.6 — Premium Gym Experience
-- Exercise detail pages
-- Exercise history and stats
-- Coach tips, mistakes and alternatives
-- RPE/RIR/failure tracking
-- Session and exercise notes
-- Premium workout flow polish
+## Next: Wearable/Health Connect (Android)
+- Choose target watches and make a native Android app wrapper
+- Read permitted steps and exercise sessions through Health Connect (user opt-in)
+- Prevent double counting total daily steps with recorded cardio sessions
+- Sync only the user-approved aggregates and dates with their TrackFit account
+- Handle missing permission, device offline and watch-not-connected gracefully
+- On-watch short check-in requires a separate Wear OS companion; not in the web build
+- Privacy: no watch data access until permissions are explicitly granted
 
-### v0.7 — AI Coach Foundation
-- Dedicated AI Coach service
-- Coach page route
-- Training readiness estimate
-- Suggested workout logic
-- Plateau detection
-- Weekly coaching summary
-- Recovery map
-- Explainable “Why?” recommendations
-- Unit tests for core intelligence engines
+## After watch and review stabilise: Nutrition
+- Food library / barcode reliability and serving adjustments
+- Repeat meals and quick logging, built for FIFO meals
+- Link actual intake to weekly coach feedback; missing entries are not zero intake
 
-## Upcoming milestones
+## Public beta release readiness
+- Review/resolve npm dependency security audit findings
+- Finish cross-device backups for reviews and private photo storage
+- Verify mobile UX, accessibility, user isolation and account sync
+- Native watch integration must pass device-specific testing
+- Play Store permissions and disclosure / safety compliance
 
-### v0.8 — Nutrition Intelligence
-- Macro tracking improvements
-- AI meal suggestions
-- Protein and hydration coaching
-- Weight trend insights
-- Mess-hall/FIFO friendly meal planning
-
-### v0.9 — Wearables and Recovery
-- Health Connect research/integration
-- Sleep and readiness inputs
-- HRV/resting heart rate support
-- Recovery confidence improvements
-
-### v1.0 — Public Beta
-- Authentication and cloud sync plan
-- Backup/export tools
-- UI accessibility pass
-- Performance pass
-- Bug bash and feature freeze
-- Play Store preparation
+## Engineering rule
+Daily logging should take under one minute. Show users their real data, never demo measurements in production. Watch and health integrations must be genuinely wired before showing Connected.
