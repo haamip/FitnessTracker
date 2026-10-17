@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 /**
  * ============================================================================
  * TrackFit Coach Intelligence Page
@@ -20,6 +21,7 @@ export default function CoachIntelligence() {
 
   return (
     <main className="coach-intelligence-page">
+      <p><Link to="/coach/weekly">Weekly check-in and progress photos →</Link></p>
       <section className="coach-hero">
         <p className="eyebrow">TrackFit Intelligence</p>
         <h1>Coach Brain</h1>
