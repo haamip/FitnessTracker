@@ -43,6 +43,13 @@ export default function DailyCheckIn() {
   const [form,setForm] = useState(initialValues);
   const [showDetails,setShowDetails] = useState(false);
   const [message,setMessage] = useState("");
+  const [olderEntries, setOlderEntries] = useState(() => CheckInRepository.getLegacyCount());
+  function importOlderEntries() {
+    const count = CheckInRepository.importLegacyForCurrentUser();
+    setOlderEntries(0);
+    setForm(initialValues());
+    setMessage(`${count} older check-in${count === 1 ? "" : "s"} imported. Cloud sync will retry if you're offline.`);
+  }
   const [watchAvailable] = useState(() => Boolean(getWearableBridge()));
   const [watchLoading, setWatchLoading] = useState(false);
   async function syncWatchSteps() {
@@ -146,6 +153,13 @@ export default function DailyCheckIn() {
           </label>
         </div>}
       </section>
+      {olderEntries > 0 && (
+        <section className="form-card" style={{ display: "grid", gap: 10 }}>
+          <strong>Found {olderEntries} older check-ins on this phone</strong>
+          <p>These were saved before account-specific storage. Only import them if they're yours. This won't import anyone else's cloud records.</p>
+          <button type="button" onClick={importOlderEntries}>Import my older check-ins</button>
+        </section>
+      )}
       {message && <p role="status">{message}</p>}
       <button className="v4-save-checkin" type="submit"><Save size={18} /> Save daily check-in</button>
       <p style={{marginTop:16,fontSize:13}}><Watch size={15} /> {watchAvailable
