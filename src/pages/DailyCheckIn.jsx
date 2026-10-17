@@ -1,454 +1,127 @@
-/*
- * TRACKFIT PAGE
- *
- * Purpose:
- * Main responsibility of this page.
- *
- * Data:
- * Repository and services used by this page.
- *
- * Features:
- * - Feature 1
- * - Feature 2
- * - Feature 3
- *
- * Future:
- * Planned improvements after MVP.
- */
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import {
-  Battery,
-  BedDouble,
-  CheckCircle2,
-  Dumbbell,
-  Flame,
-  HeartPulse,
-  Moon,
-  Save,
-  Scale,
-  Sparkles,
-  SunMedium,
-  Utensils,
-  Waves,
-} from "lucide-react";
-
-import Button from "../components/ui/Button";
+import { Activity, Footprints, HeartPulse, Save, Watch } from "lucide-react";
 import { completeDailyCheckIn } from "../features/gamification/gamification";
 import { CheckInRepository } from "../services/repositories/trackfitDataLayer";
 import "./TrackFitScreens.css";
 
-function getLocalDateKey() {
-  const date = new Date();
-  const pad = (value) => String(value).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+function todayKey() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
 }
+const today = todayKey();
 
-const initialForm = {
-  weightKg: "",
-  proteinG: "",
-  waterL: "",
-  sleepHours: "",
-  mood: "Okay",
-  energy: "5",
-  bodyFeel: "Mild",
-  trainedToday: "no",
-  trainingNote: "",
-};
-
-function toNumber(value) {
-  const number = Number.parseFloat(value);
-  return Number.isFinite(number) ? number : 0;
-}
-
-function normaliseCheckIn(checkIn, index = 0) {
+function initialValues() {
+  const existing = CheckInRepository.getAll().find((x)=>x.date===today) || {};
+  const activity = existing.activityType || (existing.trainedToday === true ? "workout" : "rest");
   return {
-    id: checkIn.id || `legacy-checkin-${index}`,
-    date: checkIn.date || checkIn.completedAt || getLocalDateKey(),
-    weightKg: toNumber(checkIn.weightKg ?? checkIn.weight),
-    proteinG: toNumber(checkIn.proteinG ?? checkIn.protein),
-    waterL: toNumber(checkIn.waterL ?? checkIn.water),
-    sleepHours: toNumber(checkIn.sleepHours ?? checkIn.sleep),
-    mood: checkIn.mood || "Okay",
-    energy: Math.round(toNumber(checkIn.energy ?? 5)),
-    bodyFeel: checkIn.bodyFeel || checkIn.soreness || "Mild",
-    trainedToday: Boolean(checkIn.trainedToday ?? checkIn.trained),
-    trainingNote: checkIn.trainingNote || "",
+    steps: existing.steps ?? "",
+    mood: existing.mood || "Okay",
+    activityType: activity,
+    weightKg: existing.weightKg ?? "",
+    sleepHours: existing.sleepHours ?? "",
+    waterL: existing.waterL ?? "",
+    proteinG: existing.proteinG ?? "",
+    energy: existing.energy ?? "",
+    bodyFeel: existing.bodyFeel || "Mild",
+    trainingNote: existing.trainingNote || "",
   };
 }
-
-function buildFormFromCheckIn(checkIn) {
-  if (!checkIn) return initialForm;
-
-  const saved = normaliseCheckIn(checkIn);
-
-  return {
-    weightKg: saved.weightKg ? String(saved.weightKg) : "",
-    proteinG: saved.proteinG ? String(saved.proteinG) : "",
-    waterL: saved.waterL ? String(saved.waterL) : "",
-    sleepHours: saved.sleepHours ? String(saved.sleepHours) : "",
-    mood: saved.mood,
-    energy: saved.energy ? String(saved.energy) : "5",
-    bodyFeel: saved.bodyFeel,
-    trainedToday: saved.trainedToday ? "yes" : "no",
-    trainingNote: saved.trainingNote,
-  };
-}
-
-function getScore(form) {
-  const sleep = Math.min(25, (toNumber(form.sleepHours) / 8) * 25);
-  const water = Math.min(20, (toNumber(form.waterL) / 4) * 20);
-  const protein = Math.min(20, (toNumber(form.proteinG) / 185) * 20);
-  const energy = Math.min(25, (toNumber(form.energy) / 10) * 25);
-  const body =
-    form.bodyFeel === "High" ? -12 : form.bodyFeel === "Moderate" ? -6 : 0;
-
-  return Math.max(
-    0,
-    Math.min(100, Math.round(sleep + water + protein + energy + body)),
-  );
-}
-
-function formatToday() {
-  const date = new Date();
-
-  return {
-    day: new Intl.DateTimeFormat("en-AU", { weekday: "short" }).format(date),
-    date: new Intl.DateTimeFormat("en-AU", { day: "numeric" }).format(date),
-  };
-}
+const MODES = [
+  ["workout", "Workout"],
+  ["cardio", "Cardio"],
+  ["both", "Both"],
+  ["rest", "Rest"],
+];
+const FEELINGS = ["Great", "Good", "Okay", "Flat", "Rough"];
 
 export default function DailyCheckIn() {
-  const today = getLocalDateKey();
-  const [showDetails, setShowDetails] = useState(false);
-  const [savedCheckIns, setSavedCheckIns] = useState(() =>
-    CheckInRepository.getAll().map(normaliseCheckIn),
-  );
-  const existingToday = savedCheckIns.find((checkIn) => checkIn.date === today);
-  const [form, setForm] = useState(() => buildFormFromCheckIn(existingToday));
-  const score = useMemo(() => getScore(form), [form]);
-  const hasReadinessInputs = Boolean(form.proteinG && form.waterL && form.sleepHours);
-  const todayLabel = formatToday();
-
-  const checkItems = [
-    {
-      icon: Scale,
-      label: "Weight",
-      value: `${toNumber(form.weightKg).toFixed(1)}kg`,
-      note: existingToday ? "Saved today" : "Ready to save",
-    },
-    {
-      icon: Utensils,
-      label: "Protein",
-      value: `${toNumber(form.proteinG).toFixed(1).replace(/\.0$/, "")}g`,
-      note: `${Math.max(0, 185 - toNumber(form.proteinG)).toFixed(1).replace(/\.0$/, "")}g to target`,
-    },
-    {
-      icon: Waves,
-      label: "Water",
-      value: `${toNumber(form.waterL).toFixed(1)}L`,
-      note: "Goal 4L",
-    },
-    {
-      icon: BedDouble,
-      label: "Sleep",
-      value: `${toNumber(form.sleepHours).toFixed(1)}h`,
-      note: toNumber(form.sleepHours) >= 7 ? "Solid" : "Low",
-    },
-  ];
-
-  const recovery = [
-    { label: "Mood", value: form.mood, icon: SunMedium },
-    { label: "Energy", value: `${form.energy}/10`, icon: Battery },
-    { label: "Body feel", value: form.bodyFeel, icon: HeartPulse },
-  ];
-
-  function updateField(field, value) {
-    setForm((current) => ({ ...current, [field]: value }));
-  }
-
-  function handleSubmit(event) {
+  const [form,setForm] = useState(initialValues);
+  const [showDetails,setShowDetails] = useState(false);
+  const [message,setMessage] = useState("");
+  function field(name,value){setForm((current)=>({...current,[name]:value}));setMessage("");}
+  function save(event){
     event.preventDefault();
-
-    const newCheckIn = normaliseCheckIn({
-      id: existingToday?.id || `checkin-${Date.now()}`,
+    const stepsText = String(form.steps).trim();
+    const steps = stepsText === "" ? null : Number(stepsText);
+    if (steps !== null && (!Number.isSafeInteger(steps) || steps < 0 || steps > 150000)) {
+      setMessage("Steps must be a whole number between 0 and 150,000.");
+      return;
+    }
+    const records = CheckInRepository.getAll();
+    const existing = records.find((x)=>x.date===today) || {};
+    const update = {
+      ...existing,
+      id: existing.id || `checkin-${crypto.randomUUID()}`,
       date: today,
-      weightKg: form.weightKg,
-      proteinG: form.proteinG,
-      waterL: form.waterL,
-      sleepHours: form.sleepHours,
+      steps,
+      stepsSource: "manual",
       mood: form.mood,
-      energy: form.energy,
-      bodyFeel: form.bodyFeel,
-      trainedToday: form.trainedToday === "yes",
-      trainingNote: form.trainingNote,
+      activityType: form.activityType,
+      trainedToday: ["workout","both"].includes(form.activityType),
+      trainingNote: form.trainingNote.trim(),
+    };
+    // Optional input fields should remain absent if the user didn't fill them in.
+    ["weightKg","sleepHours","waterL","proteinG","energy"].forEach((key)=>{
+      const raw=String(form[key]).trim();
+      if(raw) update[key]=Number(raw);
+      else delete update[key];
     });
-
-    const nextCheckIns = [
-      newCheckIn,
-      ...savedCheckIns.filter((checkIn) => checkIn.date !== today),
-    ];
-
-    CheckInRepository.saveAll(nextCheckIns);
-    completeDailyCheckIn();
-    setSavedCheckIns(nextCheckIns);
+    update.bodyFeel=form.bodyFeel;
+    try {
+      CheckInRepository.saveAll([update,...records.filter((x)=>x.date!==today)]);
+      completeDailyCheckIn();
+      setMessage("Check-in saved. Good mahi.");
+    }catch{
+      setMessage("Couldn't save your check-in on this device. Try again.");
+    }
   }
-
   return (
-    <motion.form
-      className="screen checkin-v4"
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
-      onSubmit={handleSubmit}
-    >
+    <motion.form className="screen checkin-v4" onSubmit={save} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}}>
       <section className="v4-checkin-hero">
-        <div>
-          <p className="eyebrow">Daily check-in</p>
-          <h1>Quick check-in</h1>
-          <p>Weight, energy and training. Extra details are optional.</p>
-        </div>
-
-        <div className="v4-checkin-date">
-          <span>{todayLabel.day}</span>
-          <strong>{todayLabel.date}</strong>
+        <div><p className="eyebrow">Daily check-in</p><h1>60-second check-in</h1><p>Steps, how you feel, workout or rest. Done.</p></div>
+      </section>
+      <section className="v4-workout-list">
+        <div className="v4-section-heading"><div><p className="eyebrow">Movement</p><h2><Footprints size={18} /> Steps today</h2></div></div>
+        <label className="form-card">
+          Total steps so far
+          <input aria-label="Daily steps" type="number" inputMode="numeric" min="0" max="150000" step="1" placeholder="e.g. 8500" value={form.steps ?? ""} onChange={(e)=>field("steps",e.target.value)} style={{width:"100%",padding:12,marginTop:8,borderRadius:12}} />
+        </label>
+        <small>Enter total daily steps from your watch or phone — not extra steps on top of logged cardio.</small>
+      </section>
+      <section className="v4-workout-list">
+        <div className="v4-section-heading"><div><p className="eyebrow">Recovery</p><h2><HeartPulse size={18} /> How are you feeling?</h2></div></div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8}} role="group" aria-label="How you feel">
+          {FEELINGS.map((feeling)=><button type="button" key={feeling} aria-pressed={form.mood===feeling} onClick={()=>field("mood",feeling)} style={{padding:"10px 12px",borderRadius:14,border:form.mood===feeling?"2px solid currentColor":"1px solid #777",fontWeight:form.mood===feeling?800:400}}>{feeling}</button>)}
         </div>
       </section>
-
-      {showDetails && hasReadinessInputs && <section className="v4-checkin-score">
-        <div>
-          <p className="eyebrow">Readiness</p>
-          <h2>{score}%</h2>
-          <span>Based on today&apos;s logged inputs.</span>
-        </div>
-
-        <div className="v4-checkin-ring" style={{ "--progress": `${score}%` }}>
-          <div>
-            <CheckCircle2 size={24} />
-          </div>
-        </div>
-      </section>}
-
-      <button
-        type="button"
-        aria-expanded={showDetails}
-        onClick={() => setShowDetails((value) => !value)}
-        className="v4-save-checkin"
-      >
-        {showDetails ? "Hide extra details" : "Add more details (optional)"}
-      </button>
-
-      {showDetails && <div className="v4-section-heading">
-        <div>
-          <p className="eyebrow">Inputs</p>
-          <h2>Today&apos;s numbers</h2>
-        </div>
-        <span>{existingToday ? "Saved" : "Live"}</span>
-      </div>}
-
-      {showDetails && <section className="v4-check-grid">
-        {checkItems.map((item) => (
-          <article className="v4-check-card" key={item.label}>
-            <item.icon size={21} />
-            <strong>{item.value}</strong>
-            <span>{item.label}</span>
-            <small>{item.note}</small>
-          </article>
-        ))}
-      </section>}
-
-      <section className="form-card form-grid">
-        <label>
-          Weight kg
-          <input
-            inputMode="decimal"
-            min="0"
-            step="0.1"
-            type="number"
-            value={form.weightKg}
-            onChange={(event) => updateField("weightKg", event.target.value)}
-          />
-        </label>
-
-        {showDetails && <>
-        <label>
-          Protein grams
-          <input
-            inputMode="decimal"
-            min="0"
-            step="0.1"
-            type="number"
-            value={form.proteinG}
-            onChange={(event) => updateField("proteinG", event.target.value)}
-          />
-        </label>
-
-        <label>
-          Water litres
-          <input
-            inputMode="decimal"
-            min="0"
-            step="0.1"
-            type="number"
-            value={form.waterL}
-            onChange={(event) => updateField("waterL", event.target.value)}
-          />
-        </label>
-
-        <label>
-          Sleep hours
-          <input
-            inputMode="decimal"
-            min="0"
-            step="0.1"
-            type="number"
-            value={form.sleepHours}
-            onChange={(event) => updateField("sleepHours", event.target.value)}
-          />
-        </label>
-        </>}
-      </section>
-
-      <section className="v4-training-toggle">
-        <div>
-          <p className="eyebrow">Training today?</p>
-          <h2>{form.trainedToday === "yes" ? "Yes" : "No"}</h2>
-          <span>
-            {form.trainingNote || "Add a short training note if needed."}
-          </span>
-        </div>
-
-        <div className="v4-training-pill">
-          <Dumbbell size={17} />
-          {form.trainedToday === "yes" ? "Done" : "Rest"}
+      <section className="v4-workout-list">
+        <div className="v4-section-heading"><div><p className="eyebrow">Training</p><h2><Activity size={18} /> Today was...</h2></div></div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8}} role="group" aria-label="Activity today">
+          {MODES.map(([value,label])=><button type="button" key={value} aria-pressed={form.activityType===value} onClick={()=>field("activityType",value)} style={{padding:"10px 14px",borderRadius:14,border:form.activityType===value?"2px solid currentColor":"1px solid #777",fontWeight:form.activityType===value?800:400}}>{label}</button>)}
         </div>
       </section>
-
-      <section className="form-card form-grid">
-        <label>
-          Trained today
-          <select
-            value={form.trainedToday}
-            onChange={(event) =>
-              updateField("trainedToday", event.target.value)
-            }
-          >
-            <option value="yes">Yes</option>
-            <option value="no">No</option>
-          </select>
-        </label>
-
-        {showDetails && <label>
-          Training note
-          <input
-            placeholder="Upper strength, cardio, rest day..."
-            type="text"
-            value={form.trainingNote}
-            onChange={(event) =>
-              updateField("trainingNote", event.target.value)
-            }
-          />
-        </label>}
-
+      <section className="v4-workout-list">
+        <button type="button" aria-expanded={showDetails} onClick={()=>setShowDetails((state)=>!state)}>{showDetails?"Hide optional details":"More details (optional)"}</button>
+        {showDetails && <div className="form-card form-grid">
+          {[
+            ["weightKg","Weight (kg)"],["sleepHours","Sleep (hours)"],["waterL","Water (litres)"],["proteinG","Protein (grams)"],["energy","Energy (1–10)"],
+          ].map(([key,label])=><label key={key}>{label}<input type="number" min={key==="energy"?1:0} max={key==="energy"?10:undefined} step={key==="proteinG"||key==="energy"?"1":"0.1"} inputMode="decimal" value={form[key]} onChange={(e)=>field(key,e.target.value)} /></label>)}
+          <label>Body soreness
+            <select value={form.bodyFeel} onChange={(e)=>field("bodyFeel",e.target.value)}>
+              {["Low","Mild","Moderate","High"].map((x)=><option key={x}>{x}</option>)}
+            </select>
+          </label>
+          <label>Notes
+            <textarea maxLength={500} rows={2} value={form.trainingNote} onChange={(e)=>field("trainingNote",e.target.value)} placeholder="Anything you'd like your coach to know" />
+          </label>
+        </div>}
       </section>
-
-      <div className="v4-section-heading">
-        <div>
-          <p className="eyebrow">Recovery</p>
-          <h2>How you feel</h2>
-        </div>
-      </div>
-
-      <section className="form-card form-grid">
-        <label>
-          Mood
-          <select
-            value={form.mood}
-            onChange={(event) => updateField("mood", event.target.value)}
-          >
-            <option>Great</option>
-            <option>Good</option>
-            <option>Okay</option>
-            <option>Flat</option>
-            <option>Rough</option>
-          </select>
-        </label>
-
-        <label>
-          Energy /10
-          <input
-            inputMode="numeric"
-            max="10"
-            min="1"
-            step="1"
-            type="number"
-            value={form.energy}
-            onChange={(event) => updateField("energy", event.target.value)}
-          />
-        </label>
-
-        {showDetails && <label>
-          Body feel
-          <select
-            value={form.bodyFeel}
-            onChange={(event) => updateField("bodyFeel", event.target.value)}
-          >
-            <option>Low</option>
-            <option>Mild</option>
-            <option>Moderate</option>
-            <option>High</option>
-          </select>
-        </label>}
-      </section>
-
-      {showDetails && <section className="v4-recovery-list">
-        {recovery.map((item) => (
-          <article className="v4-recovery-row" key={item.label}>
-            <div className="v4-icon-bubble small">
-              <item.icon size={18} />
-            </div>
-
-            <div>
-              <strong>{item.label}</strong>
-              <span>{item.value}</span>
-            </div>
-          </article>
-        ))}
-      </section>}
-
-      {showDetails && hasReadinessInputs && <section className="v4-checkin-coach">
-        <div className="v4-icon-bubble">
-          <Sparkles size={20} />
-        </div>
-        <div>
-          <p className="eyebrow">Coach note</p>
-          <h2>
-            {score >= 80
-              ? "Good day to push"
-              : score >= 60
-                ? "Train, but stay honest"
-                : "Recovery comes first"}
-          </h2>
-          <p>
-            {score >= 80
-              ? "Readiness is strong. Keep the planned session and progress one key lift."
-              : score >= 60
-                ? "You can train, but keep one rep in reserve and avoid adding junk volume."
-                : "Keep intensity controlled, focus on movement quality, and get an early night."}
-          </p>
-        </div>
-      </section>}
-
-      <Button className="v4-save-checkin" type="submit">
-        <Save size={18} />
-        {showDetails ? "Save detailed check-in" : "Save quick check-in"}
-      </Button>
-
-      <footer className="v4-checkin-footer">
-        <Moon size={16} />
-        <span>Saved locally for now. Cloud sync comes next.</span>
-        <Flame size={16} />
-      </footer>
+      {message && <p role="status">{message}</p>}
+      <button className="v4-save-checkin" type="submit"><Save size={18} /> Save daily check-in</button>
+      <p style={{marginTop:16,fontSize:13}}><Watch size={15} /> Watch steps can be copied here for now. Automatic Health Connect sync requires our Android app integration.</p>
+      <p><Link to="/coach/weekly">Weekly coach review</Link></p>
     </motion.form>
   );
 }

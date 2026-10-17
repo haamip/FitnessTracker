@@ -34,39 +34,6 @@ const CARDIO_TYPES = [
   "Other",
 ];
 
-const demoSessions = [
-  {
-    id: "demo-cardio-1",
-    date: new Date().toISOString().slice(0, 10),
-    type: "Incline Walk",
-    distanceKm: 3.6,
-    durationMin: 32,
-    steps: 6200,
-    calories: 280,
-    zone: "Zone 2",
-  },
-  {
-    id: "demo-cardio-2",
-    date: new Date(Date.now() - 86400000).toISOString().slice(0, 10),
-    type: "Bike",
-    distanceKm: 8.4,
-    durationMin: 26,
-    steps: 0,
-    calories: 340,
-    zone: "Zone 3",
-  },
-  {
-    id: "demo-cardio-3",
-    date: new Date(Date.now() - 172800000).toISOString().slice(0, 10),
-    type: "Treadmill",
-    distanceKm: 2.4,
-    durationMin: 20,
-    steps: 3800,
-    calories: 226,
-    zone: "Zone 2",
-  },
-];
-
 const initialForm = {
   type: "Incline Walk",
   distanceKm: "",
@@ -169,7 +136,7 @@ export default function CardioLog() {
     };
   }, []);
 
-  const sessions = savedSessions.length > 0 ? savedSessions : demoSessions;
+  const sessions = savedSessions;
   const filteredSessions = useMemo(
     () =>
       selectedType === "All"

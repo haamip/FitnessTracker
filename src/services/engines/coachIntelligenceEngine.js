@@ -54,28 +54,28 @@ function getLatestCheckIn(checkIns) {
 
 function getCheckInScore(checkIns) {
   const latest = getLatestCheckIn(checkIns);
+  if (!latest) return { score: 70, reason: "No recent check-in; neutral baseline used." };
 
-  if (!latest) {
-    return {
-      score: 70,
-      reason:
-        "No check-in logged yet, so readiness is using training history only.",
-    };
-  }
-
+  // Daily check-in only asks for feelings, steps and activity. Do not penalise
+  // users for skipping optional nutrition/hydration/sleep measurements.
+  const moodScores = { Great: 95, Good: 85, Okay: 70, Flat: 55, Rough: 40 };
+  const scores = [];
+  if (Object.hasOwn(moodScores, latest.mood)) scores.push(moodScores[latest.mood]);
   const sleep = toNumber(latest.sleepHours ?? latest.sleep);
   const water = toNumber(latest.waterL ?? latest.water);
   const protein = toNumber(latest.proteinG ?? latest.protein);
-
-  const sleepScore = clampScore((sleep / 7) * 100);
-  const waterScore = clampScore((water / 4) * 100);
-  const proteinScore = clampScore((protein / 185) * 100);
-
+  if (sleep > 0) scores.push(clampScore((sleep / 7) * 100));
+  if (water > 0) scores.push(clampScore((water / 3) * 100));
+  if (protein > 0) scores.push(clampScore((protein / 160) * 100));
+  const score = scores.length
+    ? Math.round(scores.reduce((sum, value) => sum + value, 0) / scores.length)
+    : 70;
+  const sorenessPenalty = latest.bodyFeel === "High" ? 18 : latest.bodyFeel === "Moderate" ? 8 : 0;
   return {
-    score: Math.round(
-      sleepScore * 0.45 + waterScore * 0.25 + proteinScore * 0.3,
-    ),
-    reason: `Latest check-in: ${sleep}h sleep, ${water}L water and ${protein}g protein.`,
+    score: clampScore(score - sorenessPenalty),
+    reason: scores.length
+      ? "Based on your reported feeling and any optional recovery details."
+      : "No recovery details entered, so a neutral baseline was used.",
   };
 }
 
