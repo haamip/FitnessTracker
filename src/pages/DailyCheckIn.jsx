@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Activity, Footprints, HeartPulse, Save, Watch } from "lucide-react";
 import { completeDailyCheckIn } from "../features/gamification/gamification";
 import { CheckInRepository } from "../services/repositories/trackfitDataLayer";
-import { getHealthConnectBridge, readGalaxyDailySteps } from "../services/healthConnectBridge";
+import { getWearableBridge, readWearableSteps } from "../services/wearableBridge";
 import "./TrackFitScreens.css";
 
 function todayKey() {
@@ -43,16 +43,16 @@ export default function DailyCheckIn() {
   const [form,setForm] = useState(initialValues);
   const [showDetails,setShowDetails] = useState(false);
   const [message,setMessage] = useState("");
-  const [watchAvailable] = useState(() => Boolean(getHealthConnectBridge()));
+  const [watchAvailable] = useState(() => Boolean(getWearableBridge()));
   const [watchLoading, setWatchLoading] = useState(false);
   async function syncWatchSteps() {
     if (watchLoading) return;
     setWatchLoading(true);
     setMessage("");
     try {
-      const record = await readGalaxyDailySteps(today);
+      const record = await readWearableSteps(today);
       setForm((current)=>({ ...current, ...record }));
-      setMessage("Steps loaded from Health Connect. Tap Save daily check-in to keep them.");
+      setMessage("Watch steps loaded. Tap Save daily check-in to keep them.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Watch steps could not be read.");
     } finally {
@@ -76,7 +76,7 @@ export default function DailyCheckIn() {
       date: today,
       steps,
       stepsSource: form.stepsSource || "manual",
-      ...(form.stepsSource === "health_connect" ? { stepsSyncedAt: form.stepsSyncedAt } : { stepsSyncedAt: null }),
+      ...(["health_connect", "apple_health"].includes(form.stepsSource) ? { stepsSyncedAt: form.stepsSyncedAt } : { stepsSyncedAt: null }),
       mood: form.mood,
       activityType: form.activityType,
       trainedToday: ["workout","both"].includes(form.activityType),
@@ -110,11 +110,11 @@ export default function DailyCheckIn() {
         </label>
         {watchAvailable && (
           <button type="button" disabled={watchLoading} onClick={syncWatchSteps}>
-            <Watch size={18} /> {watchLoading ? "Reading Health Connect..." : "Use Galaxy Watch steps"}
+            <Watch size={18} /> {watchLoading ? "Reading your steps..." : "Sync steps from watch"}
           </button>
         )}
         <small>
-          {form.stepsSource === "health_connect" ? "Steps retrieved from Health Connect — save your check-in to keep them." : "Enter total daily steps from your watch or phone."}
+          {["health_connect","apple_health"].includes(form.stepsSource) ? "Steps retrieved from your health app — save your check-in to keep them." : "Enter total daily steps from your watch or phone."}
           {" "}Do not add cardio steps to your daily total again.
         </small>
       </section>
@@ -149,8 +149,8 @@ export default function DailyCheckIn() {
       {message && <p role="status">{message}</p>}
       <button className="v4-save-checkin" type="submit"><Save size={18} /> Save daily check-in</button>
       <p style={{marginTop:16,fontSize:13}}><Watch size={15} /> {watchAvailable
-        ? "Health Connect only reads steps when you tap the button and grant permission. Your manual entry still works."
-        : "Watch steps can be copied here for now. Health Connect requires the future Android TrackFit app, not the website."}</p>
+        ? "TrackFit only reads steps when you ask and give permission. Your manual entry still works."
+        : "Copy your watch steps here for now. Automatic importing needs the native TrackFit app, not the website."}</p>
       <p><Link to="/coach/weekly">Weekly coach review</Link></p>
     </motion.form>
   );
