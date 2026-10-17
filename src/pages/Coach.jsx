@@ -5,6 +5,7 @@ import {
   Dumbbell, HeartPulse, TrendingUp, Utensils,
 } from "lucide-react";
 import { buildCoachDashboard } from "../services/engines/coachIntelligenceEngine";
+import { getWeekStart, WeeklyReviewRepository } from "../services/weeklyCoachReview";
 import "./Coach.css";
 
 const shortcuts = [
@@ -17,6 +18,7 @@ const shortcuts = [
 
 export default function Coach() {
   const coach = useMemo(() => buildCoachDashboard(), []);
+  const weeklyCheckInDue = new Date().getDay() === 0 && !WeeklyReviewRepository.getByWeek(getWeekStart());
   const today = new Intl.DateTimeFormat("en-NZ", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
 
   return (
@@ -30,6 +32,13 @@ export default function Coach() {
         <Link to="/dashboard" className="tf-intro-link">Full dashboard <ArrowUpRight size={17} aria-hidden="true" /></Link>
       </section>
 
+      {weeklyCheckInDue && (
+        <section className="form-card" aria-label="Weekly coaching review due" style={{marginBottom:16}}>
+          <strong>Ready for your weekly check-in?</strong>
+          <p>Answer five quick questions and get a coaching recap from your real workout and activity logs.</p>
+          <Link to="/coach/weekly">Review my week <ArrowRight size={16} /></Link>
+        </section>
+      )}
       <section className="tf-feature" aria-labelledby="tf-next-title">
         <div className="tf-feature-top">
           <span className="tf-feature-label"><span className="tf-live-dot" /> TODAY'S FOCUS</span>
