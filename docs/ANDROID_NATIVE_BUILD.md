@@ -24,7 +24,7 @@ For a usable debug APK sign-in, set GitHub Actions repository secrets:
 - TRACKFIT_SUPABASE_URL: the TrackFit Supabase project URL
 - TRACKFIT_SUPABASE_ANON_KEY: TrackFit's public/anon key (never use service-role credentials)
 
-If these secrets are absent, the APK can compile but the signed-in app will display a setup error. Never package privileged Supabase keys into a mobile app.
+The debug build uses the project's public Supabase URL and RLS-restricted publishable key by default, so sign-in can work without extra repository settings. You can override them using the two GitHub Actions secrets above. These are public client credentials, not administrator credentials. Never package a Supabase secret or service-role key in a mobile app.
 
 ### Physical device smoke test
 
