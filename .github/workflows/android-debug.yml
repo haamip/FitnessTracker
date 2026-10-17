@@ -41,8 +41,8 @@ jobs:
         run: node native/android/prepare-web.mjs
       - name: Build web application into Android assets
         env:
-          VITE_SUPABASE_URL: ${{ secrets.TRACKFIT_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.TRACKFIT_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_URL: ${{ secrets.TRACKFIT_SUPABASE_URL || 'https://bhndpwknqwseapjwlxvs.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.TRACKFIT_SUPABASE_ANON_KEY || 'sb_publishable_5-52SugRvIlrv23SxDO_ng_emCyyCaf' }}
         run: npm run build
       - name: Generate native Android shell
         run: npx cap add android
