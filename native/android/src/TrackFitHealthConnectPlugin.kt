@@ -126,8 +126,11 @@ class TrackFitHealthConnectPlugin : Plugin() {
                     timeRangeFilter = TimeRangeFilter.between(from, end)
                 )
             )
-            val steps = aggregate[StepsRecord.COUNT_TOTAL] ?: 0L
-            JSObject().put("date", requested).put("steps", steps)
+            val recordedSteps = aggregate[StepsRecord.COUNT_TOTAL]
+            val steps = recordedSteps ?: 0L
+            JSObject().put("date", requested)
+                .put("steps", steps)
+                .put("dataPresent", recordedSteps != null)
         }
     }
 

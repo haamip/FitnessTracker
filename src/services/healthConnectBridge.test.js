@@ -11,6 +11,11 @@ describe("Galaxy Health Connect native boundary", () => {
     const actual = validateHealthConnectSteps({ date:"2026-10-17", steps:9842 }, "2026-10-17");
     expect(actual).toMatchObject({ steps:9842, stepsSource:"health_connect" });
   });
+  it("rejects zero and missing source data instead of replacing saved daily steps", () => {
+    expect(() => validateHealthConnectSteps({ date:"2026-10-18", steps:0, dataPresent:true }, "2026-10-18")).toThrow(/0 steps/);
+    expect(() => validateHealthConnectSteps({ date:"2026-10-18", steps:0, dataPresent:false }, "2026-10-18")).toThrow(/no readable Steps records/);
+    expect(validateHealthConnectSteps({ date:"2026-10-18", steps:32, dataPresent:true }, "2026-10-18").steps).toBe(32);
+  });
   it("prompts for read-only steps consent and refuses denial", async () => {
     const granted = {
       getStatus: vi.fn(async () => ({ available:true, stepsGranted:false })),

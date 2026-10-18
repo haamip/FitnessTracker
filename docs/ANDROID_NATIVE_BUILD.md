@@ -64,3 +64,15 @@ If Health Connect shows steps but TrackFit has a blank count:
 6. Test the data again after restarting TrackFit Test. Leave the old app installed until the new one is confirmed working.
 
 Native builds contain a public, RLS-restricted Supabase client key, not any service-role credential.
+
+## October step-save bugfix validation
+
+The earlier test app displayed “Connected” when permission was granted, even though no steps were imported or saved.
+
+This update changes “Sync steps from watch” to a **one-tap import-and-save**:
+- A nonzero step count is stored in the signed-in user's local daily check-in immediately, preserving existing mood and workout answers.
+- The app reports whether Supabase backup succeeded or is queued for later. If offline, the step count stays cached on the phone.
+- A missing/zero Health Connect reading does NOT overwrite any saved step count. The displayed error includes the requested local date, so the tester can compare it against Health Connect's daily Steps data.
+- Permission-only “Connected” status still does not mean actual records have been read.
+
+Tester: open **TrackFit Test → Daily check-in → Sync steps from watch**. If Health Connect has steps, the button should produce “N steps saved in TrackFit,” and the Steps input should show N without needing another Save. Close and reopen TrackFit Test to verify the count persisted. If it shows zero or “no readable records,” compare the day and data source in Health Connect, then report the exact message.

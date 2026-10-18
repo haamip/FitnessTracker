@@ -12,9 +12,8 @@ function todayKey() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
 }
-const today = todayKey();
-
 function initialValues() {
+  const today = todayKey();
   const existing = CheckInRepository.getAll().find((x)=>x.date===today) || {};
   const activity = existing.activityType || (existing.trainedToday === true ? "workout" : "rest");
   return {
@@ -66,21 +65,30 @@ export default function DailyCheckIn() {
     if (watchLoading) return;
     setWatchLoading(true);
     setMessage("");
+    setConnection(null);
     try {
-      const record = await readWearableSteps(today);
+      const day = todayKey();
+      const record = await readWearableSteps(day);
+      const saved = await CheckInRepository.saveStepsFromWatch(day, record);
       setForm((current)=>({ ...current, ...record }));
-      setConnection({ state: "read-success", message: `Health Connect returned ${record.steps.toLocaleString()} steps for today.` });
-      setMessage(`${record.steps.toLocaleString()} steps imported into the check-in. Tap Save daily check-in below to send them to your coach and weekly reports.`);
+      const count = record.steps.toLocaleString();
+      const backup = saved?.cloudSaved
+        ? "and backed up to your TrackFit account"
+        : "on this phone; cloud backup is pending and will retry when you sign in again";
+      setConnection({ state: "read-success", message: `Health Connect returned ${count} steps today. Saved ${backup}.` });
+      setMessage(`${count} steps saved in TrackFit. You can finish the rest of your check-in below whenever you like.`);
     } catch (error) {
-      setConnection({ state: "read-error", message: "Could not import steps. Check TrackFit’s read permission in Health Connect and try again." });
-      setMessage(error instanceof Error ? error.message : "Watch steps could not be read.");
+      const detail = error instanceof Error ? error.message : "Watch steps could not be read.";
+      setConnection({ state: "read-error", message: detail });
+      setMessage("Steps have not been imported. Your previous daily entry has not been replaced.");
     } finally {
       setWatchLoading(false);
     }
   }
   function field(name,value){setForm((current)=>({...current,[name]:value}));setMessage("");}
-  function save(event){
+  async function save(event){
     event.preventDefault();
+    const today = todayKey();
     const stepsText = String(form.steps).trim();
     const steps = stepsText === "" ? null : Number(stepsText);
     if (steps !== null && (!Number.isSafeInteger(steps) || steps < 0 || steps > 150000)) {
@@ -109,9 +117,9 @@ export default function DailyCheckIn() {
     });
     update.bodyFeel=form.bodyFeel;
     try {
-      CheckInRepository.saveAll([update,...records.filter((x)=>x.date!==today)]);
+      const result = await CheckInRepository.saveAll([update,...records.filter((x)=>x.date!==today)]);
       completeDailyCheckIn();
-      setMessage("Check-in saved. Good mahi.");
+      setMessage(result?.cloudSaved ? "Check-in saved on your phone and backed up to your account. Good mahi." : "Check-in saved on your phone. Cloud backup pending; it'll retry when you sign in again.");
     }catch{
       setMessage("Couldn't save your check-in on this device. Try again.");
     }
@@ -139,11 +147,11 @@ export default function DailyCheckIn() {
         )}
         {connection && (
           <p role="status" style={{ margin: "8px 0", fontSize: 13 }}>
-            <strong>{connection.state === "ready" ? "Ready" : connection.state === "read-success" ? "Steps loaded" : "Connection check"}:</strong> {connection.message}
+            <strong>{connection.state === "ready" ? "Ready" : connection.state === "read-success" ? "Steps saved" : "Connection check"}:</strong> {connection.message}
           </p>
         )}
         <small>
-          {["health_connect","apple_health"].includes(form.stepsSource) ? "Steps retrieved from your health app — save your check-in to keep them." : "Enter total daily steps from your watch or phone."}
+          {["health_connect","apple_health"].includes(form.stepsSource) ? "Imported steps are saved immediately; your other check-in answers can be saved separately." : "Enter total daily steps from your watch or phone."}
           {" "}Do not add cardio steps to your daily total again.
         </small>
       </section>
