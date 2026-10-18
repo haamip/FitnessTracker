@@ -5,6 +5,7 @@ import { Activity, Footprints, HeartPulse, Save, Watch } from "lucide-react";
 import { completeDailyCheckIn } from "../features/gamification/gamification";
 import { CheckInRepository } from "../services/repositories/trackfitDataLayer";
 import { getWearableBridge, readWearableSteps } from "../services/wearableBridge";
+import { inspectWatchConnection, isTrackFitNativeApp } from "../services/watchConnectionStatus";
 import "./TrackFitScreens.css";
 
 function todayKey() {
@@ -51,6 +52,15 @@ export default function DailyCheckIn() {
     setMessage(`${count} older check-in${count === 1 ? "" : "s"} imported. Cloud sync will retry if you're offline.`);
   }
   const [watchAvailable] = useState(() => Boolean(getWearableBridge()));
+  const [nativeApp] = useState(isTrackFitNativeApp);
+  const [connection, setConnection] = useState(null);
+  const [checkingConnection, setCheckingConnection] = useState(false);
+  async function checkConnection() {
+    setCheckingConnection(true);
+    const result = await inspectWatchConnection();
+    setConnection(result);
+    setCheckingConnection(false);
+  }
   const [watchLoading, setWatchLoading] = useState(false);
   async function syncWatchSteps() {
     if (watchLoading) return;
@@ -59,8 +69,10 @@ export default function DailyCheckIn() {
     try {
       const record = await readWearableSteps(today);
       setForm((current)=>({ ...current, ...record }));
-      setMessage("Watch steps loaded. Tap Save daily check-in to keep them.");
+      setConnection({ state: "read-success", message: `Health Connect returned ${record.steps.toLocaleString()} steps for today.` });
+      setMessage(`${record.steps.toLocaleString()} steps imported into the check-in. Tap Save daily check-in below to send them to your coach and weekly reports.`);
     } catch (error) {
+      setConnection({ state: "read-error", message: "Could not import steps. Check TrackFit’s read permission in Health Connect and try again." });
       setMessage(error instanceof Error ? error.message : "Watch steps could not be read.");
     } finally {
       setWatchLoading(false);
@@ -119,6 +131,16 @@ export default function DailyCheckIn() {
           <button type="button" disabled={watchLoading} onClick={syncWatchSteps}>
             <Watch size={18} /> {watchLoading ? "Reading your steps..." : "Sync steps from watch"}
           </button>
+        )}
+        {nativeApp && (
+          <button type="button" disabled={checkingConnection} onClick={checkConnection}>
+            {checkingConnection ? "Checking connection..." : "Check watch connection"}
+          </button>
+        )}
+        {connection && (
+          <p role="status" style={{ margin: "8px 0", fontSize: 13 }}>
+            <strong>{connection.state === "ready" ? "Ready" : connection.state === "read-success" ? "Steps loaded" : "Connection check"}:</strong> {connection.message}
+          </p>
         )}
         <small>
           {["health_connect","apple_health"].includes(form.stepsSource) ? "Steps retrieved from your health app — save your check-in to keep them." : "Enter total daily steps from your watch or phone."}
