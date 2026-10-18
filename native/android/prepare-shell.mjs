@@ -28,7 +28,9 @@ modify(join(base, "build.gradle"), text => {
 modify(join(base, "app", "build.gradle"), text => {
   const marker = "apply plugin: 'com.android.application'";
   if (!text.includes(marker)) throw new Error("Unexpected Gradle app structure");
-  return text.replace(marker, marker + "\napply plugin: 'kotlin-android'") +
+  if (!text.includes("buildTypes {")) throw new Error("Unexpected Gradle build type structure");
+  return text.replace(marker, marker + "\napply plugin: 'kotlin-android'")
+    .replace("buildTypes {", "buildTypes {\n        debug {\n            applicationIdSuffix '.testing'\n            versionNameSuffix '-testing'\n        }") +
     "\n\nkotlin {\n  jvmToolchain(21)\n}\n\n" +
     "dependencies {\n" +
     '  implementation "androidx.health.connect:connect-client:1.1.0"\n' +
@@ -65,6 +67,14 @@ modify(join(base, "app", "src", "main", "AndroidManifest.xml"), text => {
 modify(join(base, "variables.gradle"), text => {
   if (!/minSdkVersion\s*=\s*24/.test(text)) throw new Error("Unexpected minSdkVersion");
   return text.replace(/minSdkVersion\s*=\s*24/, "minSdkVersion = 28");
+});
+
+// Install alongside any previous test build; never require uninstalling it.
+const stringsFile = join(base, "app", "src", "main", "res", "values", "strings.xml");
+modify(stringsFile, text => {
+  const oldLabel = '<string name="app_name">TrackFit</string>';
+  if (!text.includes(oldLabel)) throw new Error("Unexpected Android app name resource");
+  return text.replace(oldLabel, '<string name="app_name">TrackFit Test</string>');
 });
 
 const sourcePackage = join(base, "app", "src", "main", "java", "nz", "hakt", "trackfit");
