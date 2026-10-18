@@ -28,7 +28,13 @@ export function getHealthConnectBridge() {
 export function validateHealthConnectSteps(record, requestedDate) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(requestedDate)) throw new Error("Invalid day requested.");
   if (!record || record.date !== requestedDate) throw new Error("Watch data was returned for the wrong date.");
+  if (record?.dataPresent === false) {
+    throw new Error(`Health Connect has no readable Steps records for ${requestedDate}. Check the date and confirm your health app shares Steps.`);
+  }
   const steps = record.steps;
+  if (steps === 0) {
+    throw new Error(`Health Connect returned 0 steps for ${requestedDate}. Nothing was saved. Check the day's Steps sources in Health Connect.`);
+  }
   if (!Number.isSafeInteger(steps) || steps < 0 || steps > 150000) {
     throw new Error("Watch steps were unavailable or invalid.");
   }
