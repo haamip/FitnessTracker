@@ -7,6 +7,9 @@ on:
       - ".github/workflows/android-debug.yml"
       - "src/services/healthConnectBridge.js"
       - "src/services/wearableBridge.js"
+      - "src/services/watchConnectionStatus.js"
+      - "src/services/watchConnectionStatus.test.js"
+      - "src/pages/DailyCheckIn.jsx"
   workflow_dispatch:
 permissions:
   contents: read
