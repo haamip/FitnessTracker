@@ -49,3 +49,18 @@ References:
 - https://developer.android.com/health-and-fitness/health-connect/get-started
 - https://developer.android.com/health-and-fitness/health-connect/read-data
 - https://capacitorjs.com/docs/android/custom-code
+
+## Health Connect diagnostic test build
+
+The debug APK is labelled **TrackFit Test** and uses the Android package suffix `.testing`. It installs alongside the previous test build, so you do not have to uninstall that app or erase its local workout/check-in cache.
+
+If Health Connect shows steps but TrackFit has a blank count:
+
+1. Launch the installed **TrackFit Test** app (not the website or old TrackFit icon), then sign in.
+2. Open **Daily check-in** and tap **Check watch connection**. Read the exact status.
+3. If permission is missing, tap **Sync steps from watch**, and allow TrackFit Test to **read Steps**.
+4. If TrackFit Test says **Health Connect returned 32 steps**, confirm the input says 32, then tap **Save daily check-in**. The coach needs this saved record.
+5. If Health Connect has steps but TrackFit returns zero or an error, report the diagnostic text and check local day / source priority. Do not assume records are available to this app until read permission is granted.
+6. Test the data again after restarting TrackFit Test. Leave the old app installed until the new one is confirmed working.
+
+Native builds contain a public, RLS-restricted Supabase client key, not any service-role credential.
