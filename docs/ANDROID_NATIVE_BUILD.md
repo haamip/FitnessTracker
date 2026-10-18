@@ -76,3 +76,7 @@ This update changes “Sync steps from watch” to a **one-tap import-and-save**
 - Permission-only “Connected” status still does not mean actual records have been read.
 
 Tester: open **TrackFit Test → Daily check-in → Sync steps from watch**. If Health Connect has steps, the button should produce “N steps saved in TrackFit,” and the Steps input should show N without needing another Save. Close and reopen TrackFit Test to verify the count persisted. If it shows zero or “no readable records,” compare the day and data source in Health Connect, then report the exact message.
+
+## Step import test app install safety
+
+For the 2026-10-18 one-tap step-saving test, Android uses the debug package suffix `.stepstest` and shows **TrackFit Steps Test** on the launcher. It installs alongside previous TrackFit and TrackFit Test builds with independently generated debug signatures. Keep older apps installed until their locally cached workout and check-in records have been safely backed up. New test builds require sign-in and a separate Health Connect read-Steps permission approval.
