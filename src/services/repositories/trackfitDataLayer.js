@@ -2,6 +2,7 @@ import { readJson, writeJson } from "../utils/storage";
 import { supabase } from "../supabase";
 import { toDailyCheckInCloudPayload, fromDailyCheckInCloudRow } from "../checkInCloudMapper";
 import { checkInCacheKey, pendingCheckInsKey, mergeCloudCheckIns } from "./checkInCacheHelpers";
+import { mergeImportedSteps } from "./watchStepSave";
 import { TrainingCloudRepository } from "./trainingCloudRepository";
 
 const WORKOUT_KEY_PREFIX = "trackfit_workout_";
@@ -66,13 +67,13 @@ async function syncCompletedWorkout(record) {
 }
 
 async function syncDailyCheckIn(record) {
-  if (!supabase || !record?.date || !activeCheckInAccountId) return;
+  if (!supabase || !record?.date || !activeCheckInAccountId) return { cloudSaved: false };
 
   try {
     const { data: userData, error: userError } = await supabase.auth.getUser();
     if (userError) throw userError;
     const userId = userData.user?.id;
-    if (!userId || userId !== activeCheckInAccountId) return;
+    if (!userId || userId !== activeCheckInAccountId) return { cloudSaved: false };
 
     const payload = toDailyCheckInCloudPayload(record, userId);
 
@@ -92,9 +93,12 @@ async function syncDailyCheckIn(record) {
       writeJson(key, current.map((item) => item.date === record.date ? { ...item, id: data.id } : item));
       const pendingKey = currentPendingKey();
       writeJson(pendingKey, readJson(pendingKey, []).filter((date) => date !== record.date));
+      return { cloudSaved: true };
     }
+    return { cloudSaved: false };
   } catch (error) {
     console.warn("Daily check-in cloud save failed; check-in remains cached locally.", error);
+    return { cloudSaved: false };
   }
 }
 
@@ -241,8 +245,16 @@ export const CheckInRepository = {
     if (checkIns[0]) {
       markCheckInPending(checkIns[0].date);
       window.dispatchEvent(new CustomEvent("trackfit:checkin-saved", { detail: { date: checkIns[0].date } }));
-      syncQuietly(syncDailyCheckIn(checkIns[0]));
+      // Resolve with a cloud status, not a false claim that network backup succeeded.
+      return syncDailyCheckIn(checkIns[0]);
     }
+    return Promise.resolve({ cloudSaved: false });
+  },
+  saveStepsFromWatch(date, imported) {
+    const oldRecords = this.getAll();
+    const existing = oldRecords.find((item) => item.date === date);
+    const updated = mergeImportedSteps(existing, date, imported);
+    return this.saveAll([updated, ...oldRecords.filter((item) => item.date !== date)]);
   },
   clear() {
     const key = currentCheckInKey();
