@@ -7,8 +7,10 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.request.AggregateRequest
+import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import com.getcapacitor.JSObject
+import com.getcapacitor.JSArray
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
@@ -131,6 +133,94 @@ class TrackFitHealthConnectPlugin : Plugin() {
             JSObject().put("date", requested)
                 .put("steps", steps)
                 .put("dataPresent", recordedSteps != null)
+        }
+    }
+
+    /**
+     * On-demand diagnostic only: show why the aggregate may differ from
+     * Samsung Health/Health Connect's displayed number.
+     * Reads today's Steps records to identify contributing apps. Source totals
+     * are NOT used to save steps (they can overlap and double count).
+     * Nothing is logged, persisted or uploaded by this method.
+     */
+    @PluginMethod
+    fun diagnoseTodaySteps(call: PluginCall) {
+        val dateText = call.getString("date") ?: run {
+            call.reject("Expected a local YYYY-MM-DD date.", "INVALID_DATE")
+            return
+        }
+        val day = try { LocalDate.parse(dateText) } catch (_: Exception) {
+            call.reject("Expected a valid local YYYY-MM-DD date.", "INVALID_DATE")
+            return
+        }
+        if (!available()) {
+            call.reject("Health Connect is unavailable.", "UNAVAILABLE")
+            return
+        }
+
+        runAsync(call) {
+            val hc = client()
+            if (!hc.permissionController.getGrantedPermissions().contains(readSteps)) {
+                throw SecurityException("Steps read permission is not granted")
+            }
+            val zone = ZoneId.systemDefault()
+            val start = day.atStartOfDay(zone).toInstant()
+            val end = minOf(day.plusDays(1).atStartOfDay(zone).toInstant(), Instant.now())
+            require(end.isAfter(start)) { "The requested day is in the future." }
+            val interval = TimeRangeFilter.between(start, end)
+
+            val total = hc.aggregate(
+                AggregateRequest(
+                    metrics = setOf(StepsRecord.COUNT_TOTAL),
+                    timeRangeFilter = interval
+                )
+            )[StepsRecord.COUNT_TOTAL] ?: 0L
+
+            data class SourceInfo(var records: Int = 0, var rawSteps: Long = 0)
+            val bySource = linkedMapOf<String, SourceInfo>()
+            var nextPage: String? = null
+            var pages = 0
+            var truncated = false
+            do {
+                val page = hc.readRecords(
+                    ReadRecordsRequest(
+                        StepsRecord::class,
+                        timeRangeFilter = interval,
+                        pageSize = 500,
+                        pageToken = nextPage
+                    )
+                )
+                for (record in page.records) {
+                    val app = record.metadata.dataOrigin.packageName.ifBlank { "unknown" }
+                    val stats = bySource.getOrPut(app) { SourceInfo() }
+                    stats.records++
+                    stats.rawSteps += record.count
+                }
+                nextPage = page.pageToken
+                pages++
+                if (pages >= 4 && nextPage != null) {
+                    truncated = true
+                    break
+                }
+            } while (nextPage != null)
+
+            val sourceData = JSArray()
+            for ((app, info) in bySource) {
+                sourceData.put(
+                    JSObject()
+                        .put("source", app)
+                        .put("records", info.records)
+                        .put("rawSteps", info.rawSteps)
+                )
+            }
+            JSObject()
+                .put("date", dateText)
+                .put("zone", zone.id)
+                .put("from", start.toString())
+                .put("through", end.toString())
+                .put("aggregatedSteps", total)
+                .put("sources", sourceData)
+                .put("truncated", truncated)
         }
     }
 

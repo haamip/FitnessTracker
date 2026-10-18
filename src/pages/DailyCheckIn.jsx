@@ -6,6 +6,7 @@ import { completeDailyCheckIn } from "../features/gamification/gamification";
 import { CheckInRepository } from "../services/repositories/trackfitDataLayer";
 import { getWearableBridge, readWearableSteps } from "../services/wearableBridge";
 import { inspectWatchConnection, isTrackFitNativeApp } from "../services/watchConnectionStatus";
+import { inspectStepSources } from "../services/wearableDiagnostics";
 import "./TrackFitScreens.css";
 
 function todayKey() {
@@ -61,6 +62,22 @@ export default function DailyCheckIn() {
     setCheckingConnection(false);
   }
   const [watchLoading, setWatchLoading] = useState(false);
+  const [sourceComparison, setSourceComparison] = useState(null);
+  const [sourceChecking, setSourceChecking] = useState(false);
+  const [sourceError, setSourceError] = useState("");
+  async function checkStepSources() {
+    if (sourceChecking) return;
+    setSourceChecking(true);
+    setSourceError("");
+    setSourceComparison(null);
+    try {
+      setSourceComparison(await inspectStepSources(todayKey()));
+    } catch (error) {
+      setSourceError(error instanceof Error ? error.message : "Unable to compare health data sources.");
+    } finally {
+      setSourceChecking(false);
+    }
+  }
   async function syncWatchSteps() {
     if (watchLoading) return;
     setWatchLoading(true);
@@ -144,6 +161,24 @@ export default function DailyCheckIn() {
           <button type="button" disabled={checkingConnection} onClick={checkConnection}>
             {checkingConnection ? "Checking connection..." : "Check watch connection"}
           </button>
+        )}
+        {nativeApp && watchAvailable && (
+          <button type="button" disabled={sourceChecking || watchLoading} onClick={checkStepSources}>
+            {sourceChecking ? "Comparing sources..." : "Compare step sources"}
+          </button>
+        )}
+        {sourceError && <p role="status">{sourceError}</p>}
+        {sourceComparison && (
+          <div className="form-card" role="status" style={{ display:"grid", gap:7, marginTop:8 }}>
+            <strong>Health Connect API: {sourceComparison.total.toLocaleString()} steps</strong>
+            <small>Day: {sourceComparison.date} ({sourceComparison.timezone}). Compared through {sourceComparison.until}.</small>
+            {sourceComparison.sources.length ? sourceComparison.sources.map((source, i) => (
+              <span key={source.label + i}>
+                {source.label}: {source.rawSteps.toLocaleString()} raw steps across {source.records} records
+              </span>
+            )) : <span>No individual step records found for this time window.</span>}
+            <small>Raw source counts can overlap. TrackFit uses the Health Connect priority-adjusted total, not the sum of these sources.{sourceComparison.truncated ? " Only a subset of records was inspected." : ""}</small>
+          </div>
         )}
         {connection && (
           <p role="status" style={{ margin: "8px 0", fontSize: 13 }}>

@@ -30,7 +30,7 @@ modify(join(base, "app", "build.gradle"), text => {
   if (!text.includes(marker)) throw new Error("Unexpected Gradle app structure");
   if (!text.includes("buildTypes {")) throw new Error("Unexpected Gradle build type structure");
   return text.replace(marker, marker + "\napply plugin: 'kotlin-android'")
-    .replace("buildTypes {", "buildTypes {\n        debug {\n            applicationIdSuffix '.stepstest'\n            versionNameSuffix '-testing'\n        }") +
+    .replace("buildTypes {", "buildTypes {\n        debug {\n            applicationIdSuffix '.stepcompare'\n            versionNameSuffix '-testing'\n        }") +
     "\n\nkotlin {\n  jvmToolchain(21)\n}\n\n" +
     "dependencies {\n" +
     '  implementation "androidx.health.connect:connect-client:1.1.0"\n' +
@@ -74,7 +74,7 @@ const stringsFile = join(base, "app", "src", "main", "res", "values", "strings.x
 modify(stringsFile, text => {
   const oldLabel = '<string name="app_name">TrackFit</string>';
   if (!text.includes(oldLabel)) throw new Error("Unexpected Android app name resource");
-  return text.replace(oldLabel, '<string name="app_name">TrackFit Steps Test</string>');
+  return text.replace(oldLabel, '<string name="app_name">TrackFit Compare</string>');
 });
 
 const sourcePackage = join(base, "app", "src", "main", "java", "nz", "hakt", "trackfit");
