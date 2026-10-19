@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import process from "node:process";
 import { writeTrackFitLauncherIcons } from "../../native/android/trackfit-icons.mjs";
 
 describe("TrackFit Android launcher branding", () => {
@@ -33,7 +34,7 @@ describe("TrackFit Android launcher branding", () => {
   });
 
   it("keeps the browser icon clearly marked with both T and F", () => {
-    const favicon = readFileSync(new URL("../../public/favicon.svg", import.meta.url), "utf8");
+    const favicon = readFileSync(join(process.cwd(), "public", "favicon.svg"), "utf8");
     expect(favicon).toContain('TrackFit TF icon');
     expect(favicon).toContain('M28 35H53V44H45V76H36V44H28Z');
     expect(favicon).toContain('M58 35H81V44H67V51H79V60H67V76H58Z');
