@@ -8,6 +8,6 @@
     </linearGradient>
   </defs>
   <rect x="0" y="0" width="108" height="108" rx="24" fill="url(#bg)" />
-  <path d="M22 31H54V42H44V79H32V42H22Z" fill="#FFFFFF" />
-  <path d="M59 31H86V42H71V51H83V62H71V79H59Z" fill="#47BFFF" />
+  <path d="M28 35H53V44H45V76H36V44H28Z" fill="#FFFFFF" />
+  <path d="M58 35H81V44H67V51H79V60H67V76H58Z" fill="#47BFFF" />
 </svg>
