@@ -1,6 +1,7 @@
 /* global process, console */
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 /**
  * Replaces Capacitor's placeholder grid icon with a legible TF monogram.
@@ -48,7 +49,7 @@ export function writeTrackFitLauncherIcons(androidRoot) {
   writeFileSync(manifest, updated);
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === resolve(new URL(import.meta.url).pathname)) {
+if (process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url))) {
   writeTrackFitLauncherIcons(resolve(process.cwd(), "android"));
   console.log("TrackFit TF launcher icons installed.");
 }
