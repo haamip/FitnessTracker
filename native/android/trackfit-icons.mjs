@@ -25,8 +25,8 @@ export function writeTrackFitLauncherIcons(androidRoot) {
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <path android:fillColor="#FFFFFFFF" android:pathData="M22,31 L54,31 L54,42 L44,42 L44,79 L32,79 L32,42 L22,42 Z"/>
-    <path android:fillColor="#FF47BFFF" android:pathData="M59,31 L86,31 L86,42 L71,42 L71,51 L83,51 L83,62 L71,62 L71,79 L59,79 Z"/>
+    <path android:fillColor="#FFFFFFFF" android:pathData="M28,35 L53,35 L53,44 L45,44 L45,76 L36,76 L36,44 L28,44 Z"/>
+    <path android:fillColor="#FF47BFFF" android:pathData="M58,35 L81,35 L81,44 L67,44 L67,51 L79,51 L79,60 L67,60 L67,76 L58,76 Z"/>
 </vector>
 `);
 
