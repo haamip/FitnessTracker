@@ -5,6 +5,7 @@
  */
 import { readFileSync, writeFileSync, mkdirSync, copyFileSync, existsSync, rmSync } from "node:fs";
 import { resolve, join } from "node:path";
+import { writeTrackFitLauncherIcons } from "./trackfit-icons.mjs";
 
 const root = resolve(process.cwd());
 const base = join(root, "android");
@@ -89,4 +90,5 @@ for (const name of [
 ]) {
   copyFileSync(join(root, "native", "android", "src", name), join(sourcePackage, name));
 }
+writeTrackFitLauncherIcons(base);
 console.log("TrackFit Android native shell and Health Connect source prepared.");

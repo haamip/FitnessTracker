@@ -1,0 +1,18 @@
+{
+  "name": "TrackFit",
+  "short_name": "TrackFit",
+  "description": "TrackFit fitness and training tracker",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#101F37",
+  "theme_color": "#101F37",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
