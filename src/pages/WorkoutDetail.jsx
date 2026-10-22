@@ -16,6 +16,7 @@ import {
   Trophy,
 } from "lucide-react";
 import ExercisePicker from "../components/ExercisePicker";
+import { createStarterWorkoutExercises } from "../services/starterWorkouts";
 import ExerciseImage from "../components/ui/ExerciseImage";
 import RestTimer from "../components/ui/RestTimer";
 import SetLogger from "../components/ui/SetLogger";
@@ -99,74 +100,6 @@ function createSet(weight = "", reps = "10", type = "S") {
   };
 }
 
-function createDefaultExercises() {
-  return [
-    {
-      id: "rdl",
-      name: "Dumbbell Romanian Deadlift",
-      target: "2 sets - 10 reps",
-      image: resolveExerciseImage({
-        id: "rdl",
-        name: "Dumbbell Romanian Deadlift",
-      }),
-      primaryMuscles: ["hamstrings"],
-      equipment: ["dumbbell"],
-      movementPattern: "hinge",
-      defaultRestSeconds: 90,
-      sets: [createSet("35", "10"), createSet("35", "10")],
-    },
-    {
-      id: "calf",
-      name: "Dumbbell Standing Calf Raise",
-      target: "2 sets - 12 reps",
-      image: resolveExerciseImage({
-        id: "calf",
-        name: "Dumbbell Standing Calf Raise",
-      }),
-      primaryMuscles: ["calves"],
-      equipment: ["dumbbell"],
-      movementPattern: "calf_raise",
-      defaultRestSeconds: 60,
-      sets: [createSet("20", "12"), createSet("20", "12")],
-    },
-    {
-      id: "press",
-      name: "Dumbbell Shoulder Press",
-      target: "2 sets - 10 reps",
-      image: resolveExerciseImage({
-        id: "press",
-        name: "Dumbbell Shoulder Press",
-      }),
-      primaryMuscles: ["shoulders"],
-      equipment: ["dumbbell"],
-      movementPattern: "vertical_push",
-      defaultRestSeconds: 90,
-      sets: [createSet("25", "10"), createSet("25", "10")],
-    },
-    {
-      id: "row",
-      name: "Dumbbell Row",
-      target: "2 sets - 10 reps",
-      image: resolveExerciseImage({ id: "row", name: "Dumbbell Row" }),
-      primaryMuscles: ["lats"],
-      equipment: ["dumbbell"],
-      movementPattern: "horizontal_pull",
-      defaultRestSeconds: 90,
-      sets: [createSet("35", "10"), createSet("35", "10")],
-    },
-    {
-      id: "squat",
-      name: "Barbell Back Squat",
-      target: "2 sets - 10 reps",
-      image: resolveExerciseImage({ id: "squat", name: "Barbell Back Squat" }),
-      primaryMuscles: ["quadriceps"],
-      equipment: ["barbell"],
-      movementPattern: "squat",
-      defaultRestSeconds: 120,
-      sets: [createSet("80", "10"), createSet("80", "10")],
-    },
-  ];
-}
 
 function findAiDay(id) {
   const plan = AIPlanRepository.getPlan();
@@ -229,7 +162,7 @@ export default function WorkoutDetail() {
     const savedWorkout = WorkoutRepository.getById(id);
     if (savedWorkout) return savedWorkout;
     if (aiDay) return convertAiDayToWorkout(aiDay);
-    return createDefaultExercises();
+    return createStarterWorkoutExercises(id);
   });
 
   const [openExerciseId, setOpenExerciseId] = useState(

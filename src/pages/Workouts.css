@@ -1,0 +1,147 @@
+/* TrackFit Train: one list, readable three-action cards on mobile. */
+.tf-workout-list-page .tf-workouts-heading {
+  align-items: center;
+}
+
+.tf-workout-list-page .tf-workout-select {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 10px 14px;
+}
+
+.tf-workout-list-page .tf-workout-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.tf-workout-list-page .tf-workout-card__main {
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  text-decoration: none;
+  text-align: left;
+}
+
+.tf-workout-list-page .tf-workout-card__main:focus-visible,
+.tf-workout-list-page .tf-workout-card__actions button:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: -3px;
+}
+
+.tf-workout-list-page .tf-workout-card__text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.tf-workout-list-page .tf-workout-card__text strong {
+  color: #171717;
+  font-size: clamp(16px, 4.5vw, 19px);
+  font-weight: 950;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.tf-workout-list-page .tf-workout-card__text small {
+  color: #606963;
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.tf-workout-list-page .tf-workout-card__chevron {
+  margin-left: auto;
+  color: #627365;
+}
+
+.tf-workout-list-page .tf-workout-card__actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0 16px;
+  border-top: 1px solid #e5e9e3;
+}
+
+.tf-workout-list-page .tf-workout-card__actions button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  min-height: 54px;
+  padding: 10px 5px;
+  color: #344b38;
+  font-size: 12px;
+  font-weight: 800;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  white-space: normal;
+  cursor: pointer;
+}
+
+.tf-workout-list-page .tf-workout-card__actions button + button {
+  border-left: 1px solid #e5e9e3;
+}
+
+.tf-workout-list-page .tf-workout-card__actions button svg {
+  flex: 0 0 auto;
+}
+
+.tf-workout-list-page .tf-workout-card__select {
+  cursor: pointer;
+}
+
+.tf-workout-list-page .tf-workout-card__select[aria-pressed="true"] {
+  background: #f5f8e6;
+}
+
+.tf-workout-list-page .tf-workout-card__select .tf-workout-card__text {
+  grid-column: 2 / -1;
+}
+
+.tf-workout-list-page .tf-workout-bulk-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.tf-workout-list-page .tf-workout-bulk-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+
+.tf-workout-list-page .tf-workout-restore {
+  min-height: 44px;
+  color: #24372a;
+  background: #ecf0df;
+}
+
+@media (max-width: 390px) {
+  .tf-workout-list-page .tf-workout-card__main {
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .tf-workout-list-page .tf-workout-card__actions button {
+    gap: 4px;
+    flex-direction: column;
+    min-height: 60px;
+    padding: 9px 4px;
+    font-size: 11px;
+  }
+}
