@@ -156,25 +156,35 @@ export function parseWorkoutText(value) {
   const exercises = [];
   const ignoredLines = [];
 
-  String(value || "")
+  const lines = String(value || "")
     .split(/\r?\n/)
-    .flatMap((line) => {
-      const cleaned = cleanLine(line);
-      if (!cleaned) return [];
+    .map(cleanLine)
+    .filter(Boolean);
 
-      // PDF extraction often joins several table rows with large whitespace gaps.
-      return cleaned.split(/\s{3,}/).map(cleanLine).filter(Boolean);
-    })
-    .forEach((line) => {
-      if (looksLikeHeading(line)) {
-        ignoredLines.push(line);
-        return;
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (looksLikeHeading(line)) {
+      ignoredLines.push(line);
+      continue;
+    }
+
+    // Copied plans often put the exercise and its prescription on separate lines.
+    // Only join a prescription-only next line; do not accidentally combine two exercises.
+    const next = lines[index + 1];
+    const prescriptionOnly = next && /^\d+\s*(?:(?:x|×)\s*\d|(?:sets?|rounds?)\s*(?:x|×|of)?\s*\d)/i.test(next);
+    const single = parseLine(line);
+    if (prescriptionOnly && single?.name && !single.sets) {
+      const combined = parseLine(`${single.name} ${next}`);
+      if (combined?.name && combined.sets && combined.reps) {
+        exercises.push(combined);
+        index += 1;
+        continue;
       }
+    }
 
-      const exercise = parseLine(line);
-      if (exercise?.name) exercises.push(exercise);
-      else ignoredLines.push(line);
-    });
+    if (single?.name) exercises.push(single);
+    else ignoredLines.push(line);
+  }
 
   return {
     exercises,
