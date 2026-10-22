@@ -96,7 +96,7 @@ describe("parseWorkoutText", () => {
   });
   it("reads an exercise followed by sets and reps on the next line", () => {
     const result = parseWorkoutText(
-      "Bench Press\\n4 sets x 6-8 reps\\nIncline Dumbbell Press,3,10-12",
+      "Bench Press\n4 sets x 6-8 reps\nIncline Dumbbell Press,3,10-12",
     );
     expect(result.exercises).toHaveLength(2);
     expect(result.exercises[0]).toMatchObject({
@@ -110,7 +110,7 @@ describe("parseWorkoutText", () => {
   });
 
   it("does not merge an incomplete exercise with a second named exercise", () => {
-    const result = parseWorkoutText("Cable Fly\\nLateral Raise 3 x 12");
+    const result = parseWorkoutText("Cable Fly\nLateral Raise 3 x 12");
     expect(result.exercises).toHaveLength(2);
     expect(result.exercises[0]).toMatchObject({ name: "Cable Fly", sets: "" });
     expect(result.exercises[1]).toMatchObject({ name: "Lateral Raise", sets: "3", reps: "12" });
