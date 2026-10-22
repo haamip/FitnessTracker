@@ -8,6 +8,7 @@ import { parseWorkoutText } from "../services/workoutTextParser";
 import { parseWorkoutWithAI } from "../services/aiWorkoutImporter";
 import { isUsableWorkoutExercise } from "../services/workoutImportValidation";
 import "./TrackFitScreens.css";
+import "./WorkoutImport.css";
 
 GlobalWorkerOptions.workerSrc = pdfWorker;
 
@@ -72,16 +73,19 @@ export default function WorkoutImport() {
   const [ignoredLines, setIgnoredLines] = useState([]);
   const [fileName, setFileName] = useState("");
   const [status, setStatus] = useState("");
+  const [saveError, setSaveError] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const exerciseCount = useMemo(() => draft.length, [draft]);
   const reviewCount = useMemo(
     () => draft.filter((exercise) => !isUsableWorkoutExercise(exercise)).length,
     [draft],
   );
-  const canSave = workoutName.trim() && exerciseCount > 0 && reviewCount === 0;
+  const validCount = exerciseCount - reviewCount;
+  const canSave = validCount > 0;
 
   function runParser(text) {
     const result = parseWorkoutText(text);
+    setSaveError("");
     setDraft(result.exercises);
     setIgnoredLines(result.ignoredLines);
     return result;
@@ -104,6 +108,7 @@ export default function WorkoutImport() {
     try {
       const localResult = parseWorkoutText(sourceText);
       const result = await parseWorkoutWithAI({ text: sourceText, localResult });
+      setSaveError("");
       setDraft(result.exercises);
       setIgnoredLines(result.ignoredLines);
       if (!workoutName.trim() && result.workoutName) setWorkoutName(result.workoutName);
@@ -119,6 +124,7 @@ export default function WorkoutImport() {
   }
 
   function updateExercise(id, field, value) {
+    setSaveError("");
     setDraft((current) =>
       current.map((exercise) =>
         exercise.id === id
@@ -137,7 +143,24 @@ export default function WorkoutImport() {
   }
 
   function removeExercise(id) {
+    setSaveError("");
     setDraft((current) => current.filter((exercise) => exercise.id !== id));
+  }
+
+  function addExercise() {
+    setSaveError("");
+    setDraft((current) => [
+      ...current,
+      {
+        id: `manual-${crypto.randomUUID()}`,
+        name: "",
+        sets: "",
+        reps: "",
+        note: "",
+        equipment: "unknown",
+        needsReview: true,
+      },
+    ]);
   }
 
   async function handleFileChange(event) {
@@ -167,25 +190,38 @@ export default function WorkoutImport() {
   }
 
   function saveWorkout(startAfterSaving) {
-    if (!canSave) return;
+    if (!canSave) {
+      setSaveError("Add at least one exercise with a name, sets and reps before saving.");
+      return;
+    }
 
-    const workoutId = `saved-${Date.now()}`;
+    if (reviewCount > 0 && !window.confirm(
+      `${reviewCount} incomplete exercise${reviewCount === 1 ? "" : "s"} will not be saved. Save the ${validCount} ready exercise${validCount === 1 ? "" : "s"}?`,
+    )) return;
+
+    const workoutId = `saved-${crypto.randomUUID()}`;
     const exercises = createWorkoutExercises(draft);
-    const name = workoutName.trim();
+    const name = workoutName.trim() || "Imported workout";
 
-    SavedWorkoutRepository.save({
-      id: workoutId,
-      name,
-      detail: `${exercises.length} exercises`,
-      exercises,
-    });
-
-    if (startAfterSaving) SavedWorkoutRepository.createSession(workoutId);
-    navigate(startAfterSaving ? `/workouts/${workoutId}` : "/workouts?refresh=saved");
+    try {
+      SavedWorkoutRepository.save({
+        id: workoutId,
+        name,
+        detail: `${exercises.length} exercises`,
+        exercises,
+      });
+      if (!SavedWorkoutRepository.getById(workoutId)) {
+        throw new Error("The workout could not be found after saving.");
+      }
+      if (startAfterSaving) SavedWorkoutRepository.createSession(workoutId);
+      navigate(startAfterSaving ? `/workouts/${workoutId}` : "/workouts?refresh=saved");
+    } catch (error) {
+      setSaveError(error instanceof Error ? `Could not save workout: ${error.message}` : "Could not save workout. Please try again.");
+    }
   }
 
   return (
-    <div className="screen workouts-v4">
+    <div className="screen workouts-v4 tf-workout-import">
       <section className="v4-workout-hero">
         <Link to="/workouts" aria-label="Back to Train"><ArrowLeft size={22} /></Link>
         <div>
@@ -201,7 +237,7 @@ export default function WorkoutImport() {
           aria-label="Workout name"
           value={workoutName}
           onChange={(event) => setWorkoutName(event.target.value)}
-          placeholder="Monday Push Workout"
+          placeholder="Imported workout (or enter your own name)"
           style={{ width: "100%", padding: 16, borderRadius: 16 }}
         />
       </section>
@@ -216,7 +252,7 @@ export default function WorkoutImport() {
           placeholder={"Bench Press\n4 sets x 6-8 reps\n\nIncline Dumbbell Press,3,10-12"}
           style={{ width: "100%", resize: "vertical", padding: 16, borderRadius: 16 }}
         />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <div className="tf-import-action-grid">
           <button type="button" onClick={handleParse} disabled={!sourceText.trim() || aiLoading}>
             <FileText size={20} /> Quick parse
           </button>
@@ -239,12 +275,12 @@ export default function WorkoutImport() {
 
       {exerciseCount > 0 && (
         <section className="v4-workout-list">
-          <div className="v4-section-heading"><div><p className="eyebrow">Review</p><h2>{exerciseCount} exercises found</h2></div></div>
+          <div className="v4-section-heading"><div><p className="eyebrow">Review &amp; edit</p><h2>{exerciseCount} exercises found</h2><p>Edit names, sets, reps or notes before saving.</p></div></div>
 
           {reviewCount > 0 ? (
             <div className="v4-quick-card">
               <AlertTriangle size={22} /><strong>{reviewCount} need your input</strong>
-              <span>TrackFit leaves uncertain sets or reps blank instead of making them up.</span>
+              <span>Fill in the missing details or remove these entries. You can still save complete exercises.</span>
             </div>
           ) : (
             <div className="v4-quick-card">
@@ -252,10 +288,13 @@ export default function WorkoutImport() {
             </div>
           )}
 
-          {draft.map((exercise) => (
+          {draft.map((exercise, index) => (
             <div className="v4-workout-card" key={exercise.id}>
-              <div className="v4-workout-card__body" style={{ display: "grid", gap: 12 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 10 }}>
+              <div className="v4-workout-card__body tf-import-exercise-body">
+                <div className="tf-import-exercise-header">
+                  <span className="tf-import-exercise-index">Exercise {index + 1}</span>
+                </div>
+                <div className="tf-import-name-row">
                   <label>
                     <small>Exercise</small>
                     <input
@@ -265,11 +304,11 @@ export default function WorkoutImport() {
                       style={{ width: "100%" }}
                     />
                   </label>
-                  <button type="button" aria-label={`Remove ${exercise.name}`} onClick={() => removeExercise(exercise.id)}>
+                  <button className="tf-import-remove" type="button" aria-label={`Remove ${exercise.name || `exercise ${index + 1}`}`} onClick={() => removeExercise(exercise.id)}>
                     <Trash2 size={18} />
                   </button>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div className="tf-import-sets-row">
                   <label>
                     <small>Sets</small>
                     <input
@@ -311,8 +350,16 @@ export default function WorkoutImport() {
             <details><summary>{ignoredLines.length} headings or unrecognised lines ignored</summary><p>{ignoredLines.join(" · ")}</p></details>
           )}
 
-          <div style={{ display: "grid", gap: 10 }}>
-            <button type="button" disabled={!canSave} onClick={() => saveWorkout(false)}>Save workout</button>
+          <button type="button" className="tf-import-add" onClick={addExercise}>+ Add exercise</button>
+          {reviewCount > 0 && (
+            <p className="tf-import-hint">{validCount} ready to save · {reviewCount} incomplete. Fill out or remove incomplete rows to save everything.</p>
+          )}
+          {!canSave && <p className="tf-import-hint">Add a valid exercise to enable saving. The workout name is optional.</p>}
+          {saveError && <p role="alert" className="tf-import-save-error">{saveError}</p>}
+          <div className="tf-import-save-actions">
+            <button type="button" disabled={!canSave} onClick={() => saveWorkout(false)}>
+              {reviewCount ? `Save ${validCount} ready exercise${validCount === 1 ? "" : "s"}` : "Save workout"}
+            </button>
             <button type="button" disabled={!canSave} onClick={() => saveWorkout(true)}>Save and start workout</button>
           </div>
         </section>
