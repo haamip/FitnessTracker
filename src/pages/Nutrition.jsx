@@ -8,6 +8,7 @@ import { getOperationalDate, getShiftMealTypes, getShiftMode, SHIFT_MODE_EVENT }
 import { isSupabaseConfigured, supabase } from "../services/supabase";
 import { parseMealText } from "../services/mealTextParser";
 import { getFoodByBarcode, scaleFoodNutrients } from "../services/openFoodFacts";
+import FoodBarcodeScanner from "../components/FoodBarcodeScanner";
 import "./TrackFitScreens.css";
 import "./NutritionSimple.css";
 
@@ -116,13 +117,13 @@ export default function Nutrition() {
     setMessage(`${matchingType} selected. Check the numbers, then tap Add meal.`);
   }
 
-  async function handleBarcodeLookup() {
+  async function handleBarcodeLookup(code = barcode) {
     if (findingFood) return;
     setFindingFood(true);
     setFoundFood(null);
     setMessage("");
     try {
-      const product = await getFoodByBarcode(barcode);
+      const product = await getFoodByBarcode(code);
       if (!product) {
         setMessage("Product not found. You can still add a meal manually.");
       } else {
@@ -134,6 +135,12 @@ export default function Nutrition() {
     } finally {
       setFindingFood(false);
     }
+  }
+
+  function handleScannedBarcode(code) {
+    setBarcode(code);
+    setFoundFood(null);
+    void handleBarcodeLookup(code);
   }
 
   function useFoundFood() {
@@ -225,11 +232,12 @@ export default function Nutrition() {
     <section className="v4-checkin-hero"><div><p className="eyebrow">Food · {shiftMode === "night" ? "Night shift" : "Day shift"}</p><h1>Shift day</h1><p>{shiftMode === "night" ? "After-midnight meals stay with the shift that started the night before." : "Meals use the current calendar day."}</p></div></section>
     <section className="tf-food-summary"><article className="tf-food-target"><div className="tf-food-target__top"><div><Flame size={20}/><span>Calories</span></div><strong>{roundDisplay(totals.calories)} / {CALORIE_TARGET}</strong></div><div className="progress-line"><span style={{width:`${calorieProgress}%`}}/></div></article><article className="tf-food-target"><div className="tf-food-target__top"><div><Beef size={20}/><span>Protein</span></div><strong>{roundDisplay(totals.protein)} / {PROTEIN_TARGET}g</strong></div><div className="progress-line"><span style={{width:`${proteinProgress}%`}}/></div></article></section>
     <section className="form-card form-grid" aria-label="Food database barcode lookup">
-      <div><p className="eyebrow">Food database</p><h2>Find packaged food</h2><p>Enter a barcode to look up nutrition details. You can edit everything before saving.</p></div>
+      <div><p className="eyebrow">Food database</p><h2>Find packaged food</h2><p>Scan a barcode using your phone camera or enter its number. Check the nutrition label before logging.</p></div>
       <label>Barcode
         <input aria-label="Food barcode" type="text" inputMode="numeric" autoComplete="off" maxLength={14} value={barcode} onChange={(event) => { setBarcode(event.target.value.replace(/[^0-9]/g, "")); setFoundFood(null); }} placeholder="Scan number on package" />
       </label>
-      <Button type="button" disabled={findingFood || barcode.length < 8} onClick={handleBarcodeLookup}>{findingFood ? "Searching..." : "Find food"}</Button>
+      <FoodBarcodeScanner onDetected={handleScannedBarcode} disabled={findingFood} />
+      <Button type="button" disabled={findingFood || barcode.length < 8} onClick={() => handleBarcodeLookup()}>{findingFood ? "Searching..." : "Find food by number"}</Button>
       {foundFood && <div className="v4-quick-card">
         <strong>{foundFood.name}</strong>
         <span>{foundFood.brand || "Brand not supplied"} · {foundFood.barcode}</span>
