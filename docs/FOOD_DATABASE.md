@@ -1,26 +1,25 @@
-# TrackFit branded food lookup (first increment)
+# TrackFit Nutrition: barcode scanning and food lookup
 
-The nutrition page supports manual barcode entry using Open Food Facts. This is
-**not** a camera barcode scanner or full food-name search.
+TrackFit supports two ways to look up packaged foods:
 
-## Behaviour
-- User submits an 8–14 digit barcode; TrackFit fetches only required product fields.
-- Shows the name, brand and available nutrients per 100g.
-- User chooses grams and explicitly copies scaled values into the editable meal form.
-- Missing nutrient values remain blank, not estimated or assumed to be zero.
-- User must review entries before saving to their own food log.
-- Failed, unknown or unavailable lookups fall back to manual logging.
+1. **Camera scan** — tap Scan barcode, grant permission, point the phone at an EAN/UPC product barcode. Detection runs on-device using the browser's native `BarcodeDetector` API. When a code is read, the existing Open Food Facts lookup starts automatically.
+2. **Manual barcode entry** — type the 8–14 digit barcode and tap Find food by number. This works as a fallback when native camera scanning is not supported or permission is denied.
 
 ## Data source
-Open Food Facts (https://world.openfoodfacts.org), Open Database License (ODbL).
-We link to the original product record in the user interface. Branded entries
-are community-maintained and may not match the local package label.
 
-## Release checks
-- Verify client-side network and CORS behaviour on Android/iOS browsers.
-- Respect provider fair-use requirements; add caching, rate limiting and a
-  provider-compliant user agent or an approved proxy for scale.
-- Review ODbL attribution/share-alike obligations before commercial launch.
-- Check regional coverage (Australia and Aotearoa/New Zealand) with real labels.
-- Do not claim camera barcode scanning is present until camera integration works.
-- Keep the existing critical dependency audit as a store-release blocker.
+Open Food Facts (https://world.openfoodfacts.org), ODbL. Users see the name, brand, per-100g values, and source link, then choose the serving amount in grams and **explicitly copy values into the editable meal form**. Missing nutrients remain blank, not invented; review the packaging before saving.
+
+## Device requirements and limitations
+
+- Barcode camera capture needs HTTPS, camera permission, a working rear camera, and native `BarcodeDetector` support for EAN/UPC/ITF formats.
+- `BarcodeDetector` isn't supported on every Android browser or WebView. In those cases, users receive a clear explanation and can type the code manually. No third-party barcode image service or camera feed upload is used.
+- The photo-to-macros feature is **not live** without `VITE_TRACKFIT_AI_ENDPOINT`, a secure server endpoint. The app must not record demo-generated estimates as real nutrition data.
+- Cameras are stopped after a successful scan, when the user stops scanning, when the page is backgrounded, and when the component unmounts.
+
+## Commercial release considerations
+
+- Test actual supermarket products sold in Australia and Aotearoa/New Zealand.
+- Review ODbL attribution/share-alike obligations if combining community and proprietary databases.
+- Respect Open Food Facts fair-use guidance, identify requests through an approved backend/user-agent approach, and cache/rate-limit high-volume lookups before scaling.
+- Test camera operation in installed Android app, Samsung Internet and Chrome. The native scanner feature is experimental and not universal.
+- For true AI meal recognition, connect a server-side service with privacy controls, authenticated usage limits, and real image analysis. Never expose an AI provider key in the mobile client.
