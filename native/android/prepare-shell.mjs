@@ -31,7 +31,7 @@ modify(join(base, "app", "build.gradle"), text => {
   if (!text.includes(marker)) throw new Error("Unexpected Gradle app structure");
   if (!text.includes("buildTypes {")) throw new Error("Unexpected Gradle build type structure");
   return text.replace(marker, marker + "\napply plugin: 'kotlin-android'")
-    .replace("buildTypes {", "buildTypes {\n        debug {\n            applicationIdSuffix '.stepcompare'\n            versionNameSuffix '-testing'\n        }") +
+    .replace("buildTypes {", "buildTypes {\n        debug {\n            applicationIdSuffix '.nativepreview'\n            versionNameSuffix '-native-preview'\n        }") +
     "\n\nkotlin {\n  jvmToolchain(21)\n}\n\n" +
     "dependencies {\n" +
     '  implementation "androidx.health.connect:connect-client:1.1.0"\n' +
@@ -70,12 +70,12 @@ modify(join(base, "variables.gradle"), text => {
   return text.replace(/minSdkVersion\s*=\s*24/, "minSdkVersion = 28");
 });
 
-// Install alongside any previous test build; never require uninstalling it.
+// Use a dedicated native-preview package so older .stepcompare test builds and their\n// local caches remain untouched. The store package remains nz.hakt.trackfit.
 const stringsFile = join(base, "app", "src", "main", "res", "values", "strings.xml");
 modify(stringsFile, text => {
   const oldLabel = '<string name="app_name">TrackFit</string>';
   if (!text.includes(oldLabel)) throw new Error("Unexpected Android app name resource");
-  return text.replace(oldLabel, '<string name="app_name">TrackFit Compare</string>');
+  return text.replace(oldLabel, '<string name="app_name">TrackFit Native</string>');
 });
 
 const sourcePackage = join(base, "app", "src", "main", "java", "nz", "hakt", "trackfit");
