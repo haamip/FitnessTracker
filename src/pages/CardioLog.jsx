@@ -24,6 +24,7 @@ import LineChartCard from "../components/LineChartCard";
 import { CardioCloudRepository } from "../services/repositories/cardioCloudRepository";
 import { CheckInRepository } from "../services/repositories/trackfitDataLayer";
 import { buildSevenDayCardio, recentCardioTotals, localDateKey, pacePerKm } from "../services/cardioSummary";
+import { signalTrackFitDataChange } from "../hooks/useTrackFitDataRefresh";
 import "./TrackFitScreens.css";
 import "./CardioLog.css";
 
@@ -166,6 +167,7 @@ export default function CardioLog() {
       ]);
       setSelectedType("All");
       setForm(initialForm);
+      signalTrackFitDataChange();
       setStatusMessage("Movement saved.");
     } catch (error) {
       console.error("Unable to sync cardio session.", error);
@@ -185,6 +187,7 @@ export default function CardioLog() {
     try {
       const updated = await CardioCloudRepository.remove(session.id);
       setSavedSessions(updated.map(normaliseSession));
+      signalTrackFitDataChange();
       setStatusMessage("Cardio session deleted.");
     } catch (error) {
       setStatusMessage(`Could not delete that session: ${error.message || "Please try again"}`);
