@@ -49,7 +49,8 @@ jobs:
           "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0" "platform-tools"
       - name: Install web dependencies
         run: npm ci
-      # Capacitor is locked to the same versions until the native platform is promoted.\n      - name: Install Capacitor for reproducible native preview
+      # Capacitor is locked to the same versions until the native platform is promoted.
+      - name: Install Capacitor for reproducible native preview
         run: npm install --no-save --package-lock=false @capacitor/core@8.3.0 @capacitor/android@8.3.0 @capacitor/cli@8.3.0
       - name: Register native-only Health Connect bridge
         run: node native/android/prepare-web.mjs
