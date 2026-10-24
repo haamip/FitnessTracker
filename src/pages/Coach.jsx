@@ -7,6 +7,7 @@ import {
 import { buildCoachDashboard } from "../services/engines/coachIntelligenceEngine";
 import { getWeekStart, WeeklyReviewRepository } from "../services/weeklyCoachReview";
 import useTrackFitDataRefresh from "../hooks/useTrackFitDataRefresh";
+import NativeWatchSnapshot from "../components/NativeWatchSnapshot";
 import "./Coach.css";
 
 const shortcuts = [
@@ -35,6 +36,8 @@ export default function Coach() {
         </div>
         <Link to="/dashboard" className="tf-intro-link">Full dashboard <ArrowUpRight size={17} aria-hidden="true" /></Link>
       </section>
+
+      <NativeWatchSnapshot />
 
       {weeklyCheckInDue && (
         <section className="form-card" aria-label="Weekly coaching review due" style={{marginBottom:16}}>
