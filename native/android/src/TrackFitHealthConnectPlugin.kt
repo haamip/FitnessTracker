@@ -185,6 +185,13 @@ class TrackFitHealthConnectPlugin : Plugin() {
                     timeRangeFilter = interval
                 )
             )[StepsRecord.COUNT_TOTAL] ?: 0L
+            val samsungTotal = hc.aggregate(
+                AggregateRequest(
+                    metrics = setOf(StepsRecord.COUNT_TOTAL),
+                    timeRangeFilter = interval,
+                    dataOriginFilter = setOf(DataOrigin(samsungHealthPackage))
+                )
+            )[StepsRecord.COUNT_TOTAL]
 
             data class SourceInfo(var records: Int = 0, var rawSteps: Long = 0)
             val bySource = linkedMapOf<String, SourceInfo>()
@@ -229,6 +236,7 @@ class TrackFitHealthConnectPlugin : Plugin() {
                 .put("from", start.toString())
                 .put("through", end.toString())
                 .put("aggregatedSteps", total)
+                .put("samsungAggregatedSteps", samsungTotal)
                 .put("sources", sourceData)
                 .put("truncated", truncated)
         }
