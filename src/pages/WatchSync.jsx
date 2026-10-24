@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertCircle, CheckCircle2, ExternalLink, Footprints, RefreshCw, Smartphone, Watch } from "lucide-react";
 import { CheckInRepository } from "../services/repositories/trackfitDataLayer";
 import { localDateKey } from "../services/cardioSummary";
 import { getWearableBridge, readWearableSteps } from "../services/wearableBridge";
 import { inspectWatchConnection, isTrackFitNativeApp } from "../services/watchConnectionStatus";
+import { isAutoWatchSyncEnabled, setAutoWatchSyncEnabled } from "../services/watchAutoSync";
+import { supabase } from "../services/supabase";
 import "./WatchSync.css";
 
 function readTodaysCheckIn() {
@@ -18,6 +20,35 @@ export default function WatchSync() {
   const [status, setStatus] = useState(null);
   const [busy, setBusy] = useState(false);
   const [operation, setOperation] = useState("");
+  const [userId, setUserId] = useState(null);
+  const [autoEnabled, setAutoEnabled] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    async function loadPreference() {
+      if (!supabase) return;
+      const { data, error } = await supabase.auth.getUser();
+      if (active && !error && data.user?.id) {
+        setUserId(data.user.id);
+        setAutoEnabled(isAutoWatchSyncEnabled(data.user.id));
+      }
+    }
+    void loadPreference();
+    return () => { active = false; };
+  }, []);
+
+  function toggleAuto(enabled) {
+    if (!connectedReader || !userId) return;
+    setAutoWatchSyncEnabled(userId, enabled);
+    setAutoEnabled(enabled);
+    setStatus({
+      state: enabled ? "ready" : "disabled",
+      message: enabled
+        ? "Enabled. TrackFit will refresh watch steps when the Android app opens or resumes, while permission is granted. It does not run constantly in the background."
+        : "Automatic watch syncing is off. You can still use Sync steps from watch.",
+    });
+  }
+
 
   const connectedReader = nativeApp && Boolean(provider);
   const steps = Number(entry?.steps);
@@ -89,6 +120,17 @@ export default function WatchSync() {
         {connectedReader ? (
           <>
             <p className="tf-watch-sync__hint">The Android health connector is available in this installed app. Check access, then import today's steps.</p>
+            <label className="tf-watch-sync__auto">
+              <input
+                type="checkbox"
+                checked={autoEnabled}
+                disabled={!userId || busy}
+                onChange={(event) => toggleAuto(event.target.checked)}
+              />
+              <span><strong>Sync automatically when I open TrackFit</strong>
+                <small>Optional · Updates while the Android app is in use, at most every 15 minutes. No background health access.</small>
+              </span>
+            </label>
             <div className="tf-watch-sync__actions">
               <button type="button" disabled={busy} onClick={syncSteps} className="tf-watch-sync__primary">
                 <RefreshCw size={18} aria-hidden="true" />
