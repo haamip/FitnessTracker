@@ -1,15 +1,26 @@
-name: TrackFit Android Debug APK
+name: TrackFit Native Android Preview
 on:
   pull_request:
     paths:
+      - "src/**"
+      - "public/**"
       - "native/android/**"
       - "capacitor.config.json"
+      - "package.json"
+      - "package-lock.json"
+      - "index.html"
       - ".github/workflows/android-debug.yml"
-      - "src/services/healthConnectBridge.js"
-      - "src/services/wearableBridge.js"
-      - "src/services/watchConnectionStatus.js"
-      - "src/services/watchConnectionStatus.test.js"
-      - "src/pages/DailyCheckIn.jsx"
+  push:
+    branches: [ui-app-shell]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "native/android/**"
+      - "capacitor.config.json"
+      - "package.json"
+      - "package-lock.json"
+      - "index.html"
+      - ".github/workflows/android-debug.yml"
   workflow_dispatch:
 permissions:
   contents: read
@@ -38,7 +49,7 @@ jobs:
           "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0" "platform-tools"
       - name: Install web dependencies
         run: npm ci
-      - name: Install Capacitor for isolated debug build
+      # Capacitor is locked to the same versions until the native platform is promoted.\n      - name: Install Capacitor for reproducible native preview
         run: npm install --no-save --package-lock=false @capacitor/core@8.3.0 @capacitor/android@8.3.0 @capacitor/cli@8.3.0
       - name: Register native-only Health Connect bridge
         run: node native/android/prepare-web.mjs
@@ -53,12 +64,12 @@ jobs:
         run: node native/android/prepare-shell.mjs
       - name: Copy web assets into native project
         run: npx cap sync android
-      - name: Build debug APK
+      - name: Build TrackFit Native preview APK
         run: cd android && chmod +x gradlew && ./gradlew --no-daemon assembleDebug
-      - name: Upload development-only debug APK
+      - name: Upload TrackFit Native installable preview
         uses: actions/upload-artifact@v4
         with:
-          name: trackfit-android-debug-apk
+          name: trackfit-native-preview-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 30
