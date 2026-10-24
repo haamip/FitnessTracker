@@ -2,6 +2,7 @@ import { CheckInRepository } from "./repositories/trackfitDataLayer";
 import { localDateKey } from "./cardioSummary";
 import { getWearableBridge, readWearableSteps } from "./wearableBridge";
 import { supabase } from "./supabase";
+import { getStepSourceMode } from "./stepSourcePreference";
 
 const preferenceKey = (userId) => `trackfit_auto_watch_sync_${userId}`;
 const attemptKey = (userId) => `trackfit_auto_watch_sync_last_${userId}`;
@@ -42,13 +43,14 @@ export async function syncWatchOnForeground() {
     if (previous > 0 && now - previous < MIN_INTERVAL_MS) return null;
     localStorage.setItem(attemptKey(userId), String(now));
     const date = localDateKey();
-    const record = await readWearableSteps(date, provider);
+    const sourceMode = getStepSourceMode(userId);
+    const record = await readWearableSteps(date, provider, { sourceMode });
     const existing = CheckInRepository.getAll().find((item) => item.date === date);
     // A temporary Health Connect source issue shouldn't reduce a previously
     // imported step total; the user can still manually correct the check-in.
-    if (existing?.stepsSource === record.stepsSource && Number(existing.steps) > record.steps) return null;
+    if (existing?.stepsSource === record.stepsSource && (existing.stepsMode || "all") === sourceMode && Number(existing.steps) > record.steps) return null;
     const saved = await CheckInRepository.saveStepsFromWatch(date, record);
-    window.dispatchEvent(new CustomEvent("trackfit:watch-auto-synced", { detail: { date, steps: record.steps, cloudSaved: Boolean(saved?.cloudSaved) } }));
+    window.dispatchEvent(new CustomEvent("trackfit:watch-auto-synced", { detail: { date, steps: record.steps, sourceMode, cloudSaved: Boolean(saved?.cloudSaved) } }));
     return record;
   } catch (error) {
     console.warn("Automatic watch sync unavailable; manual sync is still available.", error);
