@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Footprints, RefreshCw, Watch } from "lucide-react";
 import { localDateKey } from "../services/cardioSummary";
@@ -18,6 +18,16 @@ export default function NativeWatchSnapshot() {
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [entry, setEntry] = useState(getTodaysSteps);
+
+  useEffect(() => {
+    const update = () => setEntry(getTodaysSteps());
+    window.addEventListener("trackfit:checkin-saved", update);
+    window.addEventListener("trackfit:watch-auto-synced", update);
+    return () => {
+      window.removeEventListener("trackfit:checkin-saved", update);
+      window.removeEventListener("trackfit:watch-auto-synced", update);
+    };
+  }, []);
 
   if (!isNative) return null;
   const supported = Boolean(provider);
