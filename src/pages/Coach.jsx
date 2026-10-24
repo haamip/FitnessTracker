@@ -6,18 +6,21 @@ import {
 } from "lucide-react";
 import { buildCoachDashboard } from "../services/engines/coachIntelligenceEngine";
 import { getWeekStart, WeeklyReviewRepository } from "../services/weeklyCoachReview";
+import useTrackFitDataRefresh from "../hooks/useTrackFitDataRefresh";
 import "./Coach.css";
 
 const shortcuts = [
   { to: "/workouts", label: "Workouts", detail: "Start or build a session", icon: Dumbbell },
   { to: "/checkin", label: "Daily check-in", detail: "Steps, feeling, workout or rest", icon: CalendarCheck2 },
   { to: "/coach/weekly", label: "Weekly review", detail: "Progress photos and coaching feedback", icon: HeartPulse },
-  { to: "/nutrition", label: "Nutrition", detail: "Log meals and targets", icon: Utensils },
+  { to: "/nutrition", label: "Nutrition", detail: "Scan food, log meals and track macros", icon: Utensils },
+  { to: "/cardio", label: "Cardio", detail: "Log movement and review seven-day trends", icon: Activity },
   { to: "/progress", label: "Progress", detail: "See your training trend", icon: TrendingUp },
 ];
 
 export default function Coach() {
-  const coach = useMemo(() => buildCoachDashboard(), []);
+  const [revision] = useTrackFitDataRefresh();
+  const coach = useMemo(() => { void revision; return buildCoachDashboard(); }, [revision]);
   const weeklyCheckInDue = new Date().getDay() === 0 && !WeeklyReviewRepository.getByWeek(getWeekStart());
   const today = new Intl.DateTimeFormat("en-NZ", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
 
