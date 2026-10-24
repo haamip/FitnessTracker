@@ -5,6 +5,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import {
   Activity,
   Clock,
@@ -17,6 +18,8 @@ import {
   Timer,
   Zap,
   Trash2,
+  Watch,
+  ChevronRight,
 } from "lucide-react";
 
 import Button from "../components/ui/Button";
@@ -220,6 +223,12 @@ export default function CardioLog() {
         <article><Clock size={21} /><strong>{Math.round(totals.durationMin)}min</strong><span>Time</span></article>
         <article><Flame size={21} /><strong>{totals.calories}</strong><span>Calories</span></article>
       </section>
+
+      <Link to="/watch" className="tf-cardio-watch-link">
+        <Watch size={19} aria-hidden="true" />
+        <span><strong>Watch & Steps</strong><small>Sync Galaxy Watch steps or check Health Connect setup</small></span>
+        <ChevronRight size={19} aria-hidden="true" />
+      </Link>
 
       <p className="tf-cardio-explanation">Last 7 calendar days · {totals.count} cardio sessions · {todaySteps ? `Steps from ${stepsLabel}` : "Log or sync a daily check-in to show today's steps"}</p>
 
