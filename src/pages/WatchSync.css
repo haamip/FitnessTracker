@@ -1,0 +1,27 @@
+.tf-watch-sync { display:grid; gap:18px; padding-bottom:28px; }
+.tf-watch-sync__hero { padding:24px; color:#fff; background:#1d2420; border-radius:24px; }
+.tf-watch-sync__hero > svg {color:#dffa7d;}
+.tf-watch-sync__hero .eyebrow {margin:10px 0 5px;color:#dffa7d;}
+.tf-watch-sync__hero h1 {color:#fff;margin:0 0 10px;line-height:1.1;font-size:clamp(28px,6vw,43px);}
+.tf-watch-sync__hero p:last-child {margin:0;color:#d8e0d8;font-size:14px;line-height:1.5;}
+.tf-watch-sync__summary {display:flex;align-items:center;gap:16px;min-width:0;padding:20px;border:1px solid #dfe6d8;border-radius:22px;background:#fff;color:#26382b;}
+.tf-watch-sync__summary > svg {color:#496946;flex:0 0 auto;}
+.tf-watch-sync__summary div {display:grid;gap:4px;min-width:0;}
+.tf-watch-sync__summary span {font-weight:750;color:#627362;font-size:13px;}
+.tf-watch-sync__summary strong {font-size:clamp(28px,6vw,38px);line-height:1.15;}
+.tf-watch-sync__summary small {font-size:12px;color:#61715e;overflow-wrap:anywhere;}
+.tf-watch-sync__section {display:grid;gap:13px;min-width:0;}
+.tf-watch-sync__section h2 {font-size:21px;margin:0;}
+.tf-watch-sync__section p {margin:0;line-height:1.5;}
+.tf-watch-sync__section ol {margin:0;padding-left:22px;display:grid;gap:11px;line-height:1.5;}
+.tf-watch-sync__actions {display:grid;grid-template-columns:1fr;gap:10px;}
+.tf-watch-sync__actions button {min-height:50px;padding:12px 15px;border-radius:13px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;gap:8px;}
+.tf-watch-sync__primary {background:#1d2720;color:#dffa7d;}
+.tf-watch-sync__secondary {background:#f0f4e9;color:#26392c;border:1px solid #d8e3cf;}
+.tf-watch-sync__link {display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:45px;text-align:center;color:#263f31;font-weight:820;text-decoration:underline;}
+.tf-watch-sync__notice,.tf-watch-sync__success {display:flex;align-items:flex-start;gap:9px;padding:13px;border-radius:14px;font-size:13px;line-height:1.5;overflow-wrap:anywhere;}
+.tf-watch-sync__notice {background:#fff4e7;color:#6a4b29;}
+.tf-watch-sync__success {background:#eef7e7;color:#25502b;}
+.tf-watch-sync__notice svg,.tf-watch-sync__success svg {flex-shrink:0;}
+.tf-watch-sync__hint {font-size:12px;color:#5a655a;}
+.tf-watch-sync__hint svg {vertical-align:middle;margin-right:4px;}
