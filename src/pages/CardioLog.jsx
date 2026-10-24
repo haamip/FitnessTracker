@@ -16,12 +16,16 @@ import {
   Sparkles,
   Timer,
   Zap,
+  Trash2,
 } from "lucide-react";
 
 import Button from "../components/ui/Button";
 import LineChartCard from "../components/LineChartCard";
 import { CardioCloudRepository } from "../services/repositories/cardioCloudRepository";
+import { CheckInRepository } from "../services/repositories/trackfitDataLayer";
+import { buildSevenDayCardio, recentCardioTotals, localDateKey, pacePerKm } from "../services/cardioSummary";
 import "./TrackFitScreens.css";
+import "./CardioLog.css";
 
 const CARDIO_TYPES = [
   "Incline Walk",
@@ -66,43 +70,12 @@ function normaliseSession(session, index = 0) {
   };
 }
 
-function formatDateLabel(value) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Today";
-  return new Intl.DateTimeFormat("en-AU", { weekday: "short" }).format(date);
-}
-
 function formatSessionDate(value) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Recently";
-  return new Intl.DateTimeFormat("en-AU", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  }).format(date);
-}
-
-function getPace(distanceKm, durationMin) {
-  if (!distanceKm || !durationMin) return "Pace pending";
-  const pace = durationMin / distanceKm;
-  const minutes = Math.floor(pace);
-  const seconds = Math.round((pace - minutes) * 60)
-    .toString()
-    .padStart(2, "0");
-  return `${minutes}:${seconds}/km`;
-}
-
-function buildWeeklyChart(sessions) {
-  const byDay = new Map();
-  sessions.forEach((session) => {
-    const label = formatDateLabel(session.date);
-    const current = byDay.get(label) || 0;
-    byDay.set(label, Math.round((current + session.distanceKm) * 10) / 10);
-  });
-  return [...byDay.entries()].reverse().map(([date, distance]) => ({
-    date,
-    distance,
-  }));
+  const day = String(value || "").slice(0, 10);
+  const d = new Date(day + "T12:00:00");
+  return Number.isNaN(d.getTime()) ? "Recently" : new Intl.DateTimeFormat("en-AU", {
+    weekday: "short", day: "numeric", month: "short",
+  }).format(d);
 }
 
 export default function CardioLog() {
@@ -114,6 +87,7 @@ export default function CardioLog() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
+  const [removingId, setRemovingId] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -145,24 +119,14 @@ export default function CardioLog() {
     [selectedType, sessions],
   );
 
-  const totals = useMemo(
-    () =>
-      filteredSessions.reduce(
-        (summary, session) => ({
-          distanceKm: summary.distanceKm + session.distanceKm,
-          durationMin: summary.durationMin + session.durationMin,
-          calories: summary.calories + session.calories,
-          steps: summary.steps + session.steps,
-        }),
-        { distanceKm: 0, durationMin: 0, calories: 0, steps: 0 },
-      ),
-    [filteredSessions],
-  );
-
-  const chartData = useMemo(
-    () => buildWeeklyChart(filteredSessions),
-    [filteredSessions],
-  );
+  const totals = useMemo(() => recentCardioTotals(filteredSessions), [filteredSessions]);
+  const chartData = useMemo(() => buildSevenDayCardio(filteredSessions), [filteredSessions]);
+  // Steps imported from Samsung Health/Health Connect belong to the daily check-in,
+  // not the sum of cardio sessions, otherwise an activity can double count steps.
+  const todaySteps = CheckInRepository.getAll().find((record) => record.date === localDateKey());
+  const watchSteps = Number(todaySteps?.steps);
+  const stepsLabel = todaySteps?.stepsSource === "health_connect" ? "Health Connect" :
+    todaySteps?.stepsSource === "apple_health" ? "Apple Health" : "Daily check-in";
 
   function updateField(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -173,8 +137,8 @@ export default function CardioLog() {
     if (isSaving) return;
 
     const newSession = normaliseSession({
-      id: `cardio-${Date.now()}`,
-      date: new Date().toISOString().slice(0, 10),
+      id: `cardio-${crypto.randomUUID()}`,
+      date: localDateKey(),
       type: form.type,
       distanceKm: form.distanceKm,
       durationMin: form.durationMin,
@@ -183,6 +147,10 @@ export default function CardioLog() {
       zone: form.zone,
     });
 
+    if (![form.distanceKm, form.durationMin, form.steps, form.calories].some((value) => Number(value) > 0)) {
+      setStatusMessage("Enter a distance, duration, steps or calories before saving.");
+      return;
+    }
     setIsSaving(true);
     setStatusMessage("");
 
@@ -198,15 +166,30 @@ export default function CardioLog() {
       ]);
       setSelectedType("All");
       setForm(initialForm);
-      setStatusMessage("Movement saved and synced.");
+      setStatusMessage("Movement saved.");
     } catch (error) {
       console.error("Unable to sync cardio session.", error);
       setSavedSessions(
         CardioCloudRepository.getCached().map(normaliseSession),
       );
-      setStatusMessage("Saved on this device. Cloud sync will retry later.");
+      setStatusMessage("Saved on this device, but cloud sync failed. Check your connection before logging it again.");
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function deleteSession(session) {
+    if (!window.confirm(`Delete your ${session.type} session from ${formatSessionDate(session.date)}?`)) return;
+    setRemovingId(session.id);
+    setStatusMessage("");
+    try {
+      const updated = await CardioCloudRepository.remove(session.id);
+      setSavedSessions(updated.map(normaliseSession));
+      setStatusMessage("Cardio session deleted.");
+    } catch (error) {
+      setStatusMessage(`Could not delete that session: ${error.message || "Please try again"}`);
+    } finally {
+      setRemovingId(null);
     }
   }
 
@@ -221,7 +204,7 @@ export default function CardioLog() {
         <div>
           <p className="eyebrow">Movement</p>
           <h1>{totals.distanceKm.toFixed(1)}km</h1>
-          <p>Cardio and steps in one place. Keep the engine ticking over.</p>
+          <p>Your past 7 days of cardio, with steps tracked separately so they are not counted twice.</p>
         </div>
         <div className="v4-cardio-icon">
           <HeartPulse size={28} />
@@ -230,16 +213,18 @@ export default function CardioLog() {
 
       <section className="v4-cardio-stats">
         <article><Route size={21} /><strong>{totals.distanceKm.toFixed(1)}km</strong><span>Distance</span></article>
-        <article><Footprints size={21} /><strong>{totals.steps.toLocaleString()}</strong><span>Steps</span></article>
+        <article><Footprints size={21} /><strong>{todaySteps && Number.isFinite(watchSteps) ? watchSteps.toLocaleString() : "—"}</strong><span>Today’s steps</span></article>
         <article><Clock size={21} /><strong>{Math.round(totals.durationMin)}min</strong><span>Time</span></article>
         <article><Flame size={21} /><strong>{totals.calories}</strong><span>Calories</span></article>
       </section>
+
+      <p className="tf-cardio-explanation">Last 7 calendar days · {totals.count} cardio sessions · {todaySteps ? `Steps from ${stepsLabel}` : "Log or sync a daily check-in to show today's steps"}</p>
 
       <form className="form-card form-grid" onSubmit={handleSubmit}>
         <div>
           <p className="eyebrow">Log movement</p>
           <h2>Add today&apos;s cardio</h2>
-          <p>Pick the type, add steps if you have them, and TrackFit will build the graph.</p>
+          <p>Log the activity here. For your full-day watch steps, use Daily check-in rather than logging them twice.</p>
         </div>
 
         <label>
@@ -298,7 +283,7 @@ export default function CardioLog() {
         </label>
       </section>
 
-      <LineChartCard title={`${selectedType} Distance`} data={chartData} dataKey="distance" unit="km" />
+      <LineChartCard title={`${selectedType} · Last 7 days`} data={chartData} dataKey="distance" unit="km" />
 
       <div className="v4-section-heading">
         <div><p className="eyebrow">Recent</p><h2>Movement sessions</h2></div>
@@ -306,15 +291,17 @@ export default function CardioLog() {
       </div>
 
       <section className="v4-cardio-list">
+        {!isLoading && filteredSessions.length === 0 && <p>No sessions logged in this view yet.</p>}
         {filteredSessions.map((session) => (
           <article className="v4-cardio-row" key={session.id}>
             <div className="v4-cardio-row-icon"><Activity size={20} /></div>
             <div>
               <strong>{session.type}</strong>
-              <p>{session.distanceKm.toFixed(1)}km - {session.durationMin} min - {getPace(session.distanceKm, session.durationMin)}</p>
+              <p>{session.distanceKm.toFixed(1)}km - {session.durationMin} min - {pacePerKm(session.distanceKm, session.durationMin)}</p>
               <p>{formatSessionDate(session.date)} - {session.steps.toLocaleString()} steps</p>
             </div>
             <span>{session.zone}</span>
+            <button type="button" className="tf-cardio-delete" aria-label={`Delete ${session.type} on ${formatSessionDate(session.date)}`} disabled={Boolean(removingId)} onClick={() => deleteSession(session)}><Trash2 size={18} /></button>
           </article>
         ))}
       </section>
