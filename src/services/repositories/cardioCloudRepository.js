@@ -51,8 +51,12 @@ export const CardioCloudRepository = {
       if (error) throw error;
 
       const sessions = (data || []).map(toSession);
-      LocalCardioRepository.saveAll(sessions);
-      return sessions;
+      // Keep offline entries with local-only IDs visible. The cloud hydration
+      // must not erase sessions the user recorded while disconnected.
+      const localOnly = this.getCached().filter((entry) => String(entry.id || "").startsWith("cardio-"));
+      const merged = [...localOnly, ...sessions];
+      LocalCardioRepository.saveAll(merged);
+      return merged;
     } catch (error) {
       console.warn("Cardio cloud load failed; using local cache.", error);
       return this.getCached();
@@ -96,7 +100,7 @@ export const CardioCloudRepository = {
   async remove(id) {
     // Don't remove from the cache until the cloud deletion succeeds. Previously
     // an offline/cloud failure could hide a record even though it still existed.
-    if (supabase) {
+    if (supabase && !String(id).startsWith("cardio-")) {
       const userId = await getUserId();
       if (userId) {
         const { error } = await supabase
