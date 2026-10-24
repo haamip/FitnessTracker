@@ -1,6 +1,12 @@
 # TrackFit
 
-TrackFit is a mobile-first fitness tracking app being built as an offline-first personal training platform. The goal is not just to log workouts, but to help the user understand what to train next, how to progress, and why a recommendation was made.
+TrackFit is an **Android-native-first** fitness tracker with a companion web app. It runs a shared React/Vite interface inside a Capacitor Android shell and uses Kotlin for Health Connect and other device-specific capabilities. It's being built as an offline-first personal training platform. The goal is not just to log workouts, but to help the user understand what to train next, how to progress, and why a recommendation was made.
+
+## Android app
+
+The primary app is **TrackFit Native**, with workouts, Cardio, Nutrition, Dashboard and opt-in Health Connect step imports. The website remains a companion with the same TrackFit account. The installable debug build is automatically built on changes to the app in GitHub Actions (**TrackFit Native Android Preview**).
+
+See [Native-first Android architecture and release plan](docs/NATIVE_FIRST_ANDROID.md) for build instructions, APK safety notes, remaining Android features and Play Store release gates. The current APK is for testing, not the final signed store app.
 
 ## Current milestone
 
