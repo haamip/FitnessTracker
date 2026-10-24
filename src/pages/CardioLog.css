@@ -1,0 +1,39 @@
+.tf-cardio-explanation {
+  margin: 0;
+  padding: 12px 15px;
+  border: 1px solid #e0e8d9;
+  border-radius: 14px;
+  background: #f4f7ec;
+  color: #425440;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.55;
+}
+.cardio-v4 .v4-cardio-row {
+  min-width: 0;
+  gap: 10px;
+}
+.cardio-v4 .v4-cardio-row > div:nth-child(2) {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.cardio-v4 .v4-cardio-row p {
+  overflow-wrap: anywhere;
+}
+.cardio-v4 .tf-cardio-delete {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 42px;
+  min-height: 44px;
+  padding: 0;
+  background: #f5f5f2;
+  color: #744438;
+  border: 1px solid #e9e8e2;
+  border-radius: 12px;
+}
+.cardio-v4 .tf-cardio-delete:focus-visible { outline: 3px solid #b8d96d; }
+@media (max-width: 420px) {
+  .cardio-v4 .v4-cardio-row { flex-wrap: wrap; }
+  .cardio-v4 .v4-cardio-row > span { margin-left: auto; }
+}
