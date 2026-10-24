@@ -24,6 +24,6 @@ describe("Health Connect source comparison", () => {
     expect(result.total).toBe(15);
   });
   it("is unavailable on the ordinary website or older Android APK", async () => {
-    await expect(inspectStepSources("2026-10-19",null)).rejects.toThrow(/latest TrackFit/);
+    await expect(inspectStepSources("2026-10-19",null)).rejects.toThrow(/TrackFit Native/);
   });
 });
