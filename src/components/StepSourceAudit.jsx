@@ -80,7 +80,7 @@ export default function StepSourceAudit({ sourceMode = "all" }) {
             </ul>
           ) : <p>No individual step records visible to this app for that period.</p>}
           {comparison.truncated && <p className="tf-steps-audit__hint">This diagnostic inspected only a subset of the individual records.</p>}
-          <div className="tf-steps-audit__disclaimer"><Info size={17} aria-hidden="true" /><span>These per-app counts are raw records and can overlap. <strong>Do not add them together.</strong> TrackFit saves Health Connect's priority-adjusted total. “Samsung Health” means records written by Samsung Health, not necessarily watch-only steps.</span></div>
+          <div className="tf-steps-audit__disclaimer"><Info size={17} aria-hidden="true" /><span>These per-app counts are raw records and can overlap. <strong>Do not add them together.</strong> TrackFit saves the step source you select above, using an aggregate rather than summing raw records. “Samsung Health” means records written by Samsung Health, not necessarily watch-only steps.</span></div>
         </div>
       )}
       <div className="tf-steps-audit__footer"><Activity size={17} aria-hidden="true" />This is a read-only check. Nothing is saved until you choose Sync.</div>
