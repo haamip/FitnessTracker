@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity, ArrowRight, ArrowUpRight, CalendarCheck2, ChevronRight,
-  Dumbbell, HeartPulse, TrendingUp, Utensils,
+  Dumbbell, HeartPulse, TrendingUp, Utensils, Watch,
 } from "lucide-react";
 import { buildCoachDashboard } from "../services/engines/coachIntelligenceEngine";
 import { getWeekStart, WeeklyReviewRepository } from "../services/weeklyCoachReview";
@@ -12,6 +12,7 @@ import "./Coach.css";
 const shortcuts = [
   { to: "/workouts", label: "Workouts", detail: "Start or build a session", icon: Dumbbell },
   { to: "/checkin", label: "Daily check-in", detail: "Steps, feeling, workout or rest", icon: CalendarCheck2 },
+  { to: "/watch", label: "Watch & steps", detail: "Connect Health Connect and sync today's steps", icon: Watch },
   { to: "/coach/weekly", label: "Weekly review", detail: "Progress photos and coaching feedback", icon: HeartPulse },
   { to: "/nutrition", label: "Nutrition", detail: "Scan food, log meals and track macros", icon: Utensils },
   { to: "/cardio", label: "Cardio", detail: "Log movement and review seven-day trends", icon: Activity },

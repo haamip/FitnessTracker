@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity, ArrowLeft, ArrowUpRight, CalendarCheck2, Dumbbell,
-  HeartPulse, Scale, TrendingUp, Utensils, Footprints, Flame, RefreshCw,
+  HeartPulse, Scale, TrendingUp, Utensils, Footprints, Flame, RefreshCw, Watch,
 } from "lucide-react";
 import { buildCoachDashboard } from "../services/engines/coachIntelligenceEngine";
 import { CheckInRepository, NutritionRepository } from "../services/repositories/trackfitDataLayer";
@@ -61,7 +61,7 @@ export default function Dashboard() {
       <section className="tf-dashboard-section" aria-labelledby="tf-dashboard-today">
         <div className="tf-dashboard-heading">
           <div><p className="tf-dashboard-kicker">TODAY</p><h2 id="tf-dashboard-today">Daily check-in</h2></div>
-          <Link to="/checkin">Update steps <ArrowUpRight size={16} aria-hidden="true" /></Link>
+          <Link to="/watch"><Watch size={16} aria-hidden="true" /> Watch & Steps <ArrowUpRight size={16} aria-hidden="true" /></Link>
         </div>
         <div className="tf-dashboard-daily">
           <Link to="/checkin"><Footprints size={20} aria-hidden="true" /><span>Steps today</span><strong>{todaysCheckIn && Number.isFinite(Number(todaysCheckIn.steps)) ? Number(todaysCheckIn.steps).toLocaleString() : "Not logged"}</strong><small>{todaysCheckIn?.stepsSource === "health_connect" ? "Health Connect" : "Daily check-in"}</small></Link>

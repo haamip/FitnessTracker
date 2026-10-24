@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { syncWatchOnForeground } from "../../services/watchAutoSync";
 import BottomNav from "./BottomNav";
 import AccountMenu from "./AccountMenu";
 import ShiftModeToggle from "./ShiftModeToggle";
@@ -7,6 +9,18 @@ import "./MobileShell.css";
 export default function MobileShell({ children }) {
   const { pathname } = useLocation();
   const isDeveloperTools = pathname.startsWith("/dev-tools");
+
+  useEffect(() => {
+    const attempt = () => { if (!document.hidden) void syncWatchOnForeground(); };
+    // Read previously authorised steps on app opening or returning to foreground.
+    attempt();
+    window.addEventListener("focus", attempt);
+    document.addEventListener("visibilitychange", attempt);
+    return () => {
+      window.removeEventListener("focus", attempt);
+      document.removeEventListener("visibilitychange", attempt);
+    };
+  }, []);
 
   return (
     <div className={isDeveloperTools ? "mobile-frame tf-shell dev-frame" : "mobile-frame tf-shell"}>
