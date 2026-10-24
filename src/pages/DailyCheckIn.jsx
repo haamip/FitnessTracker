@@ -147,7 +147,7 @@ export default function DailyCheckIn() {
         <div><p className="eyebrow">Daily check-in</p><h1>60-second check-in</h1><p>Steps, how you feel, workout or rest. Done.</p></div>
       </section>
       <section className="v4-workout-list">
-        <div className="v4-section-heading"><div><p className="eyebrow">Movement</p><h2><Footprints size={18} /> Steps today</h2></div></div>
+        <div className="v4-section-heading"><div><p className="eyebrow">Movement</p><h2><Footprints size={18} /> Steps today</h2></div><Link to="/watch" style={{fontWeight:850,color:"#35503a",textDecoration:"underline"}}>Watch & Steps</Link></div>
         <label className="form-card">
           Total steps so far
           <input aria-label="Daily steps" type="number" inputMode="numeric" min="0" max="150000" step="1" placeholder="e.g. 8500" value={form.steps ?? ""} onChange={(e)=>setForm((current)=>({...current,steps:e.target.value,stepsSource:"manual",stepsSyncedAt:""}))} style={{width:"100%",padding:12,marginTop:8,borderRadius:12}} />
