@@ -7,6 +7,7 @@ import { getWearableBridge, readWearableSteps } from "../services/wearableBridge
 import { inspectWatchConnection, isTrackFitNativeApp } from "../services/watchConnectionStatus";
 import { isAutoWatchSyncEnabled, setAutoWatchSyncEnabled } from "../services/watchAutoSync";
 import { supabase } from "../services/supabase";
+import { getStepSourceMode, setStepSourceMode, stepSourceName } from "../services/stepSourcePreference";
 import StepSourceAudit from "../components/StepSourceAudit";
 import "./WatchSync.css";
 
@@ -33,6 +34,7 @@ export default function WatchSync() {
   }, []);
   const [userId, setUserId] = useState(null);
   const [autoEnabled, setAutoEnabled] = useState(false);
+  const [sourceMode, setSourceMode] = useState("all");
 
   useEffect(() => {
     let active = true;
@@ -42,11 +44,18 @@ export default function WatchSync() {
       if (active && !error && data.user?.id) {
         setUserId(data.user.id);
         setAutoEnabled(isAutoWatchSyncEnabled(data.user.id));
+        setSourceMode(getStepSourceMode(data.user.id));
       }
     }
     void loadPreference();
     return () => { active = false; };
   }, []);
+
+  function chooseSource(mode) {
+    if (!connectedReader || !userId || busy) return;
+    setSourceMode(setStepSourceMode(userId, mode));
+    setStatus({ state: "ready", message: `${stepSourceName(mode)} selected. Tap Sync to update today\u0027s saved steps; your previous reading is unchanged until then.` });
+  }
 
   function toggleAuto(enabled) {
     if (!connectedReader || !userId) return;
@@ -64,7 +73,7 @@ export default function WatchSync() {
   const connectedReader = nativeApp && Boolean(provider);
   const steps = Number(entry?.steps);
   const savedSteps = entry?.steps != null && Number.isFinite(steps) ? steps.toLocaleString() : "Not synced";
-  const source = entry?.stepsSource === "health_connect" ? "Health Connect" :
+  const source = entry?.stepsSource === "health_connect" ? stepSourceName(entry.stepsMode) :
     entry?.stepsSource === "apple_health" ? "Apple Health" :
     entry?.stepsSource === "manual" ? "Manual entry" : "Daily check-in";
   const lastSync = entry?.stepsSyncedAt ? new Date(entry.stepsSyncedAt) : null;
@@ -93,12 +102,12 @@ export default function WatchSync() {
     setStatus(null);
     try {
       const day = localDateKey();
-      const record = await readWearableSteps(day, provider);
+      const record = await readWearableSteps(day, provider, { sourceMode });
       const saved = await CheckInRepository.saveStepsFromWatch(day, record);
       setEntry(readTodaysCheckIn());
       setStatus({
         state: "read-success",
-        message: `${record.steps.toLocaleString()} steps saved for today${saved?.cloudSaved ? " and backed up to your account." : " on this device. Cloud backup is pending."}`,
+        message: `${record.steps.toLocaleString()} ${stepSourceName(sourceMode)} steps saved for today${saved?.cloudSaved ? " and backed up to your account." : " on this device. Cloud backup is pending."}`,
       });
     } catch (error) {
       setStatus({
@@ -131,6 +140,12 @@ export default function WatchSync() {
         {connectedReader ? (
           <>
             <p className="tf-watch-sync__hint">The Android health connector is available in this installed app. Check access, then import today's steps.</p>
+            <fieldset className="tf-watch-sync__source">
+              <legend>Which steps should TrackFit count?</legend>
+              <label><input type="radio" name="step-source" value="samsung_health" checked={sourceMode === "samsung_health"} disabled={!userId || busy} onChange={() => chooseSource("samsung_health")} /><span><strong>Samsung Health only</strong><small>Closest to your Galaxy Watch. Excludes separate phone-origin records in Health Connect, but may include phone steps counted by Samsung Health.</small></span></label>
+              <label><input type="radio" name="step-source" value="all" checked={sourceMode === "all"} disabled={!userId || busy} onChange={() => chooseSource("all")} /><span><strong>Combined steps</strong><small>Health Connect's overall total, combining eligible phone and wearable sources with source priorities.</small></span></label>
+              <p>Changing this choice won't overwrite your saved steps until you tap Sync. Foreground auto-sync follows the selected source too.</p>
+            </fieldset>
             <label className="tf-watch-sync__auto">
               <input
                 type="checkbox"
@@ -173,7 +188,7 @@ export default function WatchSync() {
           Enter steps manually or finish daily check-in <ExternalLink size={16} aria-hidden="true"/>
         </Link>
       </section>
-      <StepSourceAudit />
+      <StepSourceAudit sourceMode={sourceMode} />
 
       <section className="form-card tf-watch-sync__section">
         <h2>Samsung setup</h2>
