@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Beef, Camera, ClipboardPaste, Flame, Plus, Trash2, Utensils } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Beef, Camera, ClipboardPaste, Flame, Pencil, Plus, Trash2, Utensils, X } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button";
 import { NutritionRepository } from "../services/repositories/trackfitDataLayer";
 import { getOperationalDate, getShiftMealTypes, getShiftMode, SHIFT_MODE_EVENT } from "../services/shift/shiftModeService";
@@ -55,6 +55,8 @@ function resolveMealType(parsedType, mealTypes, shiftMode, fallback) {
 function fromDatabase(row) { return { id: row.id, date: row.entry_date, type: row.meal_type, name: row.name, calories: toNumber(row.calories), protein: toNumber(row.protein_g), carbs: toNumber(row.carbs_g), fats: toNumber(row.fats_g), createdAt: row.created_at }; }
 
 export default function Nutrition() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [shiftMode, setShiftModeState] = useState(getShiftMode);
   const operationalDate = getOperationalDate(new Date(), shiftMode);
   const mealTypes = getShiftMealTypes(shiftMode);
@@ -62,11 +64,31 @@ export default function Nutrition() {
   const [form, setForm] = useState(() => ({ type: mealTypes[0], name: "", calories: "", protein: "", carbs: "", fats: "" }));
   const [pasteText, setPasteText] = useState("");
   const [saving, setSaving] = useState(false);
+  const [editingMealId, setEditingMealId] = useState(null);
   const [barcode, setBarcode] = useState("");
   const [foodAmount, setFoodAmount] = useState("100");
   const [foundFood, setFoundFood] = useState(null);
   const [findingFood, setFindingFood] = useState(false);
   const [message, setMessage] = useState("");
+
+  // AI photo results are transferred into this editable form. They are never
+  // silently logged to a separate local-only store.
+  useEffect(() => {
+    const scanned = location.state?.scannedMeal;
+    if (!scanned) return;
+    setForm({
+      type: mealTypes.includes(scanned.type) ? scanned.type : mealTypes[0],
+      name: scanned.name || "",
+      calories: String(scanned.calories ?? ""),
+      protein: String(scanned.protein ?? ""),
+      carbs: String(scanned.carbs ?? ""),
+      fats: String(scanned.fats ?? ""),
+    });
+    setMessage("Meal photo estimate loaded. Check the portions and macros, then save.");
+    navigate(location.pathname, { replace: true, state: null });
+  // Only consume router state once; an updated form must not be reset by re-render.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
 
   useEffect(() => {
     const onShiftChange = (event) => {
@@ -99,7 +121,7 @@ export default function Nutrition() {
     return () => { active = false; };
   }, [operationalDate]);
 
-  const totals = useMemo(() => meals.reduce((sum, meal) => ({ calories: sum.calories + toNumber(meal.calories), protein: sum.protein + toNumber(meal.protein) }), { calories: 0, protein: 0 }), [meals]);
+  const totals = useMemo(() => meals.reduce((sum, meal) => ({ calories: sum.calories + toNumber(meal.calories), protein: sum.protein + toNumber(meal.protein), carbs: sum.carbs + toNumber(meal.carbs), fats: sum.fats + toNumber(meal.fats) }), { calories: 0, protein: 0, carbs: 0, fats: 0 }), [meals]);
   const updateField = (field, value) => setForm((current) => ({ ...current, [field]: value }));
 
   function handlePasteParse() {
@@ -155,26 +177,93 @@ export default function Nutrition() {
         carbs: values.carbs,
         fats: values.fats,
       }));
-      setMessage("Food details copied to Add a meal. Review the values, then save.");
+      setMessage("Food details copied below. Fill any missing macros from the label before saving.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Check the serving amount.");
     }
   }
 
+  function editMeal(meal) {
+    setEditingMealId(meal.id);
+    setForm({
+      type: meal.type,
+      name: meal.name,
+      calories: String(meal.calories ?? ""),
+      protein: String(meal.protein ?? ""),
+      carbs: String(meal.carbs ?? ""),
+      fats: String(meal.fats ?? ""),
+    });
+    setMessage(`Editing ${meal.name}. Review the values, then save changes below.`);
+    document.getElementById("tf-nutrition-meal-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function cancelEdit() {
+    setEditingMealId(null);
+    setForm({ type: mealTypes[0], name: "", calories: "", protein: "", carbs: "", fats: "" });
+    setMessage("");
+  }
+
   async function handleSubmit(event) {
-    event.preventDefault(); setSaving(true); setMessage("");
-    const localMeal = { id: crypto.randomUUID(), date: operationalDate, type: form.type, name: form.name.trim() || "Quick meal", calories: roundDisplay(form.calories), protein: roundDisplay(form.protein), carbs: roundDisplay(form.carbs), fats: roundDisplay(form.fats), shiftMode, createdAt: new Date().toISOString() };
-    if (isSupabaseConfigured && supabase) {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData.session?.user?.id;
-      if (userId) {
-        const { data, error } = await supabase.from("nutrition_entries").insert({ user_id: userId, entry_date: localMeal.date, meal_type: localMeal.type, name: localMeal.name, calories: localMeal.calories, protein_g: localMeal.protein, carbs_g: localMeal.carbs, fats_g: localMeal.fats }).select().single();
-        if (error) { setMessage(`Meal was not saved: ${error.message}`); setSaving(false); return; }
-        const savedMeal = fromDatabase(data); NutritionRepository.add(savedMeal); setMeals((current) => [savedMeal, ...current]);
-        setForm({ type: mealTypes[0], name: "", calories: "", protein: "", carbs: "", fats: "" }); setPasteText(""); setSaving(false); return;
-      }
+    event.preventDefault();
+    if (saving) return;
+    const name = form.name.trim();
+    if (!name) { setMessage("Enter a food or meal name."); return; }
+    if (form.calories === "" || form.protein === "") {
+      setMessage("Please enter calories and protein; missing database values are not zero.");
+      return;
     }
-    NutritionRepository.add(localMeal); setMeals(NutritionRepository.getToday(operationalDate)); setForm({ type: mealTypes[0], name: "", calories: "", protein: "", carbs: "", fats: "" }); setPasteText(""); setSaving(false);
+    const values = [form.calories, form.protein, form.carbs, form.fats];
+    if (values.some((value) => value !== "" && (!Number.isFinite(Number(value)) || Number(value) < 0))) {
+      setMessage("Macros must be valid non-negative numbers.");
+      return;
+    }
+    const existing = editingMealId ? meals.find((meal) => meal.id === editingMealId) : null;
+    if (editingMealId && !existing) { setMessage("That meal is no longer available to edit."); return; }
+    const meal = {
+      ...(existing || {}),
+      id: existing?.id || crypto.randomUUID(),
+      date: operationalDate,
+      type: form.type,
+      name,
+      calories: roundDisplay(form.calories),
+      protein: roundDisplay(form.protein),
+      carbs: form.carbs === "" ? null : roundDisplay(form.carbs),
+      fats: form.fats === "" ? null : roundDisplay(form.fats),
+      shiftMode,
+      createdAt: existing?.createdAt || new Date().toISOString(),
+    };
+    setSaving(true);
+    setMessage("");
+    try {
+      let saved = meal;
+      if (isSupabaseConfigured && supabase) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData.session?.user?.id;
+        if (userId) {
+          const payload = {
+            user_id: userId, entry_date: meal.date, meal_type: meal.type, name: meal.name,
+            calories: meal.calories, protein_g: meal.protein, carbs_g: meal.carbs, fats_g: meal.fats,
+          };
+          const query = existing
+            ? supabase.from("nutrition_entries").update(payload).eq("id", existing.id).eq("user_id", userId)
+            : supabase.from("nutrition_entries").insert(payload);
+          const { data, error } = await query.select().single();
+          if (error) throw error;
+          saved = fromDatabase(data);
+        }
+      }
+      const next = [saved, ...NutritionRepository.getAll().filter((item) => item.id !== saved.id && item.id !== existing?.id)];
+      NutritionRepository.saveAll(next);
+      setMeals(next.filter((item) => item.date === operationalDate));
+      setForm({ type: mealTypes[0], name: "", calories: "", protein: "", carbs: "", fats: "" });
+      setEditingMealId(null);
+      setPasteText("");
+      setMessage(existing ? "Meal updated." : "Meal saved.");
+    } catch (error) {
+      setMessage(`Meal was not saved: ${error.message || "Please try again"}`);
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function repeatMeal(meal) {
@@ -221,9 +310,13 @@ export default function Nutrition() {
   }
 
   async function deleteMeal(id) {
+    const meal = meals.find((item) => item.id === id);
+    if (!meal || !window.confirm(`Delete ${meal.name} from today's food log?`)) return;
     setMessage("");
     if (isSupabaseConfigured && supabase) { const { error } = await supabase.from("nutrition_entries").delete().eq("id", id); if (error) { setMessage(`Meal was not deleted: ${error.message}`); return; } }
     NutritionRepository.saveAll(NutritionRepository.getAll().filter((meal) => meal.id !== id)); setMeals((current) => current.filter((meal) => meal.id !== id));
+    if (editingMealId === id) cancelEdit();
+    setMessage("Meal deleted.");
   }
 
   const calorieProgress = Math.min(100, (totals.calories / CALORIE_TARGET) * 100);
@@ -231,6 +324,8 @@ export default function Nutrition() {
   return <motion.div className="screen checkin-v4" initial={{opacity:0,y:14}} animate={{opacity:1,y:0}} transition={{duration:0.25}}>
     <section className="v4-checkin-hero"><div><p className="eyebrow">Food · {shiftMode === "night" ? "Night shift" : "Day shift"}</p><h1>Shift day</h1><p>{shiftMode === "night" ? "After-midnight meals stay with the shift that started the night before." : "Meals use the current calendar day."}</p></div></section>
     <section className="tf-food-summary"><article className="tf-food-target"><div className="tf-food-target__top"><div><Flame size={20}/><span>Calories</span></div><strong>{roundDisplay(totals.calories)} / {CALORIE_TARGET}</strong></div><div className="progress-line"><span style={{width:`${calorieProgress}%`}}/></div></article><article className="tf-food-target"><div className="tf-food-target__top"><div><Beef size={20}/><span>Protein</span></div><strong>{roundDisplay(totals.protein)} / {PROTEIN_TARGET}g</strong></div><div className="progress-line"><span style={{width:`${proteinProgress}%`}}/></div></article></section>
+    <div className="tf-food-secondary-macros"><span>Carbs <strong>{roundDisplay(totals.carbs)}g</strong></span><span>Fat <strong>{roundDisplay(totals.fats)}g</strong></span></div>
+    {message && <p className="tf-food-feedback" role="status">{message}</p>}
     <section className="form-card form-grid" aria-label="Food database barcode lookup">
       <div><p className="eyebrow">Food database</p><h2>Find packaged food</h2><p>Scan a barcode using your phone camera or enter its number. Check the nutrition label before logging.</p></div>
       <label>Barcode
@@ -251,7 +346,7 @@ export default function Nutrition() {
     </section>
         <Link className="tf-ai-primary" to="/nutrition/scan"><Camera size={18}/> Scan a meal photo</Link>
     <section className="form-card form-grid"><div><p className="eyebrow">Paste log</p><h2>Import a meal</h2><p>Paste the meal format from ChatGPT and TrackFit will fill the log.</p></div><textarea rows={8} value={pasteText} onChange={(event)=>setPasteText(event.target.value)} placeholder={"MEAL: Dinner\n\nITEMS\n- Steak | 180 g\n- Rice | 1 cup\n\nTOTALS\nCalories: 980\nProtein: 80 g\nCarbs: 55 g\nFat: 40 g"} style={{width:"100%",resize:"vertical",padding:16,borderRadius:16}}/><Button type="button" onClick={handlePasteParse} disabled={!pasteText.trim()}><ClipboardPaste size={17}/> Read meal</Button></section>
-    <form className="form-card form-grid" onSubmit={handleSubmit}><div><p className="eyebrow">Quick log</p><h2>Add a meal</h2></div><label>Meal<select value={form.type} onChange={(e)=>updateField("type",e.target.value)}>{mealTypes.map((type)=><option key={type}>{type}</option>)}</select></label><label>What did you eat?<input placeholder="Chicken, rice and veg" value={form.name} onChange={(e)=>updateField("name",e.target.value)}/></label><div className="tf-food-input-row"><label>Calories<input type="number" inputMode="decimal" step="0.1" min="0" required value={form.calories} onChange={(e)=>updateField("calories",e.target.value)}/></label><label>Protein<input type="number" inputMode="decimal" step="0.1" min="0" required value={form.protein} onChange={(e)=>updateField("protein",e.target.value)}/></label></div><div className="tf-food-input-row"><label>Carbs<input type="number" inputMode="decimal" step="0.1" min="0" value={form.carbs} onChange={(e)=>updateField("carbs",e.target.value)}/></label><label>Fat<input type="number" inputMode="decimal" step="0.1" min="0" value={form.fats} onChange={(e)=>updateField("fats",e.target.value)}/></label></div><Button className="v4-save-checkin" type="submit" disabled={saving}><Plus size={17}/>{saving ? "Saving..." : "Add meal"}</Button>{message && <p role="status">{message}</p>}</form>
-    {meals.length ? <section className="tf-food-meals"><div className="v4-section-heading"><div><p className="eyebrow">{operationalDate}</p><h2>Meals</h2></div></div><div className="v4-recovery-list">{meals.map((meal)=><article className="v4-recovery-row" key={meal.id}><div className="v4-icon-bubble small"><Utensils size={18}/></div><div><strong>{meal.name}</strong><span>{meal.type} · {roundDisplay(meal.calories)} cal · {roundDisplay(meal.protein)}g protein</span></div><button type="button" aria-label={`Repeat ${meal.name}`} title="Log this meal again" disabled={saving} onClick={()=>repeatMeal(meal)}><Plus size={18}/></button><button type="button" aria-label={`Delete ${meal.name}`} disabled={saving} onClick={()=>deleteMeal(meal.id)}><Trash2 size={18}/></button></article>)}</div></section> : <section className="form-card"><p>No meals logged for this shift day.</p></section>}
+    <form id="tf-nutrition-meal-form" className="form-card form-grid" onSubmit={handleSubmit}><div><p className="eyebrow">Quick log</p><h2>{editingMealId ? "Edit your meal" : "Add a meal"}</h2></div><label>Meal<select value={form.type} onChange={(e)=>updateField("type",e.target.value)}>{mealTypes.map((type)=><option key={type}>{type}</option>)}</select></label><label>What did you eat?<input placeholder="Chicken, rice and veg" value={form.name} onChange={(e)=>updateField("name",e.target.value)}/></label><div className="tf-food-input-row"><label>Calories<input type="number" inputMode="decimal" step="0.1" min="0" required value={form.calories} onChange={(e)=>updateField("calories",e.target.value)}/></label><label>Protein<input type="number" inputMode="decimal" step="0.1" min="0" required value={form.protein} onChange={(e)=>updateField("protein",e.target.value)}/></label></div><div className="tf-food-input-row"><label>Carbs<input type="number" inputMode="decimal" step="0.1" min="0" value={form.carbs} onChange={(e)=>updateField("carbs",e.target.value)}/></label><label>Fat<input type="number" inputMode="decimal" step="0.1" min="0" value={form.fats} onChange={(e)=>updateField("fats",e.target.value)}/></label></div><Button className="v4-save-checkin" type="submit" disabled={saving}><Plus size={17}/>{saving ? "Saving..." : editingMealId ? "Save changes" : "Add meal"}</Button>{editingMealId && <button type="button" className="tf-food-cancel-edit" onClick={cancelEdit}><X size={17}/> Cancel editing</button>}</form>
+    {meals.length ? <section className="tf-food-meals"><div className="v4-section-heading"><div><p className="eyebrow">{operationalDate}</p><h2>Meals</h2></div></div><div className="v4-recovery-list">{meals.map((meal)=><article className="v4-recovery-row" key={meal.id}><div className="v4-icon-bubble small"><Utensils size={18}/></div><div><strong>{meal.name}</strong><span>{meal.type} · {roundDisplay(meal.calories)} cal · {roundDisplay(meal.protein)}g protein</span></div><button type="button" aria-label={`Edit ${meal.name}`} title="Edit meal" disabled={saving} onClick={() => editMeal(meal)}><Pencil size={18}/></button><button type="button" aria-label={`Repeat ${meal.name}`} title="Log this meal again" disabled={saving} onClick={()=>repeatMeal(meal)}><Plus size={18}/></button><button type="button" aria-label={`Delete ${meal.name}`} disabled={saving} onClick={()=>deleteMeal(meal.id)}><Trash2 size={18}/></button></article>)}</div></section> : <section className="form-card"><p>No meals logged for this shift day.</p></section>}
   </motion.div>;
 }
