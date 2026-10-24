@@ -1,14 +1,16 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Camera, Check, ImagePlus, Save, Sparkles } from "lucide-react";
 import { analyseMealPhoto } from "../services/ai/aiFeatureService";
-import { NutritionRepository } from "../services/repositories/trackfitDataLayer";
-import { getOperationalDate, getShiftMealTypes, getShiftMode } from "../services/shift/shiftModeService";
+
+import { getShiftMealTypes } from "../services/shift/shiftModeService";
 import "./TrackFitScreens.css";
 import "./AISuite.css";
 
 const LIVE_AI_CONFIGURED = Boolean(import.meta.env.VITE_TRACKFIT_AI_ENDPOINT);
 
 export default function MealScanner() {
+  const navigate = useNavigate();
   const mealTypes = getShiftMealTypes();
   const [file, setFile] = useState(null);
   const [result, setResult] = useState(null);
@@ -26,28 +28,25 @@ export default function MealScanner() {
     finally { setLoading(false); }
   }
 
-  function saveMeal() {
+  function reviewMeal() {
     if (!result || result.mode === "demo") return;
-    NutritionRepository.add({
-      id: crypto.randomUUID(),
-      date: getOperationalDate(),
-      type: mealType,
-      name: result.mealName,
-      calories: Number(result.calories) || 0,
-      protein: Number(result.protein) || 0,
-      carbs: Number(result.carbs) || 0,
-      fats: Number(result.fats) || 0,
-      source: "ai-meal-scan",
-      shiftMode: getShiftMode(),
-      confidence: result.confidence,
-      createdAt: new Date().toISOString(),
+    navigate("/nutrition", {
+      state: {
+        scannedMeal: {
+          type: mealType,
+          name: result.mealName || "Scanned meal",
+          calories: result.calories,
+          protein: result.protein,
+          carbs: result.carbs,
+          fats: result.fats,
+        },
+      },
     });
-    setStatus(`${result.mealName} saved to ${mealType}.`);
   }
 
   return (
     <main className="screen tf-ai-suite">
-      <section className="tf-ai-hero"><Camera size={30} /><p className="eyebrow">AI meal scanner</p><h1>Photo to macros</h1><p>Take a meal photo, review the estimate, then save it to the active shift day.</p></section>
+      <section className="tf-ai-hero"><Camera size={30} /><p className="eyebrow">AI meal scanner</p><h1>Photo to macros</h1><p>Take a meal photo, then check the estimate in your Nutrition log before saving.</p></section>
       {!LIVE_AI_CONFIGURED && (
         <section className="form-card">
           <strong>AI photo analysis isn't connected yet</strong>
@@ -67,7 +66,7 @@ export default function MealScanner() {
           <div className="tf-ai-macro-grid"><article><strong>{result.calories}</strong><span>Calories</span></article><article><strong>{result.protein}g</strong><span>Protein</span></article><article><strong>{result.carbs}g</strong><span>Carbs</span></article><article><strong>{result.fats}g</strong><span>Fat</span></article></div>
           <div className="tf-ai-item-list">{result.items.map((item) => <article key={item.name}><Check size={18} /><div><strong>{item.name}</strong><span>{item.amount} · {item.calories} cal</span></div><small>{Math.round(item.confidence * 100)}%</small></article>)}</div>
           <label>Log this as<select value={mealType} onChange={(event) => setMealType(event.target.value)}>{mealTypes.map((type) => <option key={type}>{type}</option>)}</select></label>
-          <button className="tf-ai-primary" onClick={saveMeal} disabled={result.mode === "demo"} type="button"><Save size={18} /> Save meal</button>
+          <button className="tf-ai-primary" onClick={reviewMeal} disabled={result.mode === "demo"} type="button"><Save size={18} /> Review and save in Nutrition</button>
           {result.mode === "demo" && <p className="tf-ai-demo-note">Demo estimate shown until the secure AI endpoint is connected.</p>}
         </section>
       )}
