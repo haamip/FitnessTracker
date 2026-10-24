@@ -5,6 +5,7 @@ import { CheckInRepository } from "../services/repositories/trackfitDataLayer";
 import { getWearableBridge } from "../services/wearableBridge";
 import { inspectStepSources } from "../services/wearableDiagnostics";
 import { isTrackFitNativeApp } from "../services/watchConnectionStatus";
+import { compareStepTotals } from "../services/stepComparison";
 import "./StepSourceAudit.css";
 
 function labelTime(instant) {
@@ -15,17 +16,6 @@ function labelTime(instant) {
   }).format(date);
 }
 
-export function getStepComparison(saved, aggregate) {
-  const current = Number(aggregate);
-  const prior = saved == null || saved === "" ? null : Number(saved);
-  if (!Number.isSafeInteger(current) || current < 0) return { kind: "invalid", difference: null };
-  if (!Number.isSafeInteger(prior) || prior < 0) return { kind: "no-saved", difference: null };
-  const difference = current - prior;
-  return {
-    kind: difference === 0 ? "match" : difference > 0 ? "more-now" : "less-now",
-    difference,
-  };
-}
 
 /** Explicit, read-only diagnostics: no hidden permissions or accidental steps writes. */
 export default function StepSourceAudit() {
@@ -39,7 +29,7 @@ export default function StepSourceAudit() {
 
   if (!native) return null;
   const capable = provider?.platform === "android" && typeof provider.bridge?.diagnoseTodaySteps === "function";
-  const status = comparison ? getStepComparison(saved?.steps, comparison.total) : null;
+  const status = comparison ? compareStepTotals(saved?.steps, comparison.total) : null;
 
   async function inspect() {
     if (loading || !capable) return;
