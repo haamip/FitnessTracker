@@ -20,7 +20,7 @@ const shortcuts = [
 
 export default function Coach() {
   const [revision] = useTrackFitDataRefresh();
-  const coach = useMemo(() => buildCoachDashboard(), [revision]);
+  const coach = useMemo(() => { void revision; return buildCoachDashboard(); }, [revision]);
   const weeklyCheckInDue = new Date().getDay() === 0 && !WeeklyReviewRepository.getByWeek(getWeekStart());
   const today = new Intl.DateTimeFormat("en-NZ", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
 
