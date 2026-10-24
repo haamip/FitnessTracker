@@ -25,11 +25,14 @@ export function getHealthConnectBridge() {
   return bridge;
 }
 
-export function validateHealthConnectSteps(record, requestedDate) {
+export function validateHealthConnectSteps(record, requestedDate, sourceMode = "all") {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(requestedDate)) throw new Error("Invalid day requested.");
   if (!record || record.date !== requestedDate) throw new Error("Watch data was returned for the wrong date.");
   if (record?.dataPresent === false) {
     throw new Error(`Health Connect has no readable Steps records for ${requestedDate}. Check the date and confirm your health app shares Steps.`);
+  }
+  if (sourceMode === "samsung_health" && record?.sourceMode !== "samsung_health") {
+    throw new Error("This TrackFit Android version cannot filter Samsung Health steps. Install the latest native APK.");
   }
   const steps = record.steps;
   if (steps === 0) {
@@ -41,11 +44,13 @@ export function validateHealthConnectSteps(record, requestedDate) {
   return {
     steps,
     stepsSource: "health_connect",
+    stepsMode: sourceMode === "samsung_health" ? "samsung_health" : "all",
     stepsSyncedAt: new Date().toISOString(),
   };
 }
 
-export async function readAndroidHealthSteps(date, bridge = getHealthConnectBridge()) {
+export async function readAndroidHealthSteps(date, bridge = getHealthConnectBridge(), options = {}) {
+  const sourceMode = options.sourceMode === "samsung_health" ? "samsung_health" : "all";
   if (!bridge) throw new Error("Galaxy Watch sync needs the TrackFit Android app. Enter steps manually for now.");
   const status = await bridge.getStatus();
   if (!status?.available) throw new Error("Health Connect isn't available on this phone.");
@@ -53,8 +58,8 @@ export async function readAndroidHealthSteps(date, bridge = getHealthConnectBrid
     const result = await bridge.requestPermissions({ dataTypes: ["steps"] });
     if (!result?.stepsGranted) throw new Error("Steps permission wasn't granted. You can still enter steps manually.");
   }
-  const result = await bridge.readTodaySteps({ date });
-  return validateHealthConnectSteps(result, date);
+  const result = await bridge.readTodaySteps({ date, sourceMode });
+  return validateHealthConnectSteps(result, date, sourceMode);
 }
 
 // Backward-compatible alias while existing Galaxy-specific callers transition.
