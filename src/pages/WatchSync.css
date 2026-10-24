@@ -25,3 +25,13 @@
 .tf-watch-sync__notice svg,.tf-watch-sync__success svg {flex-shrink:0;}
 .tf-watch-sync__hint {font-size:12px;color:#5a655a;}
 .tf-watch-sync__hint svg {vertical-align:middle;margin-right:4px;}
+
+.tf-watch-sync__auto {
+  display:flex;align-items:flex-start;gap:12px;padding:13px 14px;
+  border:1px solid #dbe7ce;border-radius:15px;background:#f5f9ed;
+  color:#223c26;cursor:pointer;
+}
+.tf-watch-sync__auto input {flex:0 0 auto;margin-top:4px;width:20px;height:20px;accent-color:#395d2f;}
+.tf-watch-sync__auto span {display:grid;gap:4px;}
+.tf-watch-sync__auto strong {font-size:13px;line-height:1.35;}
+.tf-watch-sync__auto small {font-size:12px;line-height:1.45;color:#52654e;}
