@@ -37,3 +37,14 @@
   .cardio-v4 .v4-cardio-row { flex-wrap: wrap; }
   .cardio-v4 .v4-cardio-row > span { margin-left: auto; }
 }
+
+.tf-cardio-watch-link {
+  display:flex;align-items:center;gap:13px;min-width:0;
+  padding:15px 17px;background:#1e2a22;color:#fff;
+  border-radius:18px;text-decoration:none;
+}
+.tf-cardio-watch-link > svg:first-child {color:#dffa7d;flex-shrink:0;}
+.tf-cardio-watch-link > svg:last-child {margin-left:auto;flex-shrink:0;}
+.tf-cardio-watch-link > span {display:grid;gap:3px;min-width:0;}
+.tf-cardio-watch-link strong {font-size:14px;color:#fff;}
+.tf-cardio-watch-link small {color:#d1dccd;font-size:12px;line-height:1.3;}
