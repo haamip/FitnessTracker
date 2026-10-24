@@ -1,0 +1,28 @@
+/* Android system bars and safe area: use only in the installed native container. */
+#root .tf-shell.tf-native-shell {
+  min-height: 100dvh;
+  padding-bottom: calc(116px + env(safe-area-inset-bottom, 0px));
+}
+#root .tf-shell.tf-native-shell .tf-topbar {
+  padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  min-height: calc(75px + env(safe-area-inset-top, 0px));
+  top: 0;
+}
+#root .tf-shell.tf-native-shell .bottom-nav {
+  bottom: max(12px, env(safe-area-inset-bottom, 0px));
+}
+#root .tf-shell.tf-native-shell .mobile-content {
+  padding-bottom: 8px;
+}
+#root .tf-shell.tf-native-shell button,
+#root .tf-shell.tf-native-shell a {
+  -webkit-tap-highlight-color: transparent;
+}
+@media (min-width: 920px) {
+  #root .tf-shell.tf-native-shell:not(.dev-frame) {
+    max-width: 100%;
+    margin: 0 auto;
+    border: 0;
+    border-radius: 0;
+  }
+}
