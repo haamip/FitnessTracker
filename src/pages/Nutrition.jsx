@@ -9,6 +9,7 @@ import { isSupabaseConfigured, supabase } from "../services/supabase";
 import { parseMealText } from "../services/mealTextParser";
 import { getFoodByBarcode, scaleFoodNutrients } from "../services/openFoodFacts";
 import FoodBarcodeScanner from "../components/FoodBarcodeScanner";
+import { signalTrackFitDataChange } from "../hooks/useTrackFitDataRefresh";
 import "./TrackFitScreens.css";
 import "./NutritionSimple.css";
 
@@ -255,6 +256,7 @@ export default function Nutrition() {
       const next = [saved, ...NutritionRepository.getAll().filter((item) => item.id !== saved.id && item.id !== existing?.id)];
       NutritionRepository.saveAll(next);
       setMeals(next.filter((item) => item.date === operationalDate));
+      signalTrackFitDataChange();
       setForm({ type: mealTypes[0], name: "", calories: "", protein: "", carbs: "", fats: "" });
       setEditingMealId(null);
       setPasteText("");
@@ -295,12 +297,14 @@ export default function Nutrition() {
           const saved = fromDatabase(data);
           NutritionRepository.add(saved);
           setMeals((current) => [saved, ...current]);
+          signalTrackFitDataChange();
           setMessage(`Added ${saved.name} again.`);
           return;
         }
       }
       NutritionRepository.add(copy);
       setMeals(NutritionRepository.getToday(operationalDate));
+      signalTrackFitDataChange();
       setMessage(`Added ${copy.name} again.`);
     } catch (error) {
       setMessage(`Could not repeat meal: ${error.message || "Please try again"}`);
@@ -314,7 +318,7 @@ export default function Nutrition() {
     if (!meal || !window.confirm(`Delete ${meal.name} from today's food log?`)) return;
     setMessage("");
     if (isSupabaseConfigured && supabase) { const { error } = await supabase.from("nutrition_entries").delete().eq("id", id); if (error) { setMessage(`Meal was not deleted: ${error.message}`); return; } }
-    NutritionRepository.saveAll(NutritionRepository.getAll().filter((meal) => meal.id !== id)); setMeals((current) => current.filter((meal) => meal.id !== id));
+    NutritionRepository.saveAll(NutritionRepository.getAll().filter((meal) => meal.id !== id)); setMeals((current) => current.filter((meal) => meal.id !== id)); signalTrackFitDataChange();
     if (editingMealId === id) cancelEdit();
     setMessage("Meal deleted.");
   }
