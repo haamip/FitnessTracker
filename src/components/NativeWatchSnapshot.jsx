@@ -33,6 +33,10 @@ export default function NativeWatchSnapshot() {
   const supported = Boolean(provider);
   const numeric = entry?.steps == null ? null : Number(entry.steps);
   const steps = Number.isFinite(numeric) ? numeric.toLocaleString() : "—";
+  const lastRead = entry?.stepsSyncedAt ? new Date(entry.stepsSyncedAt) : null;
+  const updatedAt = lastRead && !Number.isNaN(lastRead.getTime())
+    ? new Intl.DateTimeFormat("en-AU", { hour: "numeric", minute: "2-digit" }).format(lastRead)
+    : "";
 
   async function sync() {
     if (busy || !provider) return;
@@ -55,7 +59,7 @@ export default function NativeWatchSnapshot() {
   }
 
   return (
-    <section className="tf-native-watch" aria-label="Galaxy Watch steps">
+    <section className="tf-native-watch" aria-label="Health Connect steps">
       <div className="tf-native-watch__heading">
         <div className="tf-native-watch__icon"><Watch size={21} aria-hidden="true" /></div>
         <div>
@@ -68,7 +72,7 @@ export default function NativeWatchSnapshot() {
         <div className="tf-native-watch__count">
           <Footprints size={20} aria-hidden="true" />
           <strong>{steps}</strong>
-          <span>steps today{entry?.stepsSource === "health_connect" ? " · Health Connect" : entry ? " · Daily check-in" : ""}</span>
+          <span>today{entry?.stepsSource === "health_connect" ? " · Health Connect total" : entry ? " · Daily check-in" : ""}{updatedAt ? ` · read ${updatedAt}` : ""}</span>
         </div>
         {supported ? (
           <button disabled={busy} type="button" onClick={sync} className="tf-native-watch__sync">
@@ -79,7 +83,7 @@ export default function NativeWatchSnapshot() {
         )}
       </div>
       {feedback && <p role="status" className="tf-native-watch__feedback">{feedback}</p>}
-      <small>Reads your Health Connect total when you sync; automatic foreground sync is optional in Watch settings.</small>
+      <small>Health Connect may combine phone and watch data. For a source breakdown, open Watch &amp; Steps. Automatic foreground sync is optional in settings.</small>
     </section>
   );
 }
