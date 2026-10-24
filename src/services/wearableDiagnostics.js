@@ -29,7 +29,7 @@ export function formatStepSourceComparison(data, expectedDay) {
 
 export async function inspectStepSources(date, provider = getWearableBridge()) {
   if (provider?.platform !== "android" || typeof provider.bridge?.diagnoseTodaySteps !== "function") {
-    throw new Error("Source comparison requires the latest TrackFit Steps Test Android build.");
+    throw new Error("Source comparison needs TrackFit Native on Android with the Health Connect connector.");
   }
   const result = await provider.bridge.diagnoseTodaySteps({ date });
   return formatStepSourceComparison(result, date);
