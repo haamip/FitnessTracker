@@ -35,3 +35,13 @@
 .tf-watch-sync__auto span {display:grid;gap:4px;}
 .tf-watch-sync__auto strong {font-size:13px;line-height:1.35;}
 .tf-watch-sync__auto small {font-size:12px;line-height:1.45;color:#52654e;}
+
+.tf-watch-sync__source {display:grid;gap:10px;min-width:0;border:1px solid #d8e4d4;border-radius:16px;margin:0;padding:13px;background:#f7faf3}
+.tf-watch-sync__source legend {padding:0 7px;color:#28452a;font-size:14px;font-weight:900}
+.tf-watch-sync__source label {display:flex;align-items:flex-start;gap:11px;padding:13px;background:#fff;border:1px solid #dde5d7;border-radius:12px;cursor:pointer}
+.tf-watch-sync__source label:has(input:checked) {border-color:#698d53;background:#f0f7e5}
+.tf-watch-sync__source input {flex:0 0 auto;margin-top:3px;accent-color:#375f30;width:20px;height:20px}
+.tf-watch-sync__source label span {display:grid;gap:4px;min-width:0}
+.tf-watch-sync__source label strong {color:#283929;font-size:13px}
+.tf-watch-sync__source label small {line-height:1.5;color:#647064;font-size:12px}
+.tf-watch-sync__source p {font-size:12px;color:#596d55;line-height:1.45}
