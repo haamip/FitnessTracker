@@ -94,21 +94,22 @@ export const CardioCloudRepository = {
   },
 
   async remove(id) {
+    // Don't remove from the cache until the cloud deletion succeeds. Previously
+    // an offline/cloud failure could hide a record even though it still existed.
+    if (supabase) {
+      const userId = await getUserId();
+      if (userId) {
+        const { error } = await supabase
+          .from("cardio_sessions")
+          .delete()
+          .eq("id", id)
+          .eq("user_id", userId);
+        if (error) throw error;
+      }
+    }
     const cached = this.getCached().filter((session) => session.id !== id);
     LocalCardioRepository.saveAll(cached);
-
-    if (!supabase) return cached;
-
-    const userId = await getUserId();
-    if (!userId) return cached;
-
-    const { error } = await supabase
-      .from("cardio_sessions")
-      .delete()
-      .eq("id", id)
-      .eq("user_id", userId);
-
-    if (error) throw error;
     return cached;
+
   },
 };
