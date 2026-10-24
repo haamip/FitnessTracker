@@ -62,7 +62,17 @@ export default function Nutrition() {
   const operationalDate = getOperationalDate(new Date(), shiftMode);
   const mealTypes = getShiftMealTypes(shiftMode);
   const [meals, setMeals] = useState(() => NutritionRepository.getToday(operationalDate));
-  const [form, setForm] = useState(() => ({ type: mealTypes[0], name: "", calories: "", protein: "", carbs: "", fats: "" }));
+  const [form, setForm] = useState(() => {
+    const scanned = location.state?.scannedMeal;
+    return {
+      type: mealTypes.includes(scanned?.type) ? scanned.type : mealTypes[0],
+      name: scanned?.name || "",
+      calories: String(scanned?.calories ?? ""),
+      protein: String(scanned?.protein ?? ""),
+      carbs: String(scanned?.carbs ?? ""),
+      fats: String(scanned?.fats ?? ""),
+    };
+  });
   const [pasteText, setPasteText] = useState("");
   const [saving, setSaving] = useState(false);
   const [editingMealId, setEditingMealId] = useState(null);
@@ -70,26 +80,7 @@ export default function Nutrition() {
   const [foodAmount, setFoodAmount] = useState("100");
   const [foundFood, setFoundFood] = useState(null);
   const [findingFood, setFindingFood] = useState(false);
-  const [message, setMessage] = useState("");
-
-  // AI photo results are transferred into this editable form. They are never
-  // silently logged to a separate local-only store.
-  useEffect(() => {
-    const scanned = location.state?.scannedMeal;
-    if (!scanned) return;
-    setForm({
-      type: mealTypes.includes(scanned.type) ? scanned.type : mealTypes[0],
-      name: scanned.name || "",
-      calories: String(scanned.calories ?? ""),
-      protein: String(scanned.protein ?? ""),
-      carbs: String(scanned.carbs ?? ""),
-      fats: String(scanned.fats ?? ""),
-    });
-    setMessage("Meal photo estimate loaded. Check the portions and macros, then save.");
-    navigate(location.pathname, { replace: true, state: null });
-  // Only consume router state once; an updated form must not be reset by re-render.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.state]);
+  const [message, setMessage] = useState(() => location.state?.scannedMeal ? "Photo estimate loaded. Review the portions and macros below before saving." : "");
 
   useEffect(() => {
     const onShiftChange = (event) => {
@@ -261,6 +252,7 @@ export default function Nutrition() {
       setEditingMealId(null);
       setPasteText("");
       setMessage(existing ? "Meal updated." : "Meal saved.");
+      if (location.state?.scannedMeal) navigate(location.pathname, { replace: true, state: null });
     } catch (error) {
       setMessage(`Meal was not saved: ${error.message || "Please try again"}`);
     } finally {
