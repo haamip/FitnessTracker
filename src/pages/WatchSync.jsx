@@ -7,6 +7,7 @@ import { getWearableBridge, readWearableSteps } from "../services/wearableBridge
 import { inspectWatchConnection, isTrackFitNativeApp } from "../services/watchConnectionStatus";
 import { isAutoWatchSyncEnabled, setAutoWatchSyncEnabled } from "../services/watchAutoSync";
 import { supabase } from "../services/supabase";
+import StepSourceAudit from "../components/StepSourceAudit";
 import "./WatchSync.css";
 
 function readTodaysCheckIn() {
@@ -116,7 +117,7 @@ export default function WatchSync() {
         <Watch size={30} aria-hidden="true" />
         <p className="eyebrow">Wearables</p>
         <h1>Watch &amp; steps</h1>
-        <p>Track your daily steps through Health Connect. Syncing is always your choice, and it never adds your cardio steps twice.</p>
+        <p>Track your Health Connect steps, whether they came from Samsung Health or your phone. Compare sources if counts disagree.</p>
       </section>
 
       <section className="tf-watch-sync__summary" aria-label="Today’s watch steps">
@@ -126,7 +127,7 @@ export default function WatchSync() {
 
       <section className="form-card tf-watch-sync__section">
         <h2>Connect your watch</h2>
-        <p>Galaxy Watch → Samsung Health → Health Connect → TrackFit Android app.</p>
+        <p>Galaxy Watch → Samsung Health → Health Connect → TrackFit Android app. Phone-recorded steps can also contribute to the Health Connect total.</p>
         {connectedReader ? (
           <>
             <p className="tf-watch-sync__hint">The Android health connector is available in this installed app. Check access, then import today's steps.</p>
@@ -144,7 +145,7 @@ export default function WatchSync() {
             <div className="tf-watch-sync__actions">
               <button type="button" disabled={busy} onClick={syncSteps} className="tf-watch-sync__primary">
                 <RefreshCw size={18} aria-hidden="true" />
-                {busy && operation === "sync" ? "Reading steps..." : "Sync steps from watch"}
+                {busy && operation === "sync" ? "Reading steps..." : "Sync latest Health Connect steps"}
               </button>
               <button type="button" disabled={busy} onClick={check} className="tf-watch-sync__secondary">
                 {busy && operation === "check" ? "Checking..." : "Check Health Connect access"}
@@ -172,12 +173,14 @@ export default function WatchSync() {
           Enter steps manually or finish daily check-in <ExternalLink size={16} aria-hidden="true"/>
         </Link>
       </section>
+      <StepSourceAudit />
+
       <section className="form-card tf-watch-sync__section">
         <h2>Samsung setup</h2>
         <ol>
           <li>Make sure your Galaxy Watch is syncing to Samsung Health.</li>
           <li>On your phone, open Health Connect and allow Samsung Health to write Steps.</li>
-          <li>In a compatible TrackFit Android app, tap <strong>Sync steps from watch</strong> and grant TrackFit permission to read Steps.</li>
+          <li>In a compatible TrackFit Android app, tap <strong>Sync latest Health Connect steps</strong> and grant TrackFit permission to read Steps.</li>
           <li>Check your daily step total above. It will show in Cardio and Dashboard after a refresh.</li>
         </ol>
         <p className="tf-watch-sync__hint"><Smartphone size={15} aria-hidden="true" /> TrackFit imports a daily total when you tap Sync; this isn't continuous background watch syncing.</p>
