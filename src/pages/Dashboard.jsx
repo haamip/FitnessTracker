@@ -18,11 +18,11 @@ function number(value) {
 
 export default function Dashboard() {
   const [revision, refresh] = useTrackFitDataRefresh();
-  const coach = useMemo(() => buildCoachDashboard(), [revision]);
-  const checkIns = useMemo(() => CheckInRepository.getAll(), [revision]);
+  const coach = useMemo(() => { void revision; return buildCoachDashboard(); }, [revision]);
+  const checkIns = useMemo(() => { void revision; return CheckInRepository.getAll(); }, [revision]);
   const latestCheckIn = checkIns[0] || null;
   const todaysCheckIn = checkIns.find((record) => record.date === localDateKey());
-  const meals = useMemo(() => NutritionRepository.getToday(getOperationalDate()), [revision]);
+  const meals = useMemo(() => { void revision; return NutritionRepository.getToday(getOperationalDate()); }, [revision]);
   const todayNutrition = meals.reduce((sum, meal) => ({
     calories: sum.calories + number(meal.calories),
     protein: sum.protein + number(meal.protein),
