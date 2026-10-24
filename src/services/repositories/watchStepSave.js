@@ -14,6 +14,7 @@ export function mergeImportedSteps(existing, date, imported) {
     date,
     steps: imported.steps,
     stepsSource: imported.stepsSource,
+    stepsMode: imported.stepsSource === "health_connect" ? (imported.stepsMode === "samsung_health" ? "samsung_health" : "all") : null,
     stepsSyncedAt: imported.stepsSyncedAt || new Date().toISOString(),
     // Keep existing mood, workout/rest and other details; don't assume today is a rest day.
   };

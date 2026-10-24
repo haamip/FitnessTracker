@@ -7,6 +7,7 @@ import { CheckInRepository } from "../services/repositories/trackfitDataLayer";
 import { getWearableBridge, readWearableSteps } from "../services/wearableBridge";
 import { inspectWatchConnection, isTrackFitNativeApp } from "../services/watchConnectionStatus";
 import { inspectStepSources } from "../services/wearableDiagnostics";
+import { getCurrentStepSourceMode, stepSourceName } from "../services/stepSourcePreference";
 import "./TrackFitScreens.css";
 
 function todayKey() {
@@ -85,14 +86,15 @@ export default function DailyCheckIn() {
     setConnection(null);
     try {
       const day = todayKey();
-      const record = await readWearableSteps(day);
+      const sourceMode = await getCurrentStepSourceMode();
+      const record = await readWearableSteps(day, undefined, { sourceMode });
       const saved = await CheckInRepository.saveStepsFromWatch(day, record);
       setForm((current)=>({ ...current, ...record }));
       const count = record.steps.toLocaleString();
       const backup = saved?.cloudSaved
         ? "and backed up to your TrackFit account"
         : "on this phone; cloud backup is pending and will retry when you sign in again";
-      setConnection({ state: "read-success", message: `Health Connect returned ${count} steps today. Saved ${backup}.` });
+      setConnection({ state: "read-success", message: `${stepSourceName(record.stepsMode)} returned ${count} steps today. Saved ${backup}.` });
       setMessage(`${count} steps saved in TrackFit. You can finish the rest of your check-in below whenever you like.`);
     } catch (error) {
       const detail = error instanceof Error ? error.message : "Watch steps could not be read.";
