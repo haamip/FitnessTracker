@@ -20,6 +20,16 @@ export default function WatchSync() {
   const [status, setStatus] = useState(null);
   const [busy, setBusy] = useState(false);
   const [operation, setOperation] = useState("");
+  
+  useEffect(() => {
+    const update = () => setEntry(readTodaysCheckIn());
+    window.addEventListener("trackfit:checkin-saved", update);
+    window.addEventListener("trackfit:watch-auto-synced", update);
+    return () => {
+      window.removeEventListener("trackfit:checkin-saved", update);
+      window.removeEventListener("trackfit:watch-auto-synced", update);
+    };
+  }, []);
   const [userId, setUserId] = useState(null);
   const [autoEnabled, setAutoEnabled] = useState(false);
 
