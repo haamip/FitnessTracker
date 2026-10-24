@@ -17,6 +17,7 @@ export function formatStepSourceComparison(data, expectedDay) {
     date: data.date,
     timezone: typeof data.zone === "string" ? data.zone : "Local",
     total: data.aggregatedSteps,
+    samsungTotal: Number.isSafeInteger(data.samsungAggregatedSteps) && data.samsungAggregatedSteps >= 0 ? data.samsungAggregatedSteps : null,
     until: typeof data.through === "string" ? data.through : "",
     truncated: data.truncated === true,
     sources: sources.slice(0, 12).filter((x) => x && Number.isSafeInteger(x.records) && Number.isSafeInteger(x.rawSteps)).map((x) => ({
