@@ -1,0 +1,26 @@
+# TrackFit AI Coach – release and audit notes
+
+## What is built (2026-10-25)
+- Home: user-initiated **Get today's AI advice** plus existing deterministic Coach Brain.
+- Weekly check-in: save the five answers, then optionally **Generate AI weekly feedback** for the current week; the pre-existing deterministic review remains the offline default.
+- AI Suite: **Review my training** and **AI Coach Chat** now use live Supabase Edge Function, not fabricated demo replies.
+- Back end: `trackfit-coach` authenticates each user's JWT and selects only their own cloud records via RLS; exposes daily/weekly/chat modes. No uploaded progress photos, raw workout notes, health diagnoses, or service-role credentials are used.
+- Database: atomic 20-request-per-account/day quota, no prompts/fitness data written by the usage tracker. `OPENAI_API_KEY` must be set **only in Supabase Edge Function secrets**, never in Vite or Vercel public environment variables.
+- Exercise Details: fix mojibake bullet and no-value dash in `src/pages/ExerciseDetail.jsx`.
+
+## Launch configuration – required before real AI answers
+1. In **Supabase → FitnessTracker → Edge Functions → Secrets**, set `OPENAI_API_KEY` to the server-owned HAKT OpenAI API key. Optionally set `OPENAI_COACH_MODEL` (default `gpt-4.1-mini`). **Never add any key prefixed VITE_ or share the value in client code.**
+2. Verify `trackfit-coach` exists, deployed with `verify_jwt=true`, and a signed-in user can use Home daily feedback and chat. Unsigned requests should fail at the auth gateway; a valid signed-in user receives a clear 503 until the key is set.
+3. Verify with a **real** user account, plus test with a second account to ensure no cross-user records. Check missing logs, offline, expired auth, empty chat, request quota and provider failure.
+4. AI reads **cloud-synced** records from the past 14 days, not browser-local-only workouts. Confirm sync and timezone behavior. Weekly AI is only available for the current week; historical reviews continue to use the deterministic engine.
+5. Review usage and per-user quotas before monetising. OpenAI API is billed independently of ChatGPT. The server defaults to a 20/day cap (UTC), 450 output tokens, max 20 sessions / 150 meals / 50 cardio entries, and a 14-day lookback; confirm actual dollar spend and actual model billing in the provider console.
+6. Publish clear user-facing privacy disclosure and Terms before public availability; explicit button tap initiates processing by the AI provider. Existing health and recovery readings are informational, not medical advice.
+
+## Code audit findings / follow-ups
+- Prior weekly review and photos remain device-local; AI never sees the photos and will not imply that it has.
+- Existing workout, meal and cardio components may hold **local-only pending data**, not yet reflected by AI. Need a reliable per-user sync status and cloud reconciliation for production-grade coaching.
+- `src/services/ai/aiProviderConfig.js` and AI Playground still expose mock *diagnostic* output; do not treat the developer playground as a live provider setup. Public Coach Chat no longer uses that mock.
+- AI video technique/form analysis and meal camera scanning are **not** live AI just because Coach is deployed; they still have demo routes and require separate secure implementations.
+- A signed-in user executing the purpose-built `consume_trackfit_ai_allowance()` SECURITY DEFINER RPC is an intentional database security-advisor warning. The function accepts no input and uses `auth.uid()` to update only the requester's quota. Continue reviewing this authorization during changes.
+- Supabase's older advisor warnings for leaked-password protection and index/policy tuning remain separate platform maintenance work.
+- Validate native Android APK build independently, not just web CI, and sign beta builds consistently before Play testing.
