@@ -18,7 +18,7 @@ function labelTime(instant) {
 
 
 /** Explicit, read-only diagnostics: no hidden permissions or accidental steps writes. */
-export default function StepSourceAudit() {
+export default function StepSourceAudit({ sourceMode = "all" }) {
   const [native] = useState(isTrackFitNativeApp);
   const [provider] = useState(getWearableBridge);
   const [comparison, setComparison] = useState(null);
@@ -29,7 +29,8 @@ export default function StepSourceAudit() {
 
   if (!native) return null;
   const capable = provider?.platform === "android" && typeof provider.bridge?.diagnoseTodaySteps === "function";
-  const status = comparison ? compareStepTotals(saved?.steps, comparison.total) : null;
+  const selectedTotal = sourceMode === "samsung_health" ? comparison?.samsungTotal : comparison?.total;
+  const status = selectedTotal != null ? compareStepTotals(saved?.steps, selectedTotal) : null;
 
   async function inspect() {
     if (loading || !capable) return;
@@ -61,13 +62,15 @@ export default function StepSourceAudit() {
         <div className="tf-steps-audit__results" role="status">
           <div className="tf-steps-audit__totals">
             <div><small>Saved in TrackFit</small><strong>{saved?.steps != null && Number.isFinite(Number(saved.steps)) ? Number(saved.steps).toLocaleString() : "—"}</strong></div>
-            <div><small>Health Connect now</small><strong>{comparison.total.toLocaleString()}</strong></div>
+            <div><small>{sourceMode === "samsung_health" ? "Samsung Health now" : "Health Connect now"}</small><strong>{selectedTotal == null ? "Not available" : selectedTotal.toLocaleString()}</strong></div>
           </div>
+          {sourceMode === "samsung_health" && comparison.samsungTotal == null && <p>Samsung Health did not provide an aggregate for today. Your saved steps have not changed.</p>}
           {status?.kind === "match" && <p className="tf-steps-audit__match"><CheckCircle2 size={16} aria-hidden="true"/>Both readings match.</p>}
-          {status?.kind === "more-now" && <p>Health Connect currently has <strong>{status.difference.toLocaleString()} more steps</strong> than TrackFit last saved. Tap <strong>Sync steps from watch</strong> above to save the latest deduplicated total.</p>}
-          {status?.kind === "less-now" && <p>Health Connect currently shows <strong>{Math.abs(status.difference).toLocaleString()} fewer steps</strong> than TrackFit last saved. This can happen if the source priorities or records changed. Check the sources before syncing.</p>}
+          {status?.kind === "more-now" && <p>{sourceMode === "samsung_health" ? "Samsung Health" : "Health Connect"} currently has <strong>{status.difference.toLocaleString()} more steps</strong> than TrackFit last saved. Tap <strong>Sync steps from watch</strong> above to save the latest deduplicated total.</p>}
+          {status?.kind === "less-now" && <p>{sourceMode === "samsung_health" ? "Samsung Health" : "Health Connect"} currently shows <strong>{Math.abs(status.difference).toLocaleString()} fewer steps</strong> than TrackFit last saved. This can happen if the source priorities or records changed. Check the sources before syncing.</p>}
           {status?.kind === "no-saved" && <p>No steps saved in TrackFit today. Use Sync steps above to import the current Health Connect total.</p>}
           <small>Checked {labelTime(checkedAt)} · Day {comparison.date} ({comparison.timezone}){comparison.until ? ` · Data through ${labelTime(comparison.until)}` : ""}</small>
+          <p>Combined Health Connect total: <strong>{comparison.total.toLocaleString()}</strong> · Samsung Health filtered total: <strong>{comparison.samsungTotal == null ? "Not available" : comparison.samsungTotal.toLocaleString()}</strong></p>
           <h3>Underlying step sources</h3>
           {comparison.sources.length ? (
             <ul>
@@ -77,7 +80,7 @@ export default function StepSourceAudit() {
             </ul>
           ) : <p>No individual step records visible to this app for that period.</p>}
           {comparison.truncated && <p className="tf-steps-audit__hint">This diagnostic inspected only a subset of the individual records.</p>}
-          <div className="tf-steps-audit__disclaimer"><Info size={17} aria-hidden="true" /><span>These per-app counts are raw records and can overlap. <strong>Do not add them together.</strong> TrackFit saves Health Connect's priority-adjusted total. “Samsung Health” means records written by Samsung Health, not necessarily watch-only steps.</span></div>
+          <div className="tf-steps-audit__disclaimer"><Info size={17} aria-hidden="true" /><span>These per-app counts are raw records and can overlap. <strong>Do not add them together.</strong> TrackFit saves the step source you select above, using an aggregate rather than summing raw records. “Samsung Health” means records written by Samsung Health, not necessarily watch-only steps.</span></div>
         </div>
       )}
       <div className="tf-steps-audit__footer"><Activity size={17} aria-hidden="true" />This is a read-only check. Nothing is saved until you choose Sync.</div>

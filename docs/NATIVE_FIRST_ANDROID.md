@@ -17,6 +17,16 @@ TrackFit's **primary mobile product is the Android app** (Capacitor 8 + source-c
 
 Read Steps is the only requested Health Connect scope today. It does **not** import exercise sessions, heart rate or sleep, and does not watch your data in the background. Manual step entry remains available.
 
+## Choosing step sources (October 2026)
+
+Users can select **Samsung Health only** or **Combined steps** on Watch & Steps. Samsung Health only queries Health Connect's `StepsRecord.COUNT_TOTAL` with `dataOriginFilter = setOf(DataOrigin("com.sec.android.app.shealth"))`. Combined uses Health Connect's normal priority-adjusted aggregation without an origin filter. No raw sources are summed together.
+
+Samsung Health is a **writer application**, not a guaranteed hardware watch identifier: Samsung Health may contain both Galaxy Watch and phone steps. The source option is labelled Samsung Health only, not Watch only. For a strict watch-only number, validated hardware-origin metadata or a separate Wear OS integration would be required.
+
+The account-specific source choice applies to on-demand sync from Home, Daily check-in and Watch & Steps as well as opt-in foreground sync. Existing users retain combined by default until choosing a source. Switching sources changes the imported number **only after the next successful sync**; zero or unavailable data cannot overwrite a saved day. Older native builds that ignore the source filter are rejected for Samsung-only mode, rather than mislabelled.
+
+The new source-audit report also displays Samsung's own filtered aggregate alongside Health Connect's combined aggregate. Different source modes can yield lower daily step totals; the existing auto-sync lower-total safeguard is bypassed when changing modes.
+
 ## Developer build
 
 GitHub Actions -> **TrackFit Native Android Preview** -> the latest successful `ui-app-shell` run -> download artifact `trackfit-native-preview-apk` -> extract `app-debug.apk`.

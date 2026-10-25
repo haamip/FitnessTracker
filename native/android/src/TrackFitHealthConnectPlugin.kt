@@ -6,6 +6,7 @@ import androidx.activity.result.ActivityResult
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.records.metadata.DataOrigin
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
@@ -35,6 +36,7 @@ class TrackFitHealthConnectPlugin : Plugin() {
     private val job = SupervisorJob()
     private val scope = CoroutineScope(job + Dispatchers.IO)
     private val readSteps = HealthPermission.getReadPermission(StepsRecord::class)
+    private val samsungHealthPackage = "com.sec.android.app.shealth"
 
     private fun available(): Boolean {
         return HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE
@@ -100,6 +102,11 @@ class TrackFitHealthConnectPlugin : Plugin() {
 
     @PluginMethod
     fun readTodaySteps(call: PluginCall) {
+        val sourceMode = call.getString("sourceMode") ?: "all"
+        if (sourceMode != "all" && sourceMode != "samsung_health") {
+            call.reject("Unsupported Steps source filter.", "INVALID_SOURCE")
+            return
+        }
         val requested = call.getString("date") ?: run {
             call.reject("Expected a local YYYY-MM-DD date.", "INVALID_DATE")
             return
@@ -125,13 +132,16 @@ class TrackFitHealthConnectPlugin : Plugin() {
             val aggregate = hc.aggregate(
                 AggregateRequest(
                     metrics = setOf(StepsRecord.COUNT_TOTAL),
-                    timeRangeFilter = TimeRangeFilter.between(from, end)
+                    timeRangeFilter = TimeRangeFilter.between(from, end),
+                    dataOriginFilter = if (sourceMode == "samsung_health")
+                        setOf(DataOrigin(samsungHealthPackage)) else emptySet()
                 )
             )
             val recordedSteps = aggregate[StepsRecord.COUNT_TOTAL]
             val steps = recordedSteps ?: 0L
             JSObject().put("date", requested)
                 .put("steps", steps)
+                .put("sourceMode", sourceMode)
                 .put("dataPresent", recordedSteps != null)
         }
     }
@@ -175,6 +185,13 @@ class TrackFitHealthConnectPlugin : Plugin() {
                     timeRangeFilter = interval
                 )
             )[StepsRecord.COUNT_TOTAL] ?: 0L
+            val samsungTotal = hc.aggregate(
+                AggregateRequest(
+                    metrics = setOf(StepsRecord.COUNT_TOTAL),
+                    timeRangeFilter = interval,
+                    dataOriginFilter = setOf(DataOrigin(samsungHealthPackage))
+                )
+            )[StepsRecord.COUNT_TOTAL]
 
             data class SourceInfo(var records: Int = 0, var rawSteps: Long = 0)
             val bySource = linkedMapOf<String, SourceInfo>()
@@ -219,6 +236,7 @@ class TrackFitHealthConnectPlugin : Plugin() {
                 .put("from", start.toString())
                 .put("through", end.toString())
                 .put("aggregatedSteps", total)
+                .put("samsungAggregatedSteps", samsungTotal)
                 .put("sources", sourceData)
                 .put("truncated", truncated)
         }

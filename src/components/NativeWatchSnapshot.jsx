@@ -6,6 +6,7 @@ import { CheckInRepository } from "../services/repositories/trackfitDataLayer";
 import { getWearableBridge, readWearableSteps } from "../services/wearableBridge";
 import { isTrackFitNativeApp } from "../services/watchConnectionStatus";
 import { signalTrackFitDataChange } from "../hooks/useTrackFitDataRefresh";
+import { getCurrentStepSourceMode, stepSourceName } from "../services/stepSourcePreference";
 import "./NativeWatchSnapshot.css";
 
 function getTodaysSteps() {
@@ -44,7 +45,8 @@ export default function NativeWatchSnapshot() {
     setFeedback("");
     try {
       const day = localDateKey();
-      const record = await readWearableSteps(day, provider);
+      const sourceMode = await getCurrentStepSourceMode();
+      const record = await readWearableSteps(day, provider, { sourceMode });
       const result = await CheckInRepository.saveStepsFromWatch(day, record);
       setEntry(getTodaysSteps());
       signalTrackFitDataChange();
@@ -72,7 +74,7 @@ export default function NativeWatchSnapshot() {
         <div className="tf-native-watch__count">
           <Footprints size={20} aria-hidden="true" />
           <strong>{steps}</strong>
-          <span>today{entry?.stepsSource === "health_connect" ? " · Health Connect total" : entry ? " · Daily check-in" : ""}{updatedAt ? ` · read ${updatedAt}` : ""}</span>
+          <span>today{entry?.stepsSource === "health_connect" ? ` · ${stepSourceName(entry.stepsMode)}` : entry ? " · Daily check-in" : ""}{updatedAt ? ` · read ${updatedAt}` : ""}</span>
         </div>
         {supported ? (
           <button disabled={busy} type="button" onClick={sync} className="tf-native-watch__sync">
@@ -83,7 +85,7 @@ export default function NativeWatchSnapshot() {
         )}
       </div>
       {feedback && <p role="status" className="tf-native-watch__feedback">{feedback}</p>}
-      <small>Health Connect may combine phone and watch data. For a source breakdown, open Watch &amp; Steps. Automatic foreground sync is optional in settings.</small>
+      <small>Choose Samsung Health only or combined steps in Watch &amp; Steps. Automatic sync follows the selected source.</small>
     </section>
   );
 }
