@@ -4,6 +4,8 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Camera, Trash2 } from "lucide-rea
 import { CardioRepository, CheckInRepository, HistoryRepository, NutritionRepository } from "../services/repositories/trackfitDataLayer";
 import { buildWeeklyFeedback, getWeekStart, getWeeklyFacts, WeeklyReviewRepository } from "../services/weeklyCoachReview";
 import { deleteWeeklyPhoto, getWeeklyPhoto, putWeeklyPhoto } from "../services/weeklyPhotos";
+import { requestTrackFitCoach } from "../services/ai/secureCoachClient";
+import { Sparkles } from "lucide-react";
 import "./TrackFitScreens.css";
 
 const questions = [
@@ -100,6 +102,9 @@ export default function WeeklyCoachReview() {
   const [answers, setAnswers] = useState(() => ({ ...EMPTY_ANSWERS, ...(WeeklyReviewRepository.getByWeek(currentWeek)?.answers || {}) }));
   const [saved, setSaved] = useState(() => Boolean(WeeklyReviewRepository.getByWeek(currentWeek)));
   const [photoRevision, setPhotoRevision] = useState(0);
+  const [aiFeedback, setAIFeedback] = useState(null);
+  const [aiError, setAIError] = useState("");
+  const [aiBusy, setAIBusy] = useState(false);
   const facts = useMemo(() => getWeeklyFacts({
     checkIns: CheckInRepository.getAll(),
     workouts: HistoryRepository.getAll(),
@@ -113,11 +118,23 @@ export default function WeeklyCoachReview() {
     setWeek(newWeek);
     setAnswers({ ...EMPTY_ANSWERS, ...(review?.answers || {}) });
     setSaved(Boolean(review));
+    setAIFeedback(null);
+    setAIError("");
   }
   function save() {
     if (!answered) return;
     WeeklyReviewRepository.save({ weekStart: week, answers });
     setSaved(true);
+    setAIFeedback(null);
+    setAIError("");
+  }
+  async function generateWeeklyAdvice() {
+    if (aiBusy || !saved || week !== currentWeek) return;
+    setAIBusy(true);
+    setAIError("");
+    try { setAIFeedback(await requestTrackFitCoach("weekly", { answers })); }
+    catch (error) { setAIError(error instanceof Error ? error.message : "AI Coach is unavailable."); }
+    finally { setAIBusy(false); }
   }
   return (
     <main className="screen workouts-v4">
@@ -168,6 +185,21 @@ export default function WeeklyCoachReview() {
           <div className="form-card"><strong>From your logs</strong><ul>{feedback.evidence.map((line)=><li key={line}>{line}</li>)}</ul></div>
           <div className="form-card"><strong>Focus for next week</strong><ol>{feedback.nextSteps.map((line)=><li key={line}>{line}</li>)}</ol></div>
           <small>{feedback.note} Coaching suggestions are estimates, not medical advice.</small>
+        </section>
+      )}
+      {saved && week === currentWeek && (
+        <section className="form-card" style={{display:"grid",gap:12}} aria-label="AI weekly review">
+          <div style={{display:"flex",alignItems:"center",gap:8}}><Sparkles size={20}/><strong>Your AI weekly review</strong></div>
+          <p style={{margin:0,fontSize:13}}>Get an AI summary of your saved answers and recent synced account logs. Your progress pictures stay on your device.</p>
+          <button type="button" disabled={aiBusy} onClick={generateWeeklyAdvice} className="v4-save-checkin">
+            {aiBusy ? "Reviewing your week..." : aiFeedback ? "Regenerate weekly advice" : "Generate AI weekly feedback"}
+          </button>
+          {aiFeedback && <div role="status" style={{display:"grid",gap:8}}>
+            <strong>{aiFeedback.headline}</strong><p style={{margin:0}}>{aiFeedback.summary}</p>
+            {aiFeedback.actions.length > 0 && <ul>{aiFeedback.actions.map((item,i)=><li key={i}>{item}</li>)}</ul>}
+            <small>AI-generated from synced account records only. Unsynced activity may not appear.</small>
+          </div>}
+          {aiError && <p role="alert" style={{margin:0,color:"#8a411f"}}>{aiError} Your standard weekly feedback above is still available.</p>}
         </section>
       )}
       <section className="v4-workout-list">
