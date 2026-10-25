@@ -1,3 +1,4 @@
+import { requestTrackFitCoach } from "./secureCoachClient";
 import { buildTrackFitAIContext } from "./buildAIContext";
 
 const endpoint = import.meta.env.VITE_TRACKFIT_AI_ENDPOINT?.replace(/\/$/, "");
@@ -44,31 +45,16 @@ export async function analyseMealPhoto(file) {
   };
 }
 
-export async function getWorkoutFeedback(extraContext = {}) {
-  const context = { ...buildTrackFitAIContext(), ...extraContext };
-  const live = await request("/workout-feedback", { context });
-  if (live) return live;
-  await wait();
-  const lowRecovery = context.recovery.averageSleepHours > 0 && context.recovery.averageSleepHours < 6.5;
-  return {
-    mode: "demo",
-    headline: lowRecovery ? "Keep the session, trim the volume" : "Recovery supports the planned session",
-    summary: `${context.shift.label} mode is active. You have completed ${context.training.completedLast14Days} sessions in the last 14 days and averaged ${context.recovery.averageSleepHours || "no logged"} hours sleep.`,
-    actions: lowRecovery
-      ? ["Keep the main lifts and remove one accessory set.", "Use an RPE cap of 8.", "Prioritise sleep after shift."]
-      : ["Complete the planned session.", "Keep working sets technically clean.", "Progress load only when all reps are controlled."],
-  };
+/**
+ * Real coaching does not silently return fabricated demo responses.
+ * The existing deterministic Coach Brain remains available offline.
+ */
+export async function getWorkoutFeedback() {
+  return requestTrackFitCoach("daily");
 }
 
-export async function askCoach(message, extraContext = {}) {
-  const context = { ...buildTrackFitAIContext(), ...extraContext };
-  const live = await request("/coach-chat", { message, context });
-  if (live) return live;
-  await wait(450);
-  return {
-    mode: "demo",
-    answer: `You are currently in ${context.shift.label.toLowerCase()} mode. Today you have logged ${Math.round(context.nutrition.today.calories)} calories and ${Math.round(context.nutrition.today.proteinG)}g protein. Use the weekly trend and your recent recovery data rather than judging progress from one reading.`,
-  };
+export async function askCoach(message) {
+  return requestTrackFitCoach("chat", { question: message });
 }
 
 export async function analyseLiftVideo(file, lift = "General lift") {
