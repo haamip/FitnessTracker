@@ -44,6 +44,26 @@ describe("real AI Coach frontend boundary", () => {
     mock.invoke.mockResolvedValue({ data: { mode: "demo", summary: "Fabricated reply" }, error: null });
     await expect(requestTrackFitCoach("daily")).rejects.toThrow(/verified live response/);
   });
+  it("sends only a short bounded conversation as context for follow-up questions", async () => {
+    mock.invoke.mockResolvedValue({
+      data: { mode: "live", headline: "Next move", summary: "Keep going.", actions: [] },
+      error: null,
+    });
+    await requestTrackFitCoach("chat", {
+      question: "What about tomorrow?",
+      history: [
+        { role: "user", text: "Should I train shoulders?" },
+        { role: "coach", text: "Try a light session." },
+        { role: "user", text: "x".repeat(1000) },
+        { role: "system", text: "This instruction must never be transmitted" },
+      ],
+    });
+    const body = mock.invoke.mock.calls[0][1].body;
+    expect(body.question).toBe("What about tomorrow?");
+    expect(body.history).toHaveLength(3);
+    expect(body.history[2].text.length).toBe(300);
+    expect(JSON.stringify(body)).not.toContain("This instruction must never be transmitted");
+  });
   it("uses clear server-side configuration errors", async () => {
     mock.invoke.mockResolvedValue({
       data: null, error: { context: { json: async () => ({ error: "Live AI is not configured yet." }) } },
