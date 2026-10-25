@@ -7,7 +7,7 @@ import "./AISuite.css";
 const tabs = [
   { id: "feedback", label: "Workout feedback", icon: Dumbbell },
   { id: "coach", label: "Coach chat", icon: MessageCircle },
-  { id: "form", label: "Form checker", icon: Video },
+  { id: "form", label: "Form checker (demo)", icon: Video },
 ];
 
 export default function AISuite() {
@@ -16,6 +16,7 @@ export default function AISuite() {
   const [feedback, setFeedback] = useState(null);
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState([]);
+  const [chatNotice, setChatNotice] = useState("");
   const [video, setVideo] = useState(null);
   const [lift, setLift] = useState("Squat");
   const [formResult, setFormResult] = useState(null);
@@ -36,16 +37,17 @@ export default function AISuite() {
   async function sendQuestion(event) {
     event.preventDefault();
     const clean = question.trim();
-    if (!clean) return;
-    setMessages((current) => [...current, { role: "user", text: clean }]);
-    setQuestion("");
+    if (!clean || loading) return;
     setLoading(true);
     setError("");
     try {
-      const response = await askCoach(clean, { source: "trackfit-app" });
-      setMessages((current) => [...current, { role: "coach", text: response.answer, mode: response.mode }]);
+      const response = await askCoach(clean, { history: messages });
+      setMessages((current) => [...current, { role: "user", text: clean }, { role: "coach", text: response.answer, mode: response.mode }]);
+      setQuestion("");
+      setChatNotice("");
     } catch (caught) {
       setError(caught.message || "Coach chat failed.");
+      setChatNotice("Your question was not sent successfully; you can retry it.");
     } finally {
       setLoading(false);
     }
@@ -104,9 +106,9 @@ export default function AISuite() {
         <section className="form-card tf-ai-tool-card">
           <p className="eyebrow">Feature 3</p>
           <h2>AI coach chat</h2>
-          <p>Ask about your training, nutrition or recovery. The coach checks only the signed-in account\u0027s synced logs when you send a question.</p>
-          <div className="tf-ai-chat">
-            {messages.length === 0 && <p className="tf-ai-empty">Ask about training, nutrition, recovery or your weekly trend. This is live AI, not a demo. Missing logs will be treated as unknown.</p>}
+          <p>Ask about your training, nutrition or recovery. The coach checks the signed-in account\u0027s synced logs and uses recent messages from this chat for context.</p>
+          <div className="tf-ai-chat" aria-live="polite">
+            {messages.length === 0 && <p className="tf-ai-empty">Ask about training, nutrition, recovery or your weekly trend. Recent replies are used for follow-up questions during this open chat only; missing logs are treated as unknown.</p>}
             {messages.map((message, index) => (
               <article className={message.role} key={`${message.role}-${index}`}>
                 <strong>{message.role === "coach" ? "TrackFit Coach" : "You"}</strong>
@@ -114,8 +116,13 @@ export default function AISuite() {
               </article>
             ))}
           </div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap"}}>
+            <small>Chat history stays on this screen only, and isn't permanently saved.</small>
+            <button type="button" onClick={() => { setMessages([]); setChatNotice("Conversation cleared."); setError(""); }} disabled={!messages.length && !chatNotice}>Clear chat</button>
+          </div>
+          {chatNotice && <small role="status">{chatNotice}</small>}
           <form className="tf-ai-chat-form" onSubmit={sendQuestion}>
-            <input value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Why has my weight gone up this week?" maxLength={700} />
+            <input aria-label="Ask your TrackFit Coach" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Why has my weight gone up this week?" maxLength={700} />
             <button disabled={loading || !question.trim()} type="submit"><Send size={18} /></button>
           </form>
         </section>
@@ -124,16 +131,17 @@ export default function AISuite() {
       {tab === "form" && (
         <section className="form-card tf-ai-tool-card">
           <p className="eyebrow">Feature 4</p>
-          <h2>AI form checker</h2>
+          <h2>Form checker — demo only</h2>
+          <p>This is a demonstration of the upload interface, not a real assessment of your technique. No AI pose analysis is connected yet.</p>
           <label>Lift<select value={lift} onChange={(event) => setLift(event.target.value)}><option>Squat</option><option>Bench press</option><option>Deadlift</option><option>Overhead press</option><option>General lift</option></select></label>
           <label className="tf-ai-file-picker">
             <Upload size={24} />
             <strong>{video ? video.name : "Upload a short lifting video"}</strong>
             <span>Best result: 5-15 seconds, whole body visible, 45-degree side angle.</span>
-            <input accept="video/*" capture="environment" onChange={(event) => { setVideo(event.target.files?.[0] || null); setFormResult(null); }} type="file" />
+            <input aria-label="Choose video for demo preview" accept="video/*" capture="environment" onChange={(event) => { setVideo(event.target.files?.[0] || null); setFormResult(null); }} type="file" />
           </label>
           <button className="tf-ai-primary" disabled={!video || loading} onClick={runFormCheck} type="button">
-            <Video size={18} /> {loading ? "Checking video..." : "Check my form"}
+            <Video size={18} /> {loading ? "Preparing demo..." : "Preview demo feedback"}
           </button>
           {formResult && (
             <div className="tf-ai-output">
