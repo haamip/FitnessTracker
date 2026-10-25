@@ -25,22 +25,22 @@ export function getAIProviderConfig() {
       id: AI_PROVIDER_MODE.OPENAI,
       label: "OpenAI",
       enabled: requestedProvider === AI_PROVIDER_MODE.OPENAI,
-      hasKey: Boolean(getEnvValue("VITE_OPENAI_API_KEY")),
-      status: "Requires VITE_OPENAI_API_KEY.",
+      hasKey: false,
+      status: "Secret key is server-managed, never included in Vite.",
     },
     {
       id: AI_PROVIDER_MODE.GEMINI,
       label: "Gemini",
       enabled: requestedProvider === AI_PROVIDER_MODE.GEMINI,
-      hasKey: Boolean(getEnvValue("VITE_GEMINI_API_KEY")),
-      status: "Requires VITE_GEMINI_API_KEY.",
+      hasKey: false,
+      status: "Not configured for server-side coaching.",
     },
     {
       id: AI_PROVIDER_MODE.CLAUDE,
       label: "Claude",
       enabled: requestedProvider === AI_PROVIDER_MODE.CLAUDE,
-      hasKey: Boolean(getEnvValue("VITE_CLAUDE_API_KEY")),
-      status: "Requires VITE_CLAUDE_API_KEY.",
+      hasKey: false,
+      status: "Not configured for server-side coaching.",
     },
   ];
 
@@ -48,10 +48,8 @@ export function getAIProviderConfig() {
     providers.find((provider) => provider.id === requestedProvider) ||
     providers[0];
 
-  const canUseLiveProvider =
-    activeProvider.id !== AI_PROVIDER_MODE.MOCK &&
-    activeProvider.enabled &&
-    activeProvider.hasKey;
+  // The frontend playground cannot validate private server-side secrets.
+  const canUseLiveProvider = false;
 
   return {
     requestedProvider,

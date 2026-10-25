@@ -106,7 +106,7 @@ export default function ExerciseDetail() {
           <p>Exercise Detail</p>
           <h1>{exercise.name}</h1>
           <span>
-            {pretty(exercise.movementPattern)} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢{" "}
+            {pretty(exercise.movementPattern)} ·{" "}
             {pretty(exercise.difficulty)}
           </span>
         </div>
@@ -157,7 +157,7 @@ export default function ExerciseDetail() {
           </article>
           <article>
             <strong>
-              {stats.bestE1rm ? `${stats.bestE1rm}kg` : "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}
+              {stats.bestE1rm ? `${stats.bestE1rm}kg` : "—"}
             </strong>
             <span>Best e1RM</span>
           </article>
