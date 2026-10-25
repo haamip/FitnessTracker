@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Bot, Dumbbell, MessageCircle, Send, Sparkles, Upload, Video } from "lucide-react";
 import { analyseLiftVideo, askCoach, getWorkoutFeedback } from "../services/ai/aiFeatureService";
+import { supabase } from "../services/supabase";
 import "./TrackFitScreens.css";
 import "./AISuite.css";
 
@@ -17,6 +18,21 @@ export default function AISuite() {
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState([]);
   const [chatNotice, setChatNotice] = useState("");
+  const currentChatAccount = useRef(undefined);
+  useEffect(() => {
+    if (!supabase) return undefined;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const nextUser = session?.user?.id || null;
+      if (currentChatAccount.current !== undefined && nextUser !== currentChatAccount.current) {
+        setMessages([]);
+        setQuestion("");
+        setChatNotice("");
+      }
+      currentChatAccount.current = nextUser;
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
   const [video, setVideo] = useState(null);
   const [lift, setLift] = useState("Squat");
   const [formResult, setFormResult] = useState(null);
@@ -106,7 +122,7 @@ export default function AISuite() {
         <section className="form-card tf-ai-tool-card">
           <p className="eyebrow">Feature 3</p>
           <h2>AI coach chat</h2>
-          <p>Ask about your training, nutrition or recovery. The coach checks the signed-in account\u0027s synced logs and uses recent messages from this chat for context.</p>
+          <p>Ask about your training, nutrition or recovery. The coach checks the signed-in account’s synced logs and uses recent messages from this chat for context.</p>
           <div className="tf-ai-chat" aria-live="polite">
             {messages.length === 0 && <p className="tf-ai-empty">Ask about training, nutrition, recovery or your weekly trend. Recent replies are used for follow-up questions during this open chat only; missing logs are treated as unknown.</p>}
             {messages.map((message, index) => (
