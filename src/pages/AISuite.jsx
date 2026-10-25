@@ -104,8 +104,9 @@ export default function AISuite() {
         <section className="form-card tf-ai-tool-card">
           <p className="eyebrow">Feature 3</p>
           <h2>AI coach chat</h2>
+          <p>Ask about your training, nutrition or recovery. The coach checks only the signed-in account\u0027s synced logs when you send a question.</p>
           <div className="tf-ai-chat">
-            {messages.length === 0 && <p className="tf-ai-empty">Ask about training, nutrition, recovery or your weekly trend.</p>}
+            {messages.length === 0 && <p className="tf-ai-empty">Ask about training, nutrition, recovery or your weekly trend. This is live AI, not a demo. Missing logs will be treated as unknown.</p>}
             {messages.map((message, index) => (
               <article className={message.role} key={`${message.role}-${index}`}>
                 <strong>{message.role === "coach" ? "TrackFit Coach" : "You"}</strong>
@@ -114,7 +115,7 @@ export default function AISuite() {
             ))}
           </div>
           <form className="tf-ai-chat-form" onSubmit={sendQuestion}>
-            <input value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Why has my weight gone up this week?" />
+            <input value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Why has my weight gone up this week?" maxLength={700} />
             <button disabled={loading || !question.trim()} type="submit"><Send size={18} /></button>
           </form>
         </section>
@@ -144,7 +145,7 @@ export default function AISuite() {
         </section>
       )}
 
-      {error && <p className="tf-ai-error" role="alert">{error}</p>}
+      {error && <p className="tf-ai-error" role="alert">{error} Your regular Coach Brain remains available if AI is offline.</p>}
     </main>
   );
 }
