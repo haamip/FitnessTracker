@@ -1,3 +1,4 @@
+import { compactCoachChatHistory } from "./coachChatHistory";
 import { supabase } from "../supabase";
 
 /**
@@ -14,6 +15,7 @@ export async function requestTrackFitCoach(kind, details = {}) {
     const question = String(details.question || "").trim().slice(0, 700);
     if (!question) throw new Error("Enter a question for your coach.");
     body.question = question;
+    body.history = compactCoachChatHistory(details.history);
   }
   if (kind === "weekly") {
     const allowed = ["nutrition", "steps", "cardio", "progression", "recovery", "note"];

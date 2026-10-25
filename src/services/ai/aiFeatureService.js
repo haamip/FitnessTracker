@@ -57,20 +57,16 @@ export async function askCoach(message) {
   return requestTrackFitCoach("chat", { question: message });
 }
 
+/** Preview-only. Deliberately never uploads a selected video to any endpoint. */
 export async function analyseLiftVideo(file, lift = "General lift") {
-  const context = buildTrackFitAIContext();
-  const live = await request("/form-check", {
-    video: await fileToDataUrl(file), lift, fileName: file.name, fileType: file.type,
-    context: { shift: context.shift, recovery: context.recovery, training: context.training },
-  });
-  if (live) return live;
-  await wait(900);
+  if (!file) throw new Error("Choose a video to preview the form checker.");
+  await wait(120);
   return {
-    mode: "demo", lift, overall: "Video received. Live pose analysis is not connected yet.",
+    mode: "demo", lift, overall: "Demo preview only. This video has not been analysed for lifting technique.",
     checkpoints: [
-      { label: "Camera angle", status: "check", note: "Use a 45-degree side angle and show the whole body." },
-      { label: "Full rep", status: "check", note: "Keep the bar and feet visible for every repetition." },
-      { label: "Recovery", status: "check", note: `${context.recovery.averageSleepHours || "No"} hours average sleep is currently available to the coach.` },
+      { label: "Camera angle", status: "tip", note: "When form analysis launches, use a 45-degree side angle and show the whole body." },
+      { label: "Full rep", status: "tip", note: "For future analysis, keep the bar and feet visible for every repetition." },
+      { label: "Recovery", status: "tip", note: "This demonstration cannot evaluate fatigue or injury risk from a video." },
     ],
   };
 }

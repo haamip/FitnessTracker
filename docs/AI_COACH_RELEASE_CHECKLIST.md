@@ -24,3 +24,11 @@
 - A signed-in user executing the purpose-built `consume_trackfit_ai_allowance()` SECURITY DEFINER RPC is an intentional database security-advisor warning. The function accepts no input and uses `auth.uid()` to update only the requester's quota. Continue reviewing this authorization during changes.
 - Supabase's older advisor warnings for leaked-password protection and index/policy tuning remain separate platform maintenance work.
 - Validate native Android APK build independently, not just web CI, and sign beta builds consistently before Play testing.
+
+## Simple post-audit fixes (2026-10-25)
+- Coach Chat keeps at most 8 recent messages **in memory**, capped at 300 characters each for AI context. Users can clear the conversation. Switching accounts clears the in-memory chat; nothing is saved to the database. There is no cross-device conversation history.
+- The AI backend accepts only user/coach history and treats prior replies as unverified conversation context, not as authoritative logs or instructions.
+- Form checker is explicitly labelled **demo only**: no video pose scoring is connected and demo text no longer claims a video was analysed.
+- Added non-destructive B-tree indexes to the account-scoped cardio, nutrition, workout, plan and foreign-key access paths. Check with Supabase advisors after migration.
+- Leaked-password protection is a Supabase Auth project setting, **not an application-code setting**; enable it manually in the project's Auth settings, then rerun the security advisor.
+- Live AI still requires the private server-side `OPENAI_API_KEY` and an authenticated end-to-end test. Never put the provider key in public Vite/Vercel variables.
