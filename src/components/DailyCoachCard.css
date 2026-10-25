@@ -1,0 +1,15 @@
+.tf-daily-coach {display:grid;gap:12px;margin:0 0 18px;min-width:0;border:1px solid #dce8cb;border-radius:18px}
+.tf-daily-coach__heading {display:flex;gap:11px;align-items:center;color:#31542a}
+.tf-daily-coach__heading h2 {font-size:21px;line-height:1.2;margin:3px 0;color:inherit}
+.tf-daily-coach__heading .eyebrow {margin:0;font-size:11px}
+.tf-daily-coach > p {margin:0;line-height:1.5;font-size:13px;color:#5d695d}
+.tf-daily-coach__button {display:flex;justify-content:center;align-items:center;gap:8px;min-height:48px;border-radius:13px;background:#202820;color:#dffa7d;font-weight:800;padding:12px}
+.tf-daily-coach__button:disabled {opacity:.6}
+.tf-daily-coach__reply {padding:14px;border-radius:12px;background:#f3f7ee;color:#293b2d;display:grid;gap:8px}
+.tf-daily-coach__reply strong {font-size:15px}
+.tf-daily-coach__reply p {margin:0;line-height:1.5}
+.tf-daily-coach__reply ul {padding-left:21px;margin:0;display:grid;gap:5px}
+.tf-daily-coach__reply li {line-height:1.4}
+.tf-daily-coach__reply small,.tf-daily-coach > small {font-size:11px;line-height:1.5;color:#687568}
+.tf-daily-coach__error {padding:10px 12px!important;background:#fff3e6;color:#724923!important;border-radius:12px}
+.tf-daily-coach__error a {color:inherit;text-decoration:underline}
