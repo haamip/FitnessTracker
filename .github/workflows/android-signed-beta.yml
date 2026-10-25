@@ -1,0 +1,79 @@
+name: TrackFit Signed Android Beta
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  signed-beta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify signing secrets are configured
+        env:
+          KEYSTORE_B64: ${{ secrets.TRACKFIT_ANDROID_KEYSTORE_BASE64 }}
+          TRACKFIT_ANDROID_STORE_PASSWORD: ${{ secrets.TRACKFIT_ANDROID_STORE_PASSWORD }}
+          TRACKFIT_ANDROID_KEY_ALIAS: ${{ secrets.TRACKFIT_ANDROID_KEY_ALIAS }}
+          TRACKFIT_ANDROID_KEY_PASSWORD: ${{ secrets.TRACKFIT_ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_B64" || { echo "Missing TRACKFIT_ANDROID_KEYSTORE_BASE64"; exit 1; }
+          test -n "$TRACKFIT_ANDROID_STORE_PASSWORD" || { echo "Missing TRACKFIT_ANDROID_STORE_PASSWORD"; exit 1; }
+          test -n "$TRACKFIT_ANDROID_KEY_ALIAS" || { echo "Missing TRACKFIT_ANDROID_KEY_ALIAS"; exit 1; }
+          test -n "$TRACKFIT_ANDROID_KEY_PASSWORD" || { echo "Missing TRACKFIT_ANDROID_KEY_PASSWORD"; exit 1; }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install Android SDK
+        run: |
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -maxdepth 3 -type f -name sdkmanager | head -n 1)"
+          test -n "$SDKMANAGER" || exit 1
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+      - name: Install web dependencies
+        run: npm ci
+      - name: Install locked native shell tooling
+        run: npm install --no-save --package-lock=false @capacitor/core@8.3.0 @capacitor/android@8.3.0 @capacitor/cli@8.3.0
+      - name: Register native Health Connect bridge
+        run: node native/android/prepare-web.mjs
+      - name: Build TrackFit web assets
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.TRACKFIT_SUPABASE_URL || 'https://bhndpwknqwseapjwlxvs.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.TRACKFIT_SUPABASE_ANON_KEY || 'sb_publishable_5-52SugRvIlrv23SxDO_ng_emCyyCaf' }}
+        run: npm run build
+      - name: Generate and prepare Android
+        run: |
+          npx cap add android
+          node native/android/prepare-shell.mjs
+          npx cap sync android
+      - name: Configure signed beta privately
+        env:
+          KEYSTORE_B64: ${{ secrets.TRACKFIT_ANDROID_KEYSTORE_BASE64 }}
+          TRACKFIT_ANDROID_STORE_PASSWORD: ${{ secrets.TRACKFIT_ANDROID_STORE_PASSWORD }}
+          TRACKFIT_ANDROID_KEY_ALIAS: ${{ secrets.TRACKFIT_ANDROID_KEY_ALIAS }}
+          TRACKFIT_ANDROID_KEY_PASSWORD: ${{ secrets.TRACKFIT_ANDROID_KEY_PASSWORD }}
+          TRACKFIT_ANDROID_BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > android/app/trackfit-release.keystore
+          chmod 600 android/app/trackfit-release.keystore
+          node native/android/configure-release-signing.mjs
+          cd android && chmod +x gradlew && ./gradlew --no-daemon assembleRelease bundleRelease
+          rm -f app/trackfit-release.keystore
+      - name: Confirm signed APK
+        run: |
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          "$SDK_ROOT/build-tools/36.0.0/apksigner" verify --verbose android/app/build/outputs/apk/release/app-release.apk
+      - name: Upload signed beta APK and Play bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: trackfit-signed-beta
+          path: |
+            android/app/build/outputs/apk/release/app-release.apk
+            android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 14

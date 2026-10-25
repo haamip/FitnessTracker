@@ -32,3 +32,10 @@
 - Added non-destructive B-tree indexes to the account-scoped cardio, nutrition, workout, plan and foreign-key access paths. Check with Supabase advisors after migration.
 - Leaked-password protection is a Supabase Auth project setting, **not an application-code setting**; enable it manually in the project's Auth settings, then rerun the security advisor.
 - Live AI still requires the private server-side `OPENAI_API_KEY` and an authenticated end-to-end test. Never put the provider key in public Vite/Vercel variables.
+
+## 2026-10-25 Supabase and signed-beta hardening
+- Applied `202610250003_optimize_ownership_rls.sql`: rewrote 18 slow ownership policy expressions using cached scalar `(select auth.uid())` and dropped two exact-duplicate profile policies (the equivalent ALL policy remains). Live Supabase performance advisor no longer reports `auth_rls_initplan` or `multiple_permissive_policies`.
+- Added separate manually triggered `TrackFit Signed Android Beta` workflow and `native/android/configure-release-signing.mjs` to create signed release APK/AAB when a long-term keystore and four GitHub encrypted secrets are provided. See `docs/SIGNED_ANDROID_BETA.md`. Debug APKs are still signed with ephemeral keys; user must provision/backup the release keystore.
+- Supabase Management Auth password protection is not adjustable through the currently connected Supabase admin functions. **Still required manually:** Authentication → Sign In / Providers → Email → Prevent use of leaked passwords (Pro plan required) and rerun security advisor. Do not try to implement this via SQL.
+- **Still required before real AI can be tested:** provide a HAKT-owned OpenAI API key as `OPENAI_API_KEY` in Supabase Edge Function Secrets, not GitHub or public Vite variables. The connected Supabase tools can deploy functions but cannot create that secret. Do not pretend AI responds live until tested with a real signed-in account.
+- The protected quota RPC security-definer warning is intentional for per-user usage limiting; the `trackfit_ai_daily_usage` table has RLS enabled and no direct user data access.
