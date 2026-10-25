@@ -24,6 +24,16 @@ function dateDaysAgo(days: number) {
   day.setUTCDate(day.getUTCDate() - days);
   return day.toISOString().slice(0, 10);
 }
+function localDateForTimeZone(zone: unknown): string {
+  try {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: typeof zone === "string" ? zone : "UTC",
+      year: "numeric", month: "2-digit", day: "2-digit",
+    }).formatToParts(new Date());
+    const item = (type: string) => parts.find((part) => part.type === type)?.value || "01";
+    return `${item("year")}-${item("month")}-${item("day")}`;
+  } catch { return new Date().toISOString().slice(0, 10); }
+}
 const clean = (value: unknown, limit = 90) =>
   typeof value === "string" ? value.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, limit) : "";
 
@@ -50,7 +60,7 @@ async function getSnapshot(db: any, userId: string) {
       .eq("user_id", userId).gte("entry_date", cutoff).limit(150),
     db.from("cardio_sessions").select("session_date,activity_type,distance_km,duration_min")
       .eq("user_id", userId).gte("session_date", cutoff).limit(50),
-    db.from("profiles").select("calorie_target,protein_target,water_target_l")
+    db.from("profiles").select("calorie_target,protein_target,water_target_l,timezone")
       .eq("id", userId).maybeSingle(),
   ]);
   if (results.some((result) => result.error)) {
@@ -61,11 +71,11 @@ async function getSnapshot(db: any, userId: string) {
   const dates = new Set(checkins.map((x: any) => x.checkin_date));
   const withSteps = checkins.filter((x: any) => num(x.steps) !== null);
   const withWeight = checkins.filter((x: any) => num(x.weight_kg) !== null);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDateForTimeZone(profile.timezone);
   const todayMeals = meals.filter((x: any) => x.entry_date === today);
   return {
     period: "Last 14 days, synced TrackFit account records only",
-    currentUtcDate: today,
+    localDay: today,
     workouts: {
       sessions: workouts.length,
       volumeKg: Math.round(sum(workouts, "total_volume")),
