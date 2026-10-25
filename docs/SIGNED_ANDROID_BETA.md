@@ -3,7 +3,7 @@
 TrackFit's automatically generated **debug preview APK** is signed with a temporary Android debug key. That signature can change between GitHub Actions runners, which explains occasional failed installs or update collisions. Debug artifacts are **not** suitable for store distribution.
 
 ## New supported path
-The GitHub Actions workflow **TrackFit Signed Android Beta** (`.github/workflows/android-signed-beta.yml`) can be run manually after setting the four encrypted repository Actions secrets. It generates the Capacitor Android project, registers the native Health Connect bridge, configures **release** signing on the generated Gradle project, builds an APK and AAB, verifies the APK signature and uploads both as private GitHub Actions artifacts. Builds never automatically publish to Google Play.
+The GitHub Actions workflow **TrackFit Signed Android Beta** (`.github/workflows/android-signed-beta.yml`) can be run manually after setting the four encrypted repository Actions secrets. It generates the Capacitor Android project, registers the native Health Connect bridge, configures **release** signing on the generated Gradle project, builds an APK and AAB, verifies the APK signature and uploads both as GitHub Actions artifacts. This repository is public, so do not treat build artifacts as private. Builds never automatically publish to Google Play.
 
 **Required GitHub repository Actions secrets:**
 
