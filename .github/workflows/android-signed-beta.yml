@@ -57,6 +57,7 @@ jobs:
           TRACKFIT_ANDROID_STORE_PASSWORD: ${{ secrets.TRACKFIT_ANDROID_STORE_PASSWORD }}
           TRACKFIT_ANDROID_KEY_ALIAS: ${{ secrets.TRACKFIT_ANDROID_KEY_ALIAS }}
           TRACKFIT_ANDROID_KEY_PASSWORD: ${{ secrets.TRACKFIT_ANDROID_KEY_PASSWORD }}
+          TRACKFIT_ANDROID_BUILD_NUMBER: ${{ github.run_number }}
         run: |
           printf '%s' "$KEYSTORE_B64" | base64 --decode > android/app/trackfit-release.keystore
           chmod 600 android/app/trackfit-release.keystore
