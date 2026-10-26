@@ -183,6 +183,7 @@ export default function Nutrition() {
     setFoundFood(food);
     setFoodAmount("100");
     setMessage(`${food.name} selected. Choose the amount eaten, then copy the nutrition details into your meal.`);
+    window.setTimeout(() => document.getElementById("tf-food-selected-product")?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 0);
   }
 
   async function handleBarcodeLookup(code = barcode) {
@@ -408,7 +409,7 @@ export default function Nutrition() {
       </label>
       <FoodBarcodeScanner onDetected={handleScannedBarcode} disabled={findingFood} />
       <Button type="button" disabled={findingFood || barcode.length < 8} onClick={() => handleBarcodeLookup()}>{findingFood ? "Searching..." : "Find food by number"}</Button>
-      {foundFood && <div className="v4-quick-card">
+      {foundFood && <div id="tf-food-selected-product" className="v4-quick-card">
         <strong>{foundFood.name}</strong>
         <span>{foundFood.brand || "Brand not supplied"} · {foundFood.barcode}</span>
         <span>Per 100 g: {foundFood.per100g.calories === null ? "Calories unknown" : `${Math.round(foundFood.per100g.calories)} kcal`} · {foundFood.per100g.protein === null ? "Protein unknown" : `${foundFood.per100g.protein}g protein`}</span>
