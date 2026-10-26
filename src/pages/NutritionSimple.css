@@ -140,3 +140,9 @@
 .tf-food-search-result:focus-visible { outline:3px solid #9aca56;outline-offset:2px; }
 .tf-food-search-result strong { font-size:14px;line-height:1.35;overflow-wrap:anywhere; }
 .tf-food-search-result span { color:#5b6d5d;font-size:12px;line-height:1.45;overflow-wrap:anywhere; }
+
+.tf-food-quick-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tf-food-quick-action{display:flex;align-items:center;justify-content:center;gap:8px;min-height:61px;padding:11px;text-align:center;border:1px solid #cfdacb;border-radius:15px;background:#f5f9ed;color:#2a452e;font-size:13px;font-weight:850;line-height:1.3;text-decoration:none;cursor:pointer}
+.tf-food-quick-action svg{flex:0 0 auto}
+.tf-food-quick-action:hover{background:#e8f4d7}
+@media(max-width:370px){.tf-food-quick-actions{grid-template-columns:1fr}}
