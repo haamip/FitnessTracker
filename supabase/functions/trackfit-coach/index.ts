@@ -111,6 +111,38 @@ async function getSnapshot(db: any, userId: string) {
   };
 }
 
+
+/** Classify OpenAI failures without logging keys, prompt text, or raw errors. */
+async function reportProviderError(answer: Response): Promise<Response> {
+  let code = "";
+  try {
+    const payload = await answer.json();
+    code = typeof payload?.error?.code === "string" ? payload.error.code : "";
+  } catch {
+    // Provider outages sometimes return HTML instead of JSON.
+  }
+  const status = answer.status;
+  const issue = status === 401 ? "INVALID_KEY"
+    : status === 429 && code === "insufficient_quota" ? "BILLING"
+    : status === 429 ? "RATE_LIMIT"
+    : status === 403 ? "PROJECT_PERMISSION"
+    : status === 404 ? "MODEL_NOT_AVAILABLE"
+    : status === 400 ? "REQUEST_REJECTED"
+    : status >= 500 ? "PROVIDER_OUTAGE" : "UPSTREAM_ERROR";
+  console.warn("trackfit_coach_openai_failure", JSON.stringify({ status, issue }));
+  const descriptions: Record<string, string> = {
+    INVALID_KEY: "OpenAI rejected the API key. Check OPENAI_API_KEY under Supabase Edge Function secrets.",
+    BILLING: "OpenAI API credits or billing need attention. Check billing at platform.openai.com; ChatGPT Plus does not include API credit.",
+    RATE_LIMIT: "The OpenAI API rate limit was reached. Try again shortly.",
+    PROJECT_PERMISSION: "The OpenAI API project does not have permission to use the configured model. Check the API key's project permissions.",
+    MODEL_NOT_AVAILABLE: "The configured OpenAI model is not available to this API project.",
+    REQUEST_REJECTED: "OpenAI rejected the AI Coach request settings. The app configuration needs checking.",
+    PROVIDER_OUTAGE: "OpenAI is temporarily unavailable. Please try again later.",
+    UPSTREAM_ERROR: "The AI service couldn't complete the request. Please try again later.",
+  };
+  return respond({ error: descriptions[issue], errorCode: issue }, status === 429 ? 429 : 502);
+}
+
 const systemInstructions = [
   "You are TrackFit Coach, a supportive fitness and lifestyle assistant.",
   "Use ONLY the supplied, authenticated user's synced TrackFit facts. Do not invent logged meals, exact calories burned, PRs, diagnoses, or exercise history.",
@@ -129,7 +161,7 @@ Deno.serve(async (request: Request) => {
   if (request.method !== "POST") return respond({ error: "Method not allowed" }, 405);
   const header = request.headers.get("Authorization") || "";
   if (!header.startsWith("Bearer ")) return respond({ error: "Please sign into TrackFit first." }, 401);
-  const apiKey = Deno.env.get("OPENAI_API_KEY");
+  const apiKey = Deno.env.get("OPENAI_API_KEY")?.trim();
   if (!apiKey) return respond({ error: "Live AI is not configured yet. Ask the TrackFit administrator to set OPENAI_API_KEY securely." }, 503);
   const url = Deno.env.get("SUPABASE_URL");
   const anon = Deno.env.get("SUPABASE_ANON_KEY");
@@ -173,7 +205,7 @@ Deno.serve(async (request: Request) => {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: Deno.env.get("OPENAI_COACH_MODEL") || "gpt-4.1-mini",
+        model: Deno.env.get("OPENAI_COACH_MODEL")?.trim() || "gpt-4.1-mini",
         store: false,
         max_output_tokens: 450,
         instructions: systemInstructions,
@@ -181,14 +213,17 @@ Deno.serve(async (request: Request) => {
         text: { format: { type: "json_schema", name: "trackfit_coaching_reply", strict: true, schema } },
       }),
     });
-    if (!answer.ok) {
-      // Do not return secrets or raw provider error payloads.
-      return respond({ error: "AI Coach is temporarily unavailable. Your logs are safe; try again later." }, 502);
-    }
+    if (!answer.ok) return await reportProviderError(answer);
     const modelResult = await answer.json();
     const raw = modelResult?.output?.flatMap((block: any) => block.content || [])
       .find((part: any) => part.type === "output_text")?.text;
-    if (!raw) return respond({ error: "AI Coach did not return a usable answer." }, 502);
+    if (!raw) {
+      const status = typeof modelResult?.status === "string" ? modelResult.status : "unknown";
+      console.warn("trackfit_coach_empty_response", JSON.stringify({
+        status: ["completed", "failed", "incomplete", "queued"].includes(status) ? status : "unknown"
+      }));
+      return respond({ error: "OpenAI did not return a complete coaching reply. Please try again.", errorCode: "INCOMPLETE_REPLY" }, 502);
+    }
     const parsed = JSON.parse(raw);
     const headline = clean(parsed.headline, 100);
     const summary = clean(parsed.summary, 750);
