@@ -7,6 +7,7 @@ import { deleteWeeklyPhoto, getWeeklyPhoto, putWeeklyPhoto } from "../services/w
 import { requestTrackFitCoach } from "../services/ai/secureCoachClient";
 import { Sparkles } from "lucide-react";
 import "./TrackFitScreens.css";
+import "./WeeklyCoachReview.css";
 
 const questions = [
   { key: "nutrition", label: "How was your nutrition?", options: [["on-track","On track"],["mixed","Up & down"],["struggled","Struggled"]] },
@@ -80,18 +81,38 @@ function PhotoSlot({ weekStart, angle, refresh, onPhotoChange }) {
   }
 
   return (
-    <article className="form-card" style={{ display: "grid", gap: 10 }}>
-      <strong style={{ textTransform: "capitalize" }}>{angle}</strong>
-      <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
-        <div><small>This week</small>{image ? <img src={image} alt={`${angle} progress this week`} style={{ width:"100%", aspectRatio:"3 / 4", objectFit:"cover",borderRadius:10 }} /> : <p>No photo</p>}</div>
-        <div><small>Last week</small>{previousImage ? <img src={previousImage} alt={`${angle} progress last week`} style={{ width:"100%", aspectRatio:"3 / 4", objectFit:"cover",borderRadius:10 }} /> : <p>No photo</p>}</div>
+    <article className="form-card tf-weekly-photo">
+      <h3 className="tf-weekly-photo__title">{angle}</h3>
+      <div className="tf-weekly-photo__grid">
+        {[["This week", image], ["Last week", previousImage]].map(([heading, url]) => (
+          <div className="tf-weekly-photo__column" key={heading}>
+            <span className="tf-weekly-photo__caption">{heading}</span>
+            <div className="tf-weekly-photo__preview">
+              {url
+                ? <img src={url} alt={`${angle} progress ${heading.toLowerCase()}`} />
+                : <div className="tf-weekly-photo__empty">
+                    <Camera aria-hidden="true" size={23} />
+                    <span>No photo yet</span>
+                  </div>}
+            </div>
+          </div>
+        ))}
       </div>
-      <label style={{ display:"inline-flex",alignItems:"center",gap:8,cursor:"pointer" }}>
-        <Camera size={18} /> {busy ? "Saving..." : image ? "Replace photo" : "Add photo"}
-        <input aria-label={`Upload ${angle} photo`} type="file" accept="image/jpeg,image/png,image/webp" onChange={upload} disabled={busy} hidden />
-      </label>
-      {image && <button type="button" disabled={busy} onClick={remove}><Trash2 size={15} /> Delete photo</button>}
-      {error && <small role="alert">{error}</small>}
+      <div className="tf-weekly-photo__actions">
+        <label className={`tf-weekly-photo__upload${busy ? " is-busy" : ""}`}>
+          <Camera size={18} aria-hidden="true" />
+          <span>{busy ? "Saving photo..." : image ? "Replace photo" : "Add photo"}</span>
+          <input type="file" aria-label={`Upload ${angle} progress photo`}
+            accept="image/jpeg,image/png,image/webp"
+            onChange={upload} disabled={busy} />
+        </label>
+        {image && (
+          <button className="tf-weekly-photo__delete" type="button" disabled={busy} onClick={remove}>
+            <Trash2 size={16} aria-hidden="true" /> Delete photo
+          </button>
+        )}
+      </div>
+      {error && <p className="tf-weekly-photo__error" role="alert">{error}</p>}
     </article>
   );
 }
@@ -112,7 +133,8 @@ export default function WeeklyCoachReview() {
     meals: NutritionRepository.getAll(),
   }, week), [week]);
   const feedback = useMemo(() => buildWeeklyFeedback(facts, answers), [facts, answers]);
-  const answered = questions.every((q) => answers[q.key]);
+  const answeredCount = questions.filter((q) => Boolean(answers[q.key])).length;
+  const answered = answeredCount === questions.length;
   function setWeekAndAnswers(newWeek) {
     const review = WeeklyReviewRepository.getByWeek(newWeek);
     setWeek(newWeek);
@@ -137,47 +159,56 @@ export default function WeeklyCoachReview() {
     finally { setAIBusy(false); }
   }
   return (
-    <main className="screen workouts-v4">
+    <main className="screen workouts-v4 tf-weekly-review">
       <section className="v4-workout-hero">
         <Link to="/coach/intelligence" aria-label="Back to coach"><ArrowLeft size={22} /></Link>
         <div><p className="eyebrow">Your coach</p><h1>Weekly check-in</h1>
           <p>A few answers, real training data, and one clear direction for next week.</p></div>
       </section>
-      <section className="form-card" style={{ display:"flex",alignItems:"center",justifyContent:"space-between",gap:10 }}>
-        <button type="button" aria-label="Previous week" onClick={() => setWeekAndAnswers(shiftWeek(week,-1))}><ChevronLeft size={22}/></button>
+      <section className="form-card tf-weekly-navigation" aria-label="Choose review week">
+        <button className="tf-weekly-nav-button" type="button" aria-label="Previous week" onClick={() => setWeekAndAnswers(shiftWeek(week,-1))}><ChevronLeft size={22}/></button>
         <strong>Week of {new Date(week+"T12:00:00").toLocaleDateString("en-AU",{day:"numeric",month:"short",year:"numeric"})}</strong>
-        <button type="button" aria-label="Next week" disabled={week>=currentWeek} onClick={() => setWeekAndAnswers(shiftWeek(week,1))}><ChevronRight size={22}/></button>
+        <button className="tf-weekly-nav-button" type="button" aria-label="Next week" disabled={week>=currentWeek} onClick={() => setWeekAndAnswers(shiftWeek(week,1))}><ChevronRight size={22}/></button>
       </section>
       <section className="v4-workout-list">
         <div className="v4-section-heading"><div><p className="eyebrow">Your logs</p><h2>This week's numbers</h2></div></div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:10}}>
+        <div className="tf-weekly-stats">
           {[
             ["Strength",`${facts.workouts} workouts`],
             ["Cardio",`${facts.cardioMinutes} minutes`],
             ["Steps",facts.averageSteps === null ? "Not logged" : `${facts.averageSteps.toLocaleString()} / logged day`],
             ["Check-ins",`${facts.checkInDays} days`],
-          ].map(([label,value])=><article className="form-card" key={label}><small>{label}</small><strong style={{display:"block"}}>{value}</strong></article>)}
+          ].map(([label,value])=><article className="form-card tf-weekly-stat" key={label}><small>{label}</small><strong>{value}</strong></article>)}
         </div>
         <small>Daily steps are total steps for each logged day. Cardio steps are not added again.</small>
       </section>
-      <section className="v4-workout-list">
+      <section className="v4-workout-list tf-weekly-questions">
         <div className="v4-section-heading"><div><p className="eyebrow">Your answers</p><h2>How was your week?</h2></div></div>
+        <p className="tf-weekly-questions__progress" aria-live="polite">{answeredCount} of {questions.length} answered</p>
         {questions.map((question)=>(
-          <fieldset className="form-card" key={question.key} style={{border:0,margin:0,display:"grid",gap:10}}>
-            <legend style={{fontWeight:700,marginBottom:10}}>{question.label}</legend>
-            <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-              {question.options.map(([value,label])=><label key={value} style={{display:"inline-flex",gap:6,alignItems:"center",padding:"8px 10px",border:"1px solid #777",borderRadius:14}}>
-                <input type="radio" name={question.key} checked={answers[question.key]===value} onChange={() => {setAnswers((x)=>({...x,[question.key]:value}));setSaved(false);}} />
-                {label}
-              </label>)}
+          <fieldset className="form-card tf-weekly-question" key={question.key}>
+            <legend>{question.label}</legend>
+            <div className="tf-weekly-options">
+              {question.options.map(([value, label]) => {
+                const checked = answers[question.key] === value;
+                return (
+                  <label key={value} className={`tf-weekly-choice${checked ? " is-selected" : ""}`}>
+                    <input className="tf-weekly-choice__radio" type="radio"
+                      name={question.key} value={value} checked={checked}
+                      onChange={() => { setAnswers((x) => ({...x, [question.key]: value})); setSaved(false); }} />
+                    <span className="tf-weekly-choice__indicator" aria-hidden="true" />
+                    <span className="tf-weekly-choice__text">{label}</span>
+                  </label>
+                );
+              })}
             </div>
           </fieldset>
-        ))}
-        <label className="form-card">Anything else for your coach? (optional)
-          <textarea rows={3} maxLength={800} value={answers.note} onChange={(event)=>{setAnswers((x)=>({...x,note:event.target.value}));setSaved(false);}} placeholder="Wins, challenges, injuries, what you'd like to change..." style={{width:"100%",marginTop:8}} />
+        ))}))}
+        <label className="form-card tf-weekly-notes"><strong>Anything else for your coach? <span>(optional)</span></strong>
+          <textarea rows={3} maxLength={800} value={answers.note} onChange={(event)=>{setAnswers((x)=>({...x,note:event.target.value}));setSaved(false);}} placeholder="Wins, challenges, injuries, what you'd like to change..." />
         </label>
-        <button type="button" disabled={!answered} onClick={save} className="v4-save-checkin">{saved ? "Saved — update review" : "Save my weekly check-in"}</button>
-        {!answered && <small>Answer the five quick questions to save your weekly review.</small>}
+        <button type="button" disabled={!answered} onClick={save} className="v4-save-checkin tf-weekly-save">{saved ? "Saved — update review" : "Save my weekly check-in"}</button>
+        {!answered && <p className="tf-weekly-save-help">Choose one answer for each question to save your review.</p>}
       </section>
       {saved && (
         <section className="v4-workout-list" aria-live="polite">
@@ -202,12 +233,12 @@ export default function WeeklyCoachReview() {
           {aiError && <p role="alert" style={{margin:0,color:"#8a411f"}}>{aiError} Your standard weekly feedback above is still available.</p>}
         </section>
       )}
-      <section className="v4-workout-list">
+      <section className="v4-workout-list tf-weekly-photos">
         <div className="v4-section-heading"><div><p className="eyebrow">Progress pictures</p><h2>Compare week to week</h2></div></div>
         <p>Optional front, side and back photos. Saved privately on this device only. They will not sync across devices yet. Clearing browser data can delete them.</p>
         {angles.map((angle)=><PhotoSlot key={angle} angle={angle} weekStart={week} refresh={photoRevision} onPhotoChange={()=>setPhotoRevision((n)=>n+1)} />)}
       </section>
-      <p style={{marginTop:20}}><Link to="/checkin">Daily check-in</Link> · <Link to="/workouts">Workouts</Link> · <Link to="/cardio">Cardio</Link></p>
+      <nav className="tf-weekly-footer" aria-label="Related tracking"><Link to="/checkin">Daily check-in</Link><Link to="/workouts">Workouts</Link><Link to="/cardio">Cardio</Link></nav>
     </main>
   );
 }
