@@ -143,3 +143,6 @@
 
 .tf-food-photo-shortcut {display:flex;gap:10px;align-items:center;justify-content:center;text-align:center;min-height:51px;border-radius:16px;background:#202a20;color:#d8f786;text-decoration:none;font-weight:850;padding:12px;margin:12px 0;}
 .tf-food-photo-shortcut:focus-visible {outline:3px solid #a4d65a;outline-offset:3px;}
+
+.tf-food-barcode-shortcut{width:100%;margin-top:0;border:1px solid #bbcbb3;background:#ecf5df;color:#233b26;cursor:pointer}
+.tf-food-barcode-shortcut:hover{background:#e0efca}
