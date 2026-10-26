@@ -140,3 +140,6 @@
 .tf-food-search-result:focus-visible { outline:3px solid #9aca56;outline-offset:2px; }
 .tf-food-search-result strong { font-size:14px;line-height:1.35;overflow-wrap:anywhere; }
 .tf-food-search-result span { color:#5b6d5d;font-size:12px;line-height:1.45;overflow-wrap:anywhere; }
+
+.tf-food-photo-shortcut {display:flex;gap:10px;align-items:center;justify-content:center;text-align:center;min-height:51px;border-radius:16px;background:#202a20;color:#d8f786;text-decoration:none;font-weight:850;padding:12px;margin:12px 0;}
+.tf-food-photo-shortcut:focus-visible {outline:3px solid #a4d65a;outline-offset:3px;}
