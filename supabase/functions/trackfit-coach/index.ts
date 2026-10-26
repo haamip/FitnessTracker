@@ -115,25 +115,38 @@ async function getSnapshot(db: any, userId: string) {
 /** Classify OpenAI failures without logging keys, prompt text, or raw errors. */
 async function reportProviderError(answer: Response): Promise<Response> {
   let code = "";
+  let type = "";
   try {
     const payload = await answer.json();
     code = typeof payload?.error?.code === "string" ? payload.error.code : "";
+    type = typeof payload?.error?.type === "string" ? payload.error.type : "";
   } catch {
-    // Provider outages sometimes return HTML instead of JSON.
+    // Provider outages sometimes return HTML or no response.
   }
   const status = answer.status;
+  const creditCodes = new Set(["insufficient_quota", "credit_balance_exhausted"]);
+  const spendCodes = new Set([
+    "organization_usage_limit_exceeded",
+    "organization_spend_limit_exceeded",
+    "project_spend_limit_exceeded",
+    "billing_hard_limit_reached",
+  ]);
   const issue = status === 401 ? "INVALID_KEY"
-    : status === 429 && code === "insufficient_quota" ? "BILLING"
+    : status === 429 && spendCodes.has(code) ? "SPEND_LIMIT"
+    : status === 429 && (creditCodes.has(code) || type === "insufficient_quota") ? "BILLING"
     : status === 429 ? "RATE_LIMIT"
     : status === 403 ? "PROJECT_PERMISSION"
     : status === 404 ? "MODEL_NOT_AVAILABLE"
     : status === 400 ? "REQUEST_REJECTED"
     : status >= 500 ? "PROVIDER_OUTAGE" : "UPSTREAM_ERROR";
+  // Deliberately log only the numeric status and safe category, never
+  // provider text, request bodies, account identifiers, or secrets.
   console.warn("trackfit_coach_openai_failure", JSON.stringify({ status, issue }));
   const descriptions: Record<string, string> = {
     INVALID_KEY: "OpenAI rejected the API key. Check OPENAI_API_KEY under Supabase Edge Function secrets.",
-    BILLING: "OpenAI API credits or billing need attention. Check billing at platform.openai.com; ChatGPT Plus does not include API credit.",
-    RATE_LIMIT: "The OpenAI API rate limit was reached. Try again shortly.",
+    BILLING: "The OpenAI API credit balance or billing needs attention. Check API billing at platform.openai.com; ChatGPT Plus does not include API credit.",
+    SPEND_LIMIT: "The OpenAI API organisation or project usage/spend limit has been reached. Check API Limits and project budgets.",
+    RATE_LIMIT: "The OpenAI API request or token rate limit was reached. Check your project's API Limits and try again after the limit resets.",
     PROJECT_PERMISSION: "The OpenAI API project does not have permission to use the configured model. Check the API key's project permissions.",
     MODEL_NOT_AVAILABLE: "The configured OpenAI model is not available to this API project.",
     REQUEST_REJECTED: "OpenAI rejected the AI Coach request settings. The app configuration needs checking.",
