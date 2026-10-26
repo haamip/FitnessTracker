@@ -57,3 +57,32 @@ export function scaleFoodNutrients(food, grams) {
     ]),
   );
 }
+
+/**
+ * Open Food Facts supports plain-text searches only through its legacy v1
+ * endpoint at present. Call on explicit submission; search rate limit is
+ * 10/min/IP, so never query on every keystroke.
+ */
+export async function searchFoodByName(query, request = fetch) {
+  const term = String(query || "").trim().replace(/\\s+/g, " ");
+  if (term.length < 3) throw new Error("Enter at least 3 characters to search foods.");
+  if (term.length > 70) throw new Error("Search terms must be under 70 characters.");
+  const parameters = new URLSearchParams({
+    search_terms: term, search_simple: "1", action: "process", json: "1",
+    page_size: "18", fields,
+  });
+  const url = `https://world.openfoodfacts.org/cgi/search.pl?${parameters}`;
+  const response = await request(url, { headers: { Accept: "application/json" } });
+  if (response.status === 429) throw new Error("Food database is busy. Please wait before searching again.");
+  if (!response.ok) throw new Error("Could not search the food database. Try again later.");
+  const payload = await response.json();
+  const items = Array.isArray(payload?.products) ? payload.products : [];
+  const seen = new Set();
+  return items.map(normaliseFoodProduct)
+    .filter((food) => {
+      if (!food || !food.name || food.name === "Unnamed product" || seen.has(food.barcode)) return false;
+      seen.add(food.barcode);
+      return true;
+    })
+    .slice(0, 18);
+}
