@@ -1,0 +1,15 @@
+.tf-meal-estimate__modes {display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:0 0 14px;}
+.tf-meal-estimate__modes button {display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid #d9e2d2;border-radius:14px;min-height:48px;padding:9px;background:#fff;color:#354537;font-weight:800;}
+.tf-meal-estimate__modes button[aria-pressed="true"] {border:2px solid #92b652;background:#eafaad;color:#1a2a20;}
+.tf-meal-estimate__description {display:grid;gap:7px;min-width:0;}
+.tf-meal-estimate__description span,.tf-meal-estimate__disclaimer {font-size:13px;line-height:1.5;color:#627162;}
+.tf-meal-estimate__description textarea {width:100%;min-height:100px;resize:vertical;padding:12px;border-radius:13px;border:1px solid #cbd7c7;background:#fff;color:#1a2a20;box-sizing:border-box;font:inherit;}
+.tf-meal-estimate__status {background:#fff2df;color:#78512a;border-radius:12px;padding:12px 14px;line-height:1.45;}
+.tf-meal-estimate__assumptions {background:#f5f7eb;border-radius:12px;padding:12px;line-height:1.5;color:#334b33;}
+.tf-meal-estimate__disclaimer {margin:0;}
+.tf-meal-estimate .tf-ai-macro-grid strong {overflow-wrap:anywhere;}
+.tf-meal-estimate .tf-ai-result-card {display:grid;gap:13px;}
+.tf-meal-estimate .tf-ai-result-card label {display:grid;gap:8px;font-weight:800;}
+.tf-meal-estimate .tf-ai-result-card select {padding:12px;border-radius:12px;border:1px solid #c9d3c4;}
+.tf-meal-estimate .tf-ai-upload-card small {line-height:1.5;color:#697466;}
+@media(max-width:380px){.tf-meal-estimate__modes button{font-size:12px;}}

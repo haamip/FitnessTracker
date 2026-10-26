@@ -84,7 +84,7 @@ export default function Nutrition() {
   const [foodAmount, setFoodAmount] = useState("100");
   const [foundFood, setFoundFood] = useState(null);
   const [findingFood, setFindingFood] = useState(false);
-  const [message, setMessage] = useState(() => location.state?.scannedMeal ? "Photo estimate loaded. Review the portions and macros below before saving." : "");
+  const [message, setMessage] = useState(() => location.state?.scannedMeal ? "AI meal estimate loaded. Review serving sizes and all nutrition values before saving." : "");
   const [goals, setGoals] = useState({ calories: CALORIE_TARGET, protein: PROTEIN_TARGET });
 
   useEffect(() => {
@@ -376,6 +376,9 @@ export default function Nutrition() {
   return <motion.div className="screen checkin-v4" initial={{opacity:0,y:14}} animate={{opacity:1,y:0}} transition={{duration:0.25}}>
     <section className="v4-checkin-hero"><div><p className="eyebrow">Food · {shiftMode === "night" ? "Night shift" : "Day shift"}</p><h1>Shift day</h1><p>{shiftMode === "night" ? "After-midnight meals stay with the shift that started the night before." : "Meals use the current calendar day."} Log a meal below, or open a food lookup tool.</p></div></section>
     <section className="tf-food-summary"><article className="tf-food-target"><div className="tf-food-target__top"><div><Flame size={20}/><span>Calories</span></div><strong>{roundDisplay(totals.calories)} / {goals.calories}</strong></div><div className="progress-line"><span style={{width:`${calorieProgress}%`}}/></div></article><article className="tf-food-target"><div className="tf-food-target__top"><div><Beef size={20}/><span>Protein</span></div><strong>{roundDisplay(totals.protein)} / {goals.protein}g</strong></div><div className="progress-line"><span style={{width:`${proteinProgress}%`}}/></div></article></section>
+    <Link className="tf-food-photo-shortcut" to="/nutrition/scan">
+      <Camera size={19}/> Estimate homemade meal or scan a dinner photo
+    </Link>
     <div className="tf-food-secondary-macros"><span>Carbs <strong>{roundDisplay(totals.carbs)}g</strong></span><span>Fat <strong>{roundDisplay(totals.fats)}g</strong></span></div>
     {message && <p className="tf-food-feedback" role="status">{message}</p>}
     <form id="tf-nutrition-meal-form" className="form-card form-grid" onSubmit={handleSubmit}><div><p className="eyebrow">Quick log</p><h2>{editingMealId ? "Edit your meal" : "Add a meal"}</h2></div><label>Meal<select value={form.type} onChange={(e)=>updateField("type",e.target.value)}>{mealTypes.map((type)=><option key={type}>{type}</option>)}</select></label><label>What did you eat?<input placeholder="Chicken, rice and veg" value={form.name} onChange={(e)=>updateField("name",e.target.value)}/></label><div className="tf-food-input-row"><label>Calories<input type="number" inputMode="decimal" step="0.1" min="0" required value={form.calories} onChange={(e)=>updateField("calories",e.target.value)}/></label><label>Protein<input type="number" inputMode="decimal" step="0.1" min="0" required value={form.protein} onChange={(e)=>updateField("protein",e.target.value)}/></label></div><div className="tf-food-input-row"><label>Carbs<input type="number" inputMode="decimal" step="0.1" min="0" value={form.carbs} onChange={(e)=>updateField("carbs",e.target.value)}/></label><label>Fat<input type="number" inputMode="decimal" step="0.1" min="0" value={form.fats} onChange={(e)=>updateField("fats",e.target.value)}/></label></div><Button className="v4-save-checkin" type="submit" disabled={saving}><Plus size={17}/>{saving ? "Saving..." : editingMealId ? "Save changes" : "Add meal"}</Button>{editingMealId && <button type="button" className="tf-food-cancel-edit" onClick={cancelEdit}><X size={17}/> Cancel editing</button>}</form>
@@ -420,7 +423,7 @@ export default function Nutrition() {
         <small>Nutrition data from <a href={foundFood.sourceUrl} target="_blank" rel="noreferrer">Open Food Facts</a> (ODbL). Community-entered information may be incomplete; check your food packaging.</small>
       </div>}
     </section>
-        <Link className="tf-ai-primary" to="/nutrition/scan"><Camera size={18}/> Try meal photo analysis</Link>
+
     </details>
     <details className="tf-food-tool">
       <summary>Paste a meal from ChatGPT</summary>

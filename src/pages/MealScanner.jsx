@@ -1,40 +1,64 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Camera, Check, ImagePlus, Save, Sparkles } from "lucide-react";
-import { analyseMealPhoto } from "../services/ai/aiFeatureService";
-
+import { Camera, Check, ImagePlus, Save, Sparkles, UtensilsCrossed } from "lucide-react";
+import { estimateMeal } from "../services/ai/mealEstimateClient";
 import { getShiftMealTypes } from "../services/shift/shiftModeService";
 import "./TrackFitScreens.css";
 import "./AISuite.css";
+import "./MealScanner.css";
 
-const LIVE_AI_CONFIGURED = Boolean(import.meta.env.VITE_TRACKFIT_AI_ENDPOINT);
+const fmt = (number, suffix = "") => number == null ? "Unknown" : `${Math.round(number)}${suffix}`;
 
 export default function MealScanner() {
   const navigate = useNavigate();
   const mealTypes = getShiftMealTypes();
+  const [mode, setMode] = useState("photo");
   const [file, setFile] = useState(null);
+  const preview = useMemo(() => file ? URL.createObjectURL(file) : "", [file]);
+  const [description, setDescription] = useState("");
   const [result, setResult] = useState(null);
   const [mealType, setMealType] = useState(mealTypes[0]);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
-  const preview = useMemo(() => (file ? URL.createObjectURL(file) : ""), [file]);
+
+  useEffect(() => {
+    return () => { if (preview) URL.revokeObjectURL(preview); };
+  }, [preview]);
+
+  function changeMode(next) {
+    if (loading) return;
+    setMode(next);
+    setResult(null);
+    setStatus("");
+  }
 
   async function scanMeal() {
-    if (!file || !LIVE_AI_CONFIGURED) return;
+    if (loading) return;
+    if (mode === "photo" && !file) return setStatus("Take or choose a photo first.");
+    if (mode === "homemade" && description.trim().length < 8) return setStatus("Describe the ingredients and approximate amounts.");
     setLoading(true);
+    setResult(null);
     setStatus("");
-    try { setResult(await analyseMealPhoto(file)); }
-    catch (error) { setStatus(error.message || "Meal scan failed."); }
-    finally { setLoading(false); }
+    try {
+      const estimate = await estimateMeal({ file: mode === "photo" ? file : null, description });
+      setResult(estimate);
+      if (estimate.calories === null || estimate.protein === null) {
+        setStatus("Not enough information to calculate all macros. Add missing amounts manually when reviewing.");
+      }
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Could not estimate this meal.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function reviewMeal() {
-    if (!result || result.mode === "demo") return;
+    if (!result || result.mode !== "live") return;
     navigate("/nutrition", {
       state: {
         scannedMeal: {
           type: mealType,
-          name: result.mealName || "Scanned meal",
+          name: result.mealName,
           calories: result.calories,
           protein: result.protein,
           carbs: result.carbs,
@@ -45,29 +69,78 @@ export default function MealScanner() {
   }
 
   return (
-    <main className="screen tf-ai-suite">
-      <section className="tf-ai-hero"><Camera size={30} /><p className="eyebrow">AI meal scanner</p><h1>Photo to macros</h1><p>Take a meal photo, then check the estimate in your Nutrition log before saving.</p></section>
-      {!LIVE_AI_CONFIGURED && (
-        <section className="form-card">
-          <strong>AI photo analysis isn't connected yet</strong>
-          <p>This screen can take a photo, but live nutrition estimates need a secure AI service.
-          For now, use Food → Scan barcode for packaged food, or paste a ChatGPT meal estimate into the food log. We won't save made-up demo macros.</p>
-        </section>
-      )}
-      <section className="form-card tf-ai-upload-card">
-        <label className="tf-ai-file-picker"><ImagePlus size={24} /><strong>{file ? file.name : "Take or choose a meal photo"}</strong><span>Photos are estimates, not laboratory measurements.</span><input accept="image/*" capture="environment" onChange={(event) => { setFile(event.target.files?.[0] || null); setResult(null); setStatus(""); }} type="file" /></label>
-        {preview && <img className="tf-ai-preview" src={preview} alt="Meal preview" />}
-        <button className="tf-ai-primary" disabled={!file || loading || !LIVE_AI_CONFIGURED} onClick={scanMeal} type="button"><Sparkles size={18} /> {loading ? "Analysing meal..." : "Estimate calories and macros"}</button>
-        {status && <p role="status">{status}</p>}
+    <main className="screen tf-ai-suite tf-meal-estimate">
+      <section className="tf-ai-hero">
+        <Camera size={28}/>
+        <p className="eyebrow">TRACKFIT FOOD</p>
+        <h1>What's for dinner?</h1>
+        <p>Photograph your plate or describe your homemade meal. We'll estimate the nutrition, then you check it before saving.</p>
       </section>
+
+      <div className="tf-meal-estimate__modes" role="group" aria-label="How to estimate a meal">
+        <button type="button" aria-pressed={mode === "photo"} onClick={() => changeMode("photo")}>
+          <Camera size={19}/> Meal photo
+        </button>
+        <button type="button" aria-pressed={mode === "homemade"} onClick={() => changeMode("homemade")}>
+          <UtensilsCrossed size={19}/> Homemade meal
+        </button>
+      </div>
+
+      <section className="form-card tf-ai-upload-card">
+        {mode === "photo" && (
+          <>
+            <label className="tf-ai-file-picker">
+              <ImagePlus size={24}/>
+              <strong>{file ? file.name : "Take or choose a meal photo"}</strong>
+              <span>JPEG, PNG or WebP, up to 8 MB. Photo will be resized on your phone.</span>
+              <input accept="image/jpeg,image/png,image/webp" capture="environment" type="file"
+                onChange={(event) => { setFile(event.target.files?.[0] || null); setResult(null); setStatus(""); }} />
+            </label>
+            {preview && <img className="tf-ai-preview" src={preview} alt="Selected meal preview"/>}
+          </>
+        )}
+        <label className="tf-meal-estimate__description">
+          <strong>{mode === "photo" ? "Extra details (optional)" : "Describe what you ate"}</strong>
+          <span>{mode === "photo" ? "Help estimate hidden ingredients, oils and portions." : "Include approximate portions, cooking oil, sauces and drinks for a more useful estimate."}</span>
+          <textarea rows={4} maxLength={700} value={description}
+            onChange={(event) => { setDescription(event.target.value); setResult(null); }}
+            placeholder={mode === "photo" ? "e.g. Chicken thigh with skin, 1 cup rice, creamy sauce" : "e.g. 200 g cooked chicken, 1 cup cooked rice, mixed vegetables, 1 tbsp olive oil"} />
+        </label>
+        <button className="tf-ai-primary" type="button" disabled={loading || (mode === "photo" ? !file : description.trim().length < 8)} onClick={scanMeal}>
+          <Sparkles size={18}/>{loading ? "Estimating your meal..." : "Estimate calories and macros"}
+        </button>
+        {status && <p className="tf-meal-estimate__status" role="status">{status}</p>}
+        <small>Estimate only, not a measurement. Photos are processed on request by an AI provider and are not saved in TrackFit. Your existing daily AI request limit also applies here.</small>
+      </section>
+
       {result && (
         <section className="form-card tf-ai-result-card">
-          <div className="tf-ai-result-heading"><div><p className="eyebrow">Estimate</p><h2>{result.mealName}</h2></div><span>{Math.round(result.confidence * 100)}% confidence</span></div>
-          <div className="tf-ai-macro-grid"><article><strong>{result.calories}</strong><span>Calories</span></article><article><strong>{result.protein}g</strong><span>Protein</span></article><article><strong>{result.carbs}g</strong><span>Carbs</span></article><article><strong>{result.fats}g</strong><span>Fat</span></article></div>
-          <div className="tf-ai-item-list">{result.items.map((item) => <article key={item.name}><Check size={18} /><div><strong>{item.name}</strong><span>{item.amount} · {item.calories} cal</span></div><small>{Math.round(item.confidence * 100)}%</small></article>)}</div>
-          <label>Log this as<select value={mealType} onChange={(event) => setMealType(event.target.value)}>{mealTypes.map((type) => <option key={type}>{type}</option>)}</select></label>
-          <button className="tf-ai-primary" onClick={reviewMeal} disabled={result.mode === "demo"} type="button"><Save size={18} /> Review and save in Nutrition</button>
-          {result.mode === "demo" && <p className="tf-ai-demo-note">Demo estimate shown until the secure AI endpoint is connected.</p>}
+          <div className="tf-ai-result-heading">
+            <div><p className="eyebrow">AI ESTIMATE · PLEASE VERIFY</p><h2>{result.mealName}</h2></div>
+          </div>
+          <div className="tf-ai-macro-grid">
+            <article><strong>{fmt(result.calories)}</strong><span>Calories (kcal)</span></article>
+            <article><strong>{fmt(result.protein, "g")}</strong><span>Protein</span></article>
+            <article><strong>{fmt(result.carbs, "g")}</strong><span>Carbs</span></article>
+            <article><strong>{fmt(result.fats, "g")}</strong><span>Fat</span></article>
+          </div>
+          {result.items.length > 0 && (
+            <div className="tf-ai-item-list">
+              {result.items.map((item, index) => (
+                <article key={index}><Check size={18}/><div><strong>{item.name}</strong><span>{item.amount || "Amount unknown"} · {fmt(item.calories, " kcal")}</span></div></article>
+              ))}
+            </div>
+          )}
+          {result.assumptions && <p className="tf-meal-estimate__assumptions"><strong>Check these assumptions:</strong> {result.assumptions}</p>}
+          <p className="tf-meal-estimate__disclaimer">Portion sizes and invisible ingredients can make a big difference. You'll be able to edit every macro on the next screen before saving.</p>
+          <label>Log this as
+            <select value={mealType} onChange={(event) => setMealType(event.target.value)}>
+              {mealTypes.map((type) => <option key={type}>{type}</option>)}
+            </select>
+          </label>
+          <button className="tf-ai-primary" type="button" onClick={reviewMeal}>
+            <Save size={18}/> Review and save in Food
+          </button>
         </section>
       )}
     </main>
