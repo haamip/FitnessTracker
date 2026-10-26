@@ -379,10 +379,17 @@ export default function Nutrition() {
     <Link className="tf-food-photo-shortcut" to="/nutrition/scan">
       <Camera size={19}/> Estimate homemade meal or scan a dinner photo
     </Link>
+    <button type="button" className="tf-food-photo-shortcut tf-food-barcode-shortcut"
+      onClick={() => {
+        const section = document.getElementById("tf-food-lookup");
+        if (section) { section.open = true; section.scrollIntoView({ behavior: "smooth", block: "start" }); }
+      }}>
+      <Utensils size={19}/> Search food or scan a barcode
+    </button>
     <div className="tf-food-secondary-macros"><span>Carbs <strong>{roundDisplay(totals.carbs)}g</strong></span><span>Fat <strong>{roundDisplay(totals.fats)}g</strong></span></div>
     {message && <p className="tf-food-feedback" role="status">{message}</p>}
     <form id="tf-nutrition-meal-form" className="form-card form-grid" onSubmit={handleSubmit}><div><p className="eyebrow">Quick log</p><h2>{editingMealId ? "Edit your meal" : "Add a meal"}</h2></div><label>Meal<select value={form.type} onChange={(e)=>updateField("type",e.target.value)}>{mealTypes.map((type)=><option key={type}>{type}</option>)}</select></label><label>What did you eat?<input placeholder="Chicken, rice and veg" value={form.name} onChange={(e)=>updateField("name",e.target.value)}/></label><div className="tf-food-input-row"><label>Calories<input type="number" inputMode="decimal" step="0.1" min="0" required value={form.calories} onChange={(e)=>updateField("calories",e.target.value)}/></label><label>Protein<input type="number" inputMode="decimal" step="0.1" min="0" required value={form.protein} onChange={(e)=>updateField("protein",e.target.value)}/></label></div><div className="tf-food-input-row"><label>Carbs<input type="number" inputMode="decimal" step="0.1" min="0" value={form.carbs} onChange={(e)=>updateField("carbs",e.target.value)}/></label><label>Fat<input type="number" inputMode="decimal" step="0.1" min="0" value={form.fats} onChange={(e)=>updateField("fats",e.target.value)}/></label></div><Button className="v4-save-checkin" type="submit" disabled={saving}><Plus size={17}/>{saving ? "Saving..." : editingMealId ? "Save changes" : "Add meal"}</Button>{editingMealId && <button type="button" className="tf-food-cancel-edit" onClick={cancelEdit}><X size={17}/> Cancel editing</button>}</form>
-    <details className="tf-food-tool">
+    <details id="tf-food-lookup" className="tf-food-tool">
       <summary>Find food by name or barcode</summary>
       <section className="form-card form-grid" aria-label="Food database barcode lookup">
       <div><p className="eyebrow">Food database</p><h2>Find packaged food</h2><p>Search by food or brand name, scan a barcode, or enter its number. Check the label and portion before saving.</p></div>
