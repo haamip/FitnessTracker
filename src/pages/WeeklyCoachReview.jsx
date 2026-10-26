@@ -203,7 +203,7 @@ export default function WeeklyCoachReview() {
               })}
             </div>
           </fieldset>
-        ))}))}
+        ))}
         <label className="form-card tf-weekly-notes"><strong>Anything else for your coach? <span>(optional)</span></strong>
           <textarea rows={3} maxLength={800} value={answers.note} onChange={(event)=>{setAnswers((x)=>({...x,note:event.target.value}));setSaved(false);}} placeholder="Wins, challenges, injuries, what you'd like to change..." />
         </label>
