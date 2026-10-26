@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Camera, Check, ImagePlus, Save, Sparkles, UtensilsCrossed } from "lucide-react";
 import { estimateMeal } from "../services/ai/mealEstimateClient";
@@ -14,7 +14,7 @@ export default function MealScanner() {
   const mealTypes = getShiftMealTypes();
   const [mode, setMode] = useState("photo");
   const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState("");
+  const preview = useMemo(() => file ? URL.createObjectURL(file) : "", [file]);
   const [description, setDescription] = useState("");
   const [result, setResult] = useState(null);
   const [mealType, setMealType] = useState(mealTypes[0]);
@@ -22,11 +22,8 @@ export default function MealScanner() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!file) return undefined;
-    const url = URL.createObjectURL(file);
-    setPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
+    return () => { if (preview) URL.revokeObjectURL(preview); };
+  }, [preview]);
 
   function changeMode(next) {
     if (loading) return;
