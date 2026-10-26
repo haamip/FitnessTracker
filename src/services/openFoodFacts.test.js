@@ -4,6 +4,7 @@ import {
   isValidFoodBarcode,
   normaliseFoodProduct,
   scaleFoodNutrients,
+  searchFoodByName,
 } from "./openFoodFacts";
 
 const example = {
@@ -61,4 +62,23 @@ describe("Open Food Facts adapter", () => {
     });
     await expect(getFoodByBarcode("12345678", request)).resolves.toBeNull();
   });
+  it("only searches on deliberate calls, normalises results and excludes duplicates", async () => {
+    const request = vi.fn().mockResolvedValue({
+      ok: true, json: async () => ({ products: [example, example, { ...example, code: "12345678", product_name: "Oat biscuits" }] }),
+    });
+    const foods = await searchFoodByName("  oats  ", request);
+    expect(foods).toHaveLength(2);
+    expect(foods[0].per100g.protein).toBe(13);
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(request.mock.calls[0][0]).toContain("search_terms=oats");
+    expect(request.mock.calls[0][0]).toContain("page_size=18");
+  });
+  it("requires meaningful search text and handles limited rate", async () => {
+    const request = vi.fn();
+    await expect(searchFoodByName("a", request)).rejects.toThrow(/3 characters/);
+    expect(request).not.toHaveBeenCalled();
+    request.mockResolvedValue({ status: 429, ok: false });
+    await expect(searchFoodByName("milk", request)).rejects.toThrow(/busy/);
+  });
+
 });
