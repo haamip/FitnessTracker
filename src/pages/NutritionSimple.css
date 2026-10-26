@@ -130,3 +130,13 @@
 @media(max-width: 420px) {
   .tf-food-meals .v4-recovery-row { flex-wrap: wrap; }
 }
+
+/* Search only when submitted: Open Food Facts permits 10 searches/min/IP. */
+.tf-food-lookup-search { display:grid;gap:11px;min-width:0; }
+.tf-food-lookup-search label { display:grid;gap:6px;font-size:13px;font-weight:800; }
+.tf-food-search-results { display:grid;gap:8px;min-width:0;max-height:360px;overflow-y:auto;overscroll-behavior:contain; }
+.tf-food-search-results > small,.tf-food-recent-note { color:#687269;font-size:12px;line-height:1.5;margin:0; }
+.tf-food-search-result { display:grid;gap:5px;text-align:left;min-width:0;padding:12px;border:1px solid #dce4d7;border-radius:13px;background:#fafcf7;color:#253829;cursor:pointer; }
+.tf-food-search-result:focus-visible { outline:3px solid #9aca56;outline-offset:2px; }
+.tf-food-search-result strong { font-size:14px;line-height:1.35;overflow-wrap:anywhere; }
+.tf-food-search-result span { color:#5b6d5d;font-size:12px;line-height:1.45;overflow-wrap:anywhere; }
