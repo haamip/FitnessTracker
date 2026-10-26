@@ -1,0 +1,12 @@
+.tf-meal-estimator__modes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.tf-meal-estimator__modes button{display:flex;align-items:center;justify-content:center;gap:7px;min-height:50px;padding:10px 7px;border:1px solid #d7e1d6;border-radius:14px;background:#fff;color:#344d38;font-weight:850;font-size:13px;cursor:pointer}
+.tf-meal-estimator__modes button.active{border-color:#95c15f;background:#eaf5cf;outline:1px solid #95c15f}
+.tf-meal-estimator__modes button:disabled{opacity:.6}
+.tf-meal-estimator__description{display:grid;gap:12px;min-width:0;font-weight:800;color:#344b38}
+.tf-meal-estimator__description textarea{display:block;min-height:140px;width:100%;resize:vertical;padding:14px;border:1px solid #d4ddd2;border-radius:12px;font:inherit;font-weight:500;line-height:1.5}
+.tf-meal-estimator__description small,.tf-meal-estimator__note{margin:0;color:#58665a;font-size:12px;line-height:1.55}
+.tf-meal-estimator__error{margin:0;padding:12px;border-radius:13px;background:#fff3e8;color:#74441d;line-height:1.55}
+.tf-meal-estimator__alternatives{text-align:center;font-size:13px;font-weight:700;padding:8px 4px}
+.tf-meal-estimator__alternatives a,.tf-meal-estimator__error a{color:#305b3a;text-decoration:underline}
+.tf-meal-estimator .tf-ai-result-card label{display:grid;gap:7px;font-weight:800}
+.tf-meal-estimator .tf-ai-result-card label select{min-height:45px;border-radius:11px;padding:9px;border:1px solid #d4ddd2}
