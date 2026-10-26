@@ -19,12 +19,7 @@ export default function MealScanner() {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!file) { setPreview(""); return undefined; }
-    const url = URL.createObjectURL(file);
-    setPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
+  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
 
   async function estimateMeal() {
     if (loading) return;
@@ -88,7 +83,9 @@ export default function MealScanner() {
               <span>JPG, PNG or WebP · maximum 15 MB · food only</span>
               <input aria-label="Choose meal photo" type="file" accept="image/jpeg,image/png,image/webp"
                 capture="environment" onChange={(event) => {
-                  setFile(event.target.files?.[0] || null);
+                  const next = event.target.files?.[0] || null;
+                  setFile(next);
+                  setPreview(next ? URL.createObjectURL(next) : "");
                   setResult(null); setStatus("");
                 }} />
             </label>
