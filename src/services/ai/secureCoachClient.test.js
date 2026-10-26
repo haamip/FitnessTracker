@@ -64,6 +64,24 @@ describe("real AI Coach frontend boundary", () => {
     expect(body.history[2].text.length).toBe(300);
     expect(JSON.stringify(body)).not.toContain("This instruction must never be transmitted");
   });
+  it("surfaces an actionable billing error returned by the secure backend", async () => {
+    mock.invoke.mockResolvedValue({
+      data: null, error: { context: { json: async () => ({
+        error: "OpenAI API credits or billing need attention. Check billing at platform.openai.com; ChatGPT Plus does not include API credit.",
+        errorCode: "BILLING",
+      }) } },
+    });
+    await expect(requestTrackFitCoach("daily")).rejects.toThrow(/OpenAI API credits or billing/);
+  });
+  it("surfaces an invalid server-side key without exposing the key", async () => {
+    mock.invoke.mockResolvedValue({
+      data: null, error: { context: { json: async () => ({
+        error: "OpenAI rejected the API key. Check OPENAI_API_KEY under Supabase Edge Function secrets.",
+        errorCode: "INVALID_KEY",
+      }) } },
+    });
+    await expect(requestTrackFitCoach("daily")).rejects.toThrow(/OpenAI rejected the API key/);
+  });
   it("uses clear server-side configuration errors", async () => {
     mock.invoke.mockResolvedValue({
       data: null, error: { context: { json: async () => ({ error: "Live AI is not configured yet." }) } },
