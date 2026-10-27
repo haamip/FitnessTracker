@@ -137,7 +137,7 @@ export default function FoodBarcodeScanner({ onDetected, disabled = false }) {
         {scanning && <div className="tf-barcode-camera__target" aria-hidden="true"><Camera size={26} /></div>}
       </div>
       {scanning && <p className="tf-barcode-camera__instruction">Point your camera at the barcode on the packet. TrackFit will fill in the number automatically.</p>}
-      {status && <p role="status" className="tf-barcode-camera__status">{status}</p>}
+      {status && (status !== "Barcode found. Looking up your food..." || disabled) && <p role="status" className="tf-barcode-camera__status">{status}</p>}
     </div>
   );
 }
