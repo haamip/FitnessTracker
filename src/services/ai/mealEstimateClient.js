@@ -37,13 +37,16 @@ async function decodeImage(file) {
   const url = URL.createObjectURL(file);
   try {
     const photo = new Image();
-    const loaded = new Promise((resolve, reject) => {
-      photo.onload = resolve;
-      photo.onerror = () => reject(new Error("Image could not be decoded."));
-    });
-    photo.src = url;
-    if (typeof photo.decode === "function") await photo.decode();
-    else await loaded;
+    if (typeof photo.decode === "function") {
+      photo.src = url;
+      await photo.decode();
+    } else {
+      await new Promise((resolve, reject) => {
+        photo.onload = resolve;
+        photo.onerror = () => reject(new Error("Image could not be decoded."));
+        photo.src = url;
+      });
+    }
     return { image: photo, close: () => URL.revokeObjectURL(url) };
   } catch (error) {
     URL.revokeObjectURL(url);
