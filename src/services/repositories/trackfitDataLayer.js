@@ -7,6 +7,8 @@ import { TrainingCloudRepository } from "./trainingCloudRepository";
 import { workoutHistoryCacheKey, pendingWorkoutIdsKey, toCompletedWorkoutPayload } from "./completedWorkoutSync";
 
 const WORKOUT_KEY_PREFIX = "trackfit_workout_";
+const LEGACY_WORKOUT_HISTORY_KEY = "trackfit_workout_history";
+const LEGACY_WORKOUT_CLAIM_KEY = "trackfit_workout_history_legacy_claimed";
 const SAVED_WORKOUTS_KEY = "trackfit_saved_workouts";
 // Historical unowned workout history is intentionally retained, but never assigned to a new login automatically.
 let activeWorkoutAccountId = null;
@@ -172,6 +174,34 @@ export const HistoryRepository = {
     return key ? readJson(key, []).sort(newestFirst) : [];
   },
   getRecent(limit = 6) { return this.getAll().slice(0, limit); },
+  getLegacyCount() {
+    if (!activeWorkoutAccountId || localStorage.getItem(LEGACY_WORKOUT_CLAIM_KEY)) return 0;
+    return readJson(LEGACY_WORKOUT_HISTORY_KEY, []).length;
+  },
+  importLegacyForCurrentUser() {
+    if (!activeWorkoutAccountId || localStorage.getItem(LEGACY_WORKOUT_CLAIM_KEY)) return 0;
+    const legacy = readJson(LEGACY_WORKOUT_HISTORY_KEY, []);
+    if (!legacy.length) return 0;
+    const existing = this.getAll();
+    const identities = new Set(existing.map((item) =>
+      [item.title, item.completedAt, item.volume].join("|")));
+    const ids = new Set(existing.map((item) => item.id));
+    const imported = legacy.filter((item) => {
+      if (!item?.id || !item.completedAt || ids.has(item.id)) return false;
+      if (identities.has([item.title, item.completedAt, item.volume].join("|"))) return false;
+      ids.add(item.id);
+      return true;
+    }).map((item) => ({ ...item, updatedAt: new Date().toISOString() }));
+    this.saveAll([...existing, ...imported]);
+    // A legacy browser cache has no owner: import only after explicit consent.
+    // Never delete the original, so restoration remains possible if interrupted.
+    localStorage.setItem(LEGACY_WORKOUT_CLAIM_KEY, activeWorkoutAccountId);
+    for (const item of imported) {
+      this.markPending(item.id);
+      syncQuietly(syncCompletedWorkout(item));
+    }
+    return imported.length;
+  },
   getPendingIds() {
     const key = activeWorkoutPendingKey();
     return key ? readJson(key, []) : [];
