@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { isSupabaseConfigured, supabase } from "../../services/supabase";
 import { WorkoutCloudRepository } from "../../services/repositories/workoutCloudRepository";
 import { TrainingCloudRepository } from "../../services/repositories/trainingCloudRepository";
-import { CheckInRepository } from "../../services/repositories/trackfitDataLayer";
+import { CheckInRepository, HistoryRepository } from "../../services/repositories/trackfitDataLayer";
 import AuthScreen from "./AuthScreen";
 
 export default function AuthGate({ children }) {
@@ -28,6 +28,7 @@ export default function AuthGate({ children }) {
 
       if (restoredSession) {
         CheckInRepository.setActiveUser(restoredSession.user.id);
+        HistoryRepository.setActiveUser(restoredSession.user.id);
         try {
           await Promise.all([
             WorkoutCloudRepository.getAll(),
@@ -39,6 +40,7 @@ export default function AuthGate({ children }) {
         }
       } else {
         CheckInRepository.setActiveUser(null);
+        HistoryRepository.setActiveUser(null);
       }
 
       if (mounted) setLoading(false);
@@ -54,6 +56,7 @@ export default function AuthGate({ children }) {
 
       if (nextSession) {
         CheckInRepository.setActiveUser(nextSession.user.id);
+        HistoryRepository.setActiveUser(nextSession.user.id);
         try {
           await Promise.all([
             WorkoutCloudRepository.getAll(),
@@ -65,6 +68,7 @@ export default function AuthGate({ children }) {
         }
       } else {
         CheckInRepository.setActiveUser(null);
+        HistoryRepository.setActiveUser(null);
       }
 
       if (mounted) setLoading(false);
