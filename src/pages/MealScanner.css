@@ -13,3 +13,21 @@
 .tf-meal-estimate .tf-ai-result-card select {padding:12px;border-radius:12px;border:1px solid #c9d3c4;}
 .tf-meal-estimate .tf-ai-upload-card small {line-height:1.5;color:#697466;}
 @media(max-width:380px){.tf-meal-estimate__modes button{font-size:12px;}}
+
+
+/* Android camera and gallery are separate intents. Keep both choices obvious. */
+.tf-meal-estimate__pickers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tf-meal-estimate .tf-meal-estimate__pickers .tf-ai-file-picker{
+  min-width:0;min-height:106px;padding:15px 10px;gap:8px;
+  border:1.5px solid #a7bb97;border-radius:15px;
+  background:#f4f9eb;color:#263b2b;line-height:1.35;font-size:14px;
+}
+.tf-meal-estimate__pickers .tf-ai-file-picker:focus-within{outline:3px solid #8abb56;outline-offset:2px}
+.tf-meal-estimate__pickers .tf-ai-file-picker input:disabled{cursor:wait}
+.tf-meal-estimate__photo-help{margin:0;color:#516454;font-size:12px;line-height:1.5}
+.tf-meal-estimate__selected{display:flex;align-items:flex-start;flex-wrap:wrap;gap:5px;
+  margin:0;padding:11px 13px;border-radius:13px;background:#eaf6d8;
+  color:#23442b;font-size:12px;line-height:1.5}
+.tf-meal-estimate__selected strong{overflow-wrap:anywhere}
+.tf-meal-estimate__status{overflow-wrap:anywhere}
+@media(max-width:350px){.tf-meal-estimate__pickers{grid-template-columns:1fr}.tf-meal-estimate .tf-meal-estimate__pickers .tf-ai-file-picker{min-height:72px}}

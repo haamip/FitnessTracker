@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Camera, Check, ImagePlus, Save, Sparkles, UtensilsCrossed } from "lucide-react";
-import { estimateMeal } from "../services/ai/mealEstimateClient";
+import { estimateMeal, validateMealPhoto } from "../services/ai/mealEstimateClient";
 import { getShiftMealTypes } from "../services/shift/shiftModeService";
 import "./TrackFitScreens.css";
 import "./AISuite.css";
@@ -32,6 +32,21 @@ export default function MealScanner() {
     setStatus("");
   }
 
+  function selectPhoto(event) {
+    const candidate = event.target.files?.[0];
+    event.target.value = "";
+    if (!candidate) return;
+    setResult(null);
+    try {
+      validateMealPhoto(candidate);
+      setFile(candidate);
+      setStatus("Photo ready. Tap Estimate calories and macros to analyse it.");
+    } catch (error) {
+      setFile(null);
+      setStatus(error instanceof Error ? error.message : "Couldn't select that photo.");
+    }
+  }
+
   async function scanMeal() {
     if (loading) return;
     if (mode === "photo" && !file) return setStatus("Take or choose a photo first.");
@@ -40,11 +55,11 @@ export default function MealScanner() {
     setResult(null);
     setStatus("");
     try {
-      const estimate = await estimateMeal({ file: mode === "photo" ? file : null, description });
+      const estimate = await estimateMeal({ file: mode === "photo" ? file : null, description, onProgress: setStatus });
       setResult(estimate);
-      if (estimate.calories === null || estimate.protein === null) {
-        setStatus("Not enough information to calculate all macros. Add missing amounts manually when reviewing.");
-      }
+      setStatus(estimate.calories === null || estimate.protein === null
+        ? "Estimate received, but some macros are unknown. Add missing values when reviewing."
+        : "Estimate ready. Review the numbers below before saving your meal.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Could not estimate this meal.");
     } finally {
@@ -89,14 +104,21 @@ export default function MealScanner() {
       <section className="form-card tf-ai-upload-card">
         {mode === "photo" && (
           <>
-            <label className="tf-ai-file-picker">
-              <ImagePlus size={24}/>
-              <strong>{file ? file.name : "Take or choose a meal photo"}</strong>
-              <span>JPEG, PNG or WebP, up to 8 MB. Photo will be resized on your phone.</span>
-              <input accept="image/jpeg,image/png,image/webp" capture="environment" type="file"
-                onChange={(event) => { setFile(event.target.files?.[0] || null); setResult(null); setStatus(""); }} />
-            </label>
-            {preview && <img className="tf-ai-preview" src={preview} alt="Selected meal preview"/>}
+            <div className="tf-meal-estimate__pickers" role="group" aria-label="Select a meal photo">
+              <label className="tf-ai-file-picker">
+                <Camera size={23} aria-hidden="true" />
+                <strong>Take photo</strong>
+                <input type="file" accept="image/*" capture="environment" disabled={loading} onChange={selectPhoto} aria-label="Take a meal photo with your camera" />
+              </label>
+              <label className="tf-ai-file-picker">
+                <ImagePlus size={23} aria-hidden="true" />
+                <strong>Choose photo</strong>
+                <input type="file" accept="image/*" disabled={loading} onChange={selectPhoto} aria-label="Choose a meal photo from your phone" />
+              </label>
+            </div>
+            <p className="tf-meal-estimate__photo-help">Supports photos up to 25 MB; TrackFit shrinks the image before analysis. Taking a photo does not save or send it.</p>
+            {file && <p className="tf-meal-estimate__selected"><Check size={17} aria-hidden="true" /> Photo selected: <strong>{file.name || "Camera photo"}</strong> ({(file.size / (1024 * 1024)).toFixed(1)} MB)</p>}
+            {preview && <img className="tf-ai-preview" src={preview} alt="Selected meal preview" onError={() => setStatus("Preview unavailable. Try a JPEG photo or a screenshot if Estimate can't read it.")} />}
           </>
         )}
         <label className="tf-meal-estimate__description">
