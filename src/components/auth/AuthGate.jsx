@@ -48,6 +48,15 @@ export default function AuthGate({ children }) {
 
     void restoreSession();
 
+    // Re-attempt completed-workout uploads after connectivity returns.
+    // Pending sessions stay in their original account cache until confirmed.
+    const retryWhenOnline = () => {
+      if (!navigator.onLine) return;
+      void HistoryRepository.retryPending().catch((error) =>
+        console.warn("Completed workout sync will retry at next sign-in.", error));
+    };
+    window.addEventListener("online", retryWhenOnline);
+
     const { data } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
       if (!mounted) return;
       setLoading(true);
@@ -76,6 +85,7 @@ export default function AuthGate({ children }) {
 
     return () => {
       mounted = false;
+      window.removeEventListener("online", retryWhenOnline);
       data.subscription.unsubscribe();
     };
   }, []);
