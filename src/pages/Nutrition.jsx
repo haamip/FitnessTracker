@@ -409,7 +409,7 @@ export default function Nutrition() {
             <button type="button" key={food.barcode} className="tf-food-search-result"
               onClick={() => selectSearchedFood(food)}>
               <strong>{food.name}</strong>
-              <span>{food.brand || "Unbranded"} · {food.per100g.calories == null ? "Energy unknown" : `${Math.round(food.per100g.calories)} kcal`} / 100 g · {food.per100g.protein == null ? "Protein unknown" : `${food.per100g.protein}g protein`}</span>
+              <span>{food.brand || "Unbranded"} · {food.per100g.calories == null ? "Energy unknown" : `${Math.round(food.per100g.calories)} kcal`} / 100 g · {food.per100g.protein == null ? "Protein unknown" : `${roundDisplay(food.per100g.protein)}g protein`}</span>
             </button>
           ))}
         </div>
@@ -422,7 +422,7 @@ export default function Nutrition() {
       {foundFood && <div id="tf-food-selected-product" className="v4-quick-card">
         <strong>{foundFood.name}</strong>
         <span>{foundFood.brand || "Brand not supplied"} · {foundFood.barcode}</span>
-        <span>Per 100 g: {foundFood.per100g.calories === null ? "Calories unknown" : `${Math.round(foundFood.per100g.calories)} kcal`} · {foundFood.per100g.protein === null ? "Protein unknown" : `${foundFood.per100g.protein}g protein`}</span>
+        <span>Per 100 g: {foundFood.per100g.calories === null ? "Calories unknown" : `${Math.round(foundFood.per100g.calories)} kcal`} · {foundFood.per100g.protein === null ? "Protein unknown" : `${roundDisplay(foundFood.per100g.protein)}g protein`}</span>
         <label>Amount eaten (grams)
           <input aria-label="Amount eaten in grams" type="number" inputMode="decimal" min="1" max="10000" step="1" value={foodAmount} onChange={(event) => setFoodAmount(event.target.value)} />
         </label>
