@@ -6,7 +6,7 @@ vi.mock("../supabase", () => ({
     functions: { invoke: mocks.invoke },
   },
 }));
-import { estimateMeal, prepareMealPhoto } from "./mealEstimateClient";
+import { estimateMeal, prepareMealPhoto, validateMealPhoto, MAX_MEAL_PHOTO_BYTES } from "./mealEstimateClient";
 
 describe("secure meal estimator", () => {
   beforeEach(() => {
@@ -45,6 +45,50 @@ describe("secure meal estimator", () => {
     } } });
     await expect(estimateMeal({ description: "Chicken, potatoes and carrots" })).rejects.toThrow(/Daily AI limit/);
   });
+
+  it("accepts a camera JPEG bigger than the old 8 MB limit and uploads only a compressed JPEG", async () => {
+    const close = vi.fn();
+    const bitmap = { width: 4000, height: 3000, close };
+    const decode = vi.fn().mockResolvedValue(bitmap);
+    vi.stubGlobal("createImageBitmap", decode);
+    const drawImage = vi.fn();
+    const context = vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({ drawImage });
+    const jpeg = vi.spyOn(HTMLCanvasElement.prototype, "toDataURL").mockReturnValue("data:image/jpeg;base64,dGVzdA==");
+    const original = new File([new Uint8Array(9 * 1024 * 1024)], "dinner.jpg", { type: "image/jpeg" });
+    mocks.invoke.mockResolvedValue({ data: {
+      mode: "live", mealName: "Dinner", calories: 500, protein: 30, carbs: 45, fats: 18,
+      items: [], assumptions: "Approximate portion", needsReview: true,
+    }, error: null });
+    const progress = vi.fn();
+    try {
+      const response = await estimateMeal({ file: original, description: "Chicken and vegetables", onProgress: progress });
+      expect(response.mealName).toBe("Dinner");
+      const [, payload] = mocks.invoke.mock.calls[0];
+      expect(payload.body.mode).toBe("photo");
+      expect(payload.body.image).toBe("data:image/jpeg;base64,dGVzdA==");
+      expect(drawImage).toHaveBeenCalledOnce();
+      expect(jpeg).toHaveBeenCalledOnce();
+      expect(close).toHaveBeenCalledOnce();
+      expect(progress.mock.calls.map(([message]) => message)).toEqual([
+        "Preparing your photo on this phone...", "Sending photo for AI analysis...",
+      ]);
+    } finally {
+      context.mockRestore();
+      jpeg.mockRestore();
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("allows camera files with no MIME type, while rejecting empty and overlarge files", () => {
+    const cameraPhoto = new File(["image bytes"], "camera.jpg", { type: "" });
+    expect(validateMealPhoto(cameraPhoto)).toBe(cameraPhoto);
+    expect(MAX_MEAL_PHOTO_BYTES).toBe(25 * 1024 * 1024);
+    expect(() => validateMealPhoto(new File([], "empty.jpg", { type: "image/jpeg" }))).toThrow(/empty/);
+    const huge = new File(["x"], "huge.jpg", { type: "image/jpeg" });
+    Object.defineProperty(huge, "size", { value: 26 * 1024 * 1024 });
+    expect(() => validateMealPhoto(huge)).toThrow(/25 MB/);
+  });
+
   it("validates photo format before attempting to decode or upload", async () => {
     await expect(prepareMealPhoto(new Blob(["not a picture"], { type: "text/plain" })))
       .rejects.toThrow(/JPEG, PNG or WebP/);
