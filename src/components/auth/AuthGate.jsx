@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { isSupabaseConfigured, supabase } from "../../services/supabase";
 import { WorkoutCloudRepository } from "../../services/repositories/workoutCloudRepository";
+import { CardioCloudRepository } from "../../services/repositories/cardioCloudRepository";
 import { TrainingCloudRepository } from "../../services/repositories/trainingCloudRepository";
-import { CheckInRepository, HistoryRepository } from "../../services/repositories/trackfitDataLayer";
+import { CheckInRepository, HistoryRepository, CardioRepository } from "../../services/repositories/trackfitDataLayer";
 import AuthScreen from "./AuthScreen";
 
 export default function AuthGate({ children }) {
@@ -29,9 +30,11 @@ export default function AuthGate({ children }) {
       if (restoredSession) {
         CheckInRepository.setActiveUser(restoredSession.user.id);
         HistoryRepository.setActiveUser(restoredSession.user.id);
+        CardioRepository.setActiveUser(restoredSession.user.id);
         try {
           await Promise.all([
             WorkoutCloudRepository.getAll(),
+            CardioCloudRepository.getAll(),
             TrainingCloudRepository.hydrate(),
             CheckInRepository.hydrateForUser(restoredSession.user.id),
           ]);
@@ -41,6 +44,7 @@ export default function AuthGate({ children }) {
       } else {
         CheckInRepository.setActiveUser(null);
         HistoryRepository.setActiveUser(null);
+        CardioRepository.setActiveUser(null);
       }
 
       if (mounted) setLoading(false);
@@ -54,6 +58,8 @@ export default function AuthGate({ children }) {
       if (!navigator.onLine) return;
       void HistoryRepository.retryPending().catch((error) =>
         console.warn("Completed workout sync will retry at next sign-in.", error));
+      void CardioCloudRepository.retryPending().catch((error) =>
+        console.warn("Cardio sync will retry on next sign-in.", error));
     };
     window.addEventListener("online", retryWhenOnline);
 
@@ -66,9 +72,11 @@ export default function AuthGate({ children }) {
       if (nextSession) {
         CheckInRepository.setActiveUser(nextSession.user.id);
         HistoryRepository.setActiveUser(nextSession.user.id);
+        CardioRepository.setActiveUser(nextSession.user.id);
         try {
           await Promise.all([
             WorkoutCloudRepository.getAll(),
+            CardioCloudRepository.getAll(),
             TrainingCloudRepository.hydrate(),
             CheckInRepository.hydrateForUser(nextSession.user.id),
           ]);
@@ -78,6 +86,7 @@ export default function AuthGate({ children }) {
       } else {
         CheckInRepository.setActiveUser(null);
         HistoryRepository.setActiveUser(null);
+        CardioRepository.setActiveUser(null);
       }
 
       if (mounted) setLoading(false);

@@ -4,6 +4,7 @@ import { toDailyCheckInCloudPayload, fromDailyCheckInCloudRow } from "../checkIn
 import { checkInCacheKey, pendingCheckInsKey, mergeCloudCheckIns } from "./checkInCacheHelpers";
 import { mergeImportedSteps } from "./watchStepSave";
 import { TrainingCloudRepository } from "./trainingCloudRepository";
+import { cardioCacheKey, cardioPendingKey, cardioDeletionsKey, canonicalCardioId } from "./cardioSyncHelpers";
 import { workoutHistoryCacheKey, pendingWorkoutIdsKey, toCompletedWorkoutPayload } from "./completedWorkoutSync";
 
 const WORKOUT_KEY_PREFIX = "trackfit_workout_";
@@ -30,7 +31,9 @@ function markCheckInPending(date) {
   pending.add(date);
   writeJson(key, [...pending]);
 }
-const CARDIO_KEY = "trackfit_cardio";
+const CARDIO_KEY = "trackfit_cardio"; // Unowned legacy records retained until explicit import.
+const CARDIO_LEGACY_CLAIM_KEY = "trackfit_cardio_legacy_claimed";
+let activeCardioAccountId = null;
 const NUTRITION_KEY = "trackfit_nutrition";
 const AI_PLAN_KEY = "trackfit_ai_workout_plan";
 
@@ -259,7 +262,79 @@ export const AIPlanRepository = {
   clear() { removeJson(AI_PLAN_KEY); syncQuietly(TrainingCloudRepository.clearPlan()); },
 };
 
-export const CardioRepository = { getAll() { return readJson(CARDIO_KEY, []).sort(newestFirst); }, saveAll(cardio) { writeJson(CARDIO_KEY, cardio); }, clear() { removeJson(CARDIO_KEY); } };
+export const CardioRepository = {
+  setActiveUser(userId) {
+    activeCardioAccountId = typeof userId === "string" && userId ? userId : null;
+  },
+  getActiveUser() { return activeCardioAccountId; },
+  getAll() {
+    return activeCardioAccountId
+      ? readJson(cardioCacheKey(activeCardioAccountId), []).sort(newestFirst) : [];
+  },
+  saveAll(cardio) {
+    if (!activeCardioAccountId) return;
+    writeJson(cardioCacheKey(activeCardioAccountId), cardio);
+  },
+  getPendingIds() {
+    return activeCardioAccountId ? readJson(cardioPendingKey(activeCardioAccountId), []) : [];
+  },
+  markPending(id) {
+    if (!activeCardioAccountId || !id) return;
+    const key = cardioPendingKey(activeCardioAccountId);
+    writeJson(key, [...new Set([...readJson(key, []), String(id)])]);
+  },
+  acknowledge(id) {
+    if (!activeCardioAccountId) return;
+    const key = cardioPendingKey(activeCardioAccountId);
+    writeJson(key, readJson(key, []).filter(x => x !== id));
+  },
+  getDeletions() {
+    return activeCardioAccountId ? readJson(cardioDeletionsKey(activeCardioAccountId), []) : [];
+  },
+  markDeletion(id) {
+    if (!activeCardioAccountId) return;
+    const canonical = canonicalCardioId(id);
+    if (!canonical) return;
+    const key = cardioDeletionsKey(activeCardioAccountId);
+    writeJson(key, [...new Set([...readJson(key, []), canonical])]);
+  },
+  acknowledgeDeletion(id) {
+    if (!activeCardioAccountId) return;
+    const key = cardioDeletionsKey(activeCardioAccountId);
+    writeJson(key, readJson(key, []).filter(x => x !== id));
+  },
+  getLegacyCount() {
+    return activeCardioAccountId && !localStorage.getItem(CARDIO_LEGACY_CLAIM_KEY)
+      ? readJson(CARDIO_KEY, []).length : 0;
+  },
+  importLegacyForCurrentUser() {
+    if (!activeCardioAccountId || localStorage.getItem(CARDIO_LEGACY_CLAIM_KEY)) return 0;
+    const existing = this.getAll();
+    const keys = new Set(existing.map(row => canonicalCardioId(row.id)).filter(Boolean));
+    const legacy = readJson(CARDIO_KEY, []);
+    let added = 0;
+    const imported = legacy.filter(row => row?.date && row?.type).map(row => {
+      const id = canonicalCardioId(row.id) ? String(row.id) : `cardio-${crypto.randomUUID()}`;
+      return { ...row, id };
+    }).filter(row => {
+      const key = canonicalCardioId(row.id);
+      if (!key || keys.has(key)) return false;
+      keys.add(key);
+      added += 1;
+      return true;
+    });
+    this.saveAll([...existing, ...imported]);
+    for (const row of imported) this.markPending(row.id);
+    localStorage.setItem(CARDIO_LEGACY_CLAIM_KEY, activeCardioAccountId);
+    return added;
+  },
+  clear() {
+    if (!activeCardioAccountId) return;
+    removeJson(cardioCacheKey(activeCardioAccountId));
+    removeJson(cardioPendingKey(activeCardioAccountId));
+    removeJson(cardioDeletionsKey(activeCardioAccountId));
+  },
+};
 export const CheckInRepository = {
   setActiveUser(userId) {
     activeCheckInAccountId = typeof userId === "string" && userId ? userId : null;

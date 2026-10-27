@@ -25,7 +25,7 @@ import {
 import Button from "../components/ui/Button";
 import LineChartCard from "../components/LineChartCard";
 import { CardioCloudRepository } from "../services/repositories/cardioCloudRepository";
-import { CheckInRepository } from "../services/repositories/trackfitDataLayer";
+import { CheckInRepository, CardioRepository } from "../services/repositories/trackfitDataLayer";
 import { buildSevenDayCardio, recentCardioTotals, localDateKey, pacePerKm } from "../services/cardioSummary";
 import { signalTrackFitDataChange } from "../hooks/useTrackFitDataRefresh";
 import "./TrackFitScreens.css";
@@ -92,6 +92,9 @@ export default function CardioLog() {
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [removingId, setRemovingId] = useState(null);
+  const [pendingCount, setPendingCount] = useState(() => CardioCloudRepository.getPendingCount());
+  const [legacyCount, setLegacyCount] = useState(() => CardioRepository.getLegacyCount());
+  const [syncBusy, setSyncBusy] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -99,7 +102,10 @@ export default function CardioLog() {
     async function loadSessions() {
       try {
         const sessions = await CardioCloudRepository.getAll();
-        if (active) setSavedSessions(sessions.map(normaliseSession));
+        if (active) {
+          setSavedSessions(sessions.map(normaliseSession));
+          setPendingCount(CardioCloudRepository.getPendingCount());
+        }
       } catch (error) {
         console.error("Unable to load cardio sessions.", error);
         if (active) setStatusMessage("Using saved offline cardio data.");
@@ -159,9 +165,8 @@ export default function CardioLog() {
     setStatusMessage("");
 
     try {
-      const saved = normaliseSession(
-        await CardioCloudRepository.add(newSession),
-      );
+      const result = await CardioCloudRepository.add(newSession);
+      const saved = normaliseSession(result);
       setSavedSessions((current) => [
         saved,
         ...current.filter(
@@ -171,13 +176,15 @@ export default function CardioLog() {
       setSelectedType("All");
       setForm(initialForm);
       signalTrackFitDataChange();
-      setStatusMessage("Movement saved.");
+      setPendingCount(CardioCloudRepository.getPendingCount());
+      setStatusMessage(result.cloudPending ? "Movement saved on this device. Cloud backup pending." : "Movement saved and backed up.");
     } catch (error) {
       console.error("Unable to sync cardio session.", error);
       setSavedSessions(
         CardioCloudRepository.getCached().map(normaliseSession),
       );
-      setStatusMessage("Saved on this device, but cloud sync failed. Check your connection before logging it again.");
+      setPendingCount(CardioCloudRepository.getPendingCount());
+      setStatusMessage("Movement kept on this device; cloud backup will retry.");
     } finally {
       setIsSaving(false);
     }
@@ -191,12 +198,38 @@ export default function CardioLog() {
       const updated = await CardioCloudRepository.remove(session.id);
       setSavedSessions(updated.map(normaliseSession));
       signalTrackFitDataChange();
-      setStatusMessage("Cardio session deleted.");
+      setPendingCount(CardioCloudRepository.getPendingCount());
+      setStatusMessage("Cardio removed from this device. If offline, cloud deletion will retry.");
     } catch (error) {
       setStatusMessage(`Could not delete that session: ${error.message || "Please try again"}`);
     } finally {
       setRemovingId(null);
     }
+  }
+
+  async function retryCardioSync() {
+    if (syncBusy) return;
+    setSyncBusy(true);
+    try {
+      await CardioCloudRepository.retryPending();
+      const next = await CardioCloudRepository.getAll();
+      setSavedSessions(next.map(normaliseSession));
+      setPendingCount(CardioCloudRepository.getPendingCount());
+      setStatusMessage(CardioCloudRepository.getPendingCount()
+        ? "Some cardio changes are still waiting for cloud backup."
+        : "Cardio cloud backup is up to date.");
+    } finally { setSyncBusy(false); }
+  }
+
+  async function restoreOldCardio() {
+    if (!window.confirm("These cardio entries were saved on this device before TrackFit separated accounts. Only restore them if they belong to your signed-in account. Restore them?")) return;
+    const count = CardioRepository.importLegacyForCurrentUser();
+    setLegacyCount(0);
+    setSavedSessions(CardioCloudRepository.getCached().map(normaliseSession));
+    setPendingCount(CardioCloudRepository.getPendingCount());
+    setStatusMessage(`${count} older cardio records restored on this device. Cloud backup will retry.`);
+    await CardioCloudRepository.retryPending();
+    setPendingCount(CardioCloudRepository.getPendingCount());
   }
 
   return (
@@ -229,6 +262,23 @@ export default function CardioLog() {
         <span><strong>Watch & Steps</strong><small>Sync Galaxy Watch steps or check Health Connect setup</small></span>
         <ChevronRight size={19} aria-hidden="true" />
       </Link>
+
+      {pendingCount > 0 && (
+        <section className="form-card" style={{ display: "grid", gap: 10 }} aria-label="Cardio cloud sync status">
+          <strong>{pendingCount} cardio change{pendingCount === 1 ? "" : "s"} waiting for cloud sync</strong>
+          <p style={{ margin: 0 }}>Your device copy is retained. TrackFit will retry when the connection is back.</p>
+          <button type="button" disabled={syncBusy} onClick={retryCardioSync}>
+            {syncBusy ? "Syncing..." : "Retry cardio backup"}
+          </button>
+        </section>
+      )}
+      {legacyCount > 0 && (
+        <section className="form-card" style={{ display: "grid", gap: 10 }}>
+          <strong>{legacyCount} older cardio record{legacyCount === 1 ? "" : "s"} found</strong>
+          <p style={{ margin: 0 }}>These were saved before account-specific storage. Only restore them if they are yours.</p>
+          <button type="button" onClick={restoreOldCardio}>Restore my old cardio records</button>
+        </section>
+      )}
 
       <p className="tf-cardio-explanation">Last 7 calendar days · {totals.count} cardio sessions · {todaySteps ? `Steps from ${stepsLabel}` : "Log or sync a daily check-in to show today's steps"}</p>
 
