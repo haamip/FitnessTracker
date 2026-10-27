@@ -38,6 +38,7 @@ import {
   HistoryRepository,
   SavedWorkoutRepository,
 } from "../services/repositories/trackfitDataLayer";
+import { getOrStartWorkoutClock, elapsedWorkoutSeconds, clearWorkoutClock } from "../services/workoutClock";
 import "./TrackFitScreens.css";
 
 const DEFAULT_REST_SECONDS = 90;
@@ -147,7 +148,9 @@ export default function WorkoutDetail() {
   const savedTemplate = SavedWorkoutRepository.getById(id);
   const workoutTitle = savedTemplate?.name || aiDay?.name || "Workout 1";
 
-  const [seconds, setSeconds] = useState(0);
+  const accountId = HistoryRepository.getActiveUser();
+  const [startedAt] = useState(() => getOrStartWorkoutClock(accountId, id));
+  const [seconds, setSeconds] = useState(() => elapsedWorkoutSeconds(startedAt));
   const [restSeconds, setRestSeconds] = useState(DEFAULT_REST_SECONDS);
   const [restRunning, setRestRunning] = useState(false);
   const [activeRestLabel, setActiveRestLabel] = useState("Rest ready");
@@ -157,6 +160,7 @@ export default function WorkoutDetail() {
   const [completedExerciseId, setCompletedExerciseId] = useState("");
   const [finishedWorkoutSummary, setFinishedWorkoutSummary] = useState(null);
   const swipeStartX = useRef(null);
+  const workoutSavedRef = useRef(false);
 
   const [exercises, setExercises] = useState(() => {
     const savedWorkout = WorkoutRepository.getById(id);
@@ -201,12 +205,23 @@ export default function WorkoutDetail() {
     completedExerciseId === currentExercise?.id;
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      setSeconds((currentSeconds) => currentSeconds + 1);
-    }, 1000);
-
-    return () => window.clearInterval(timer);
-  }, []);
+    // The display refreshes every second, but the source of truth is a saved
+    // timestamp. Background throttling or navigating away cannot lose time.
+    const refresh = () => {
+      if (!workoutSavedRef.current) setSeconds(elapsedWorkoutSeconds(startedAt));
+    };
+    refresh();
+    const timer = window.setInterval(refresh, 1000);
+    window.addEventListener("focus", refresh);
+    window.addEventListener("pageshow", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("pageshow", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [startedAt]);
 
   useEffect(() => {
     if (!completedExerciseId) return undefined;
@@ -356,6 +371,10 @@ export default function WorkoutDetail() {
 
     if (willCompleteWorkout) {
       window.setTimeout(() => {
+        if (workoutSavedRef.current) return;
+        workoutSavedRef.current = true;
+        const finalSeconds = elapsedWorkoutSeconds(startedAt);
+        setSeconds(finalSeconds);
         const nextTotals = calculateWorkoutTotals(nextExercises);
         const history = readWorkoutHistory();
         const prs = detectWorkoutPRs(history, nextExercises);
@@ -363,7 +382,8 @@ export default function WorkoutDetail() {
         const finishedWorkout = buildCompletedWorkout({
           id,
           title: workoutTitle,
-          seconds,
+          seconds: finalSeconds,
+          startedAt: new Date(startedAt).toISOString(),
           notes,
           exercises: nextExercises,
           totals: nextTotals,
@@ -372,6 +392,7 @@ export default function WorkoutDetail() {
 
         HistoryRepository.add(finishedWorkout);
         WorkoutRepository.removeById(id);
+        clearWorkoutClock(accountId, id);
         setFinishedWorkoutSummary(finishedWorkout);
       }, 1100);
     }
@@ -515,12 +536,17 @@ export default function WorkoutDetail() {
   }
 
   function finishWorkout() {
+    if (workoutSavedRef.current) return;
+    workoutSavedRef.current = true;
+    const finalSeconds = elapsedWorkoutSeconds(startedAt);
+    setSeconds(finalSeconds);
     const history = readWorkoutHistory();
     const prs = detectWorkoutPRs(history, exercises);
     const finishedWorkout = buildCompletedWorkout({
       id,
-      title: aiDay?.name || "Workout 1",
-      seconds,
+      title: workoutTitle,
+      seconds: finalSeconds,
+      startedAt: new Date(startedAt).toISOString(),
       notes,
       exercises,
       totals,
@@ -529,6 +555,7 @@ export default function WorkoutDetail() {
 
     HistoryRepository.add(finishedWorkout);
     WorkoutRepository.removeById(id);
+    clearWorkoutClock(accountId, id);
     setFinishedWorkoutSummary(finishedWorkout);
     window.scrollTo({ top: window.scrollY, behavior: "instant" });
   }
