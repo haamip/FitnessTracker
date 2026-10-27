@@ -71,6 +71,8 @@ export default function Workouts() {
   const [selectMode, setSelectMode] = useState(false);
   const [historyRevision, setHistoryRevision] = useState(0);
   const [legacyHistoryCount, setLegacyHistoryCount] = useState(() => HistoryRepository.getLegacyCount());
+  const [pendingHistoryCount, setPendingHistoryCount] = useState(() => HistoryRepository.getPendingIds().length);
+  const [retryingHistory, setRetryingHistory] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
 
   const workoutHistory = useMemo(() => {
@@ -173,10 +175,23 @@ export default function Workouts() {
     }
   }
 
+  async function retryWorkoutCloudSync() {
+    if (retryingHistory) return;
+    setRetryingHistory(true);
+    try {
+      await HistoryRepository.retryPending();
+      setPendingHistoryCount(HistoryRepository.getPendingIds().length);
+      setHistoryRevision((value) => value + 1);
+    } finally {
+      setRetryingHistory(false);
+    }
+  }
+
   function restoreLegacyHistory() {
     if (!window.confirm("These workout records were saved on this device before TrackFit separated accounts. Only restore them if they belong to your signed-in account. Restore and back them up to the cloud?")) return;
     const count = HistoryRepository.importLegacyForCurrentUser();
     setLegacyHistoryCount(0);
+    setPendingHistoryCount(HistoryRepository.getPendingIds().length);
     if (count) setHistoryRevision((value) => value + 1);
   }
 
@@ -300,6 +315,16 @@ export default function Workouts() {
           <Sparkles size={24} /><strong>Manage Plan</strong><span>{hasTrainingPlan ? "Edit your workouts" : "Build a plan"}</span>
         </Link>
       </section>
+
+      {pendingHistoryCount > 0 && (
+        <section className="form-card" style={{ display: "grid", gap: 10 }}>
+          <strong>{pendingHistoryCount} workout{pendingHistoryCount === 1 ? "" : "s"} saved on this device</strong>
+          <p style={{ margin: 0, lineHeight: 1.5 }}>Cloud backup is pending. Your workouts will retry when you're online or reopen TrackFit.</p>
+          <button type="button" className="tf-workout-restore" disabled={retryingHistory} onClick={retryWorkoutCloudSync}>
+            {retryingHistory ? "Retrying backup..." : "Retry cloud backup"}
+          </button>
+        </section>
+      )}
 
       {legacyHistoryCount > 0 && (
         <section className="form-card" style={{ display: "grid", gap: 10 }}>
