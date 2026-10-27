@@ -102,6 +102,7 @@ export function buildCompletedWorkout({
   id,
   title,
   seconds,
+  startedAt,
   notes,
   exercises,
   totals,
@@ -116,6 +117,9 @@ export function buildCompletedWorkout({
     workoutId: id,
     title,
     completedAt: new Date().toISOString(),
+    // Timestamp retained so the cloud can use the real start, not an inferred
+    // interval that might be affected by a delayed background save.
+    startedAt: startedAt || null,
 
     // Keep both fields for compatibility: older UI reads `seconds`, while
     // repository/history code reads `durationSeconds`.
