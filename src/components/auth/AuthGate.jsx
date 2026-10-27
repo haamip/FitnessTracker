@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { isSupabaseConfigured, supabase } from "../../services/supabase";
 import { WorkoutCloudRepository } from "../../services/repositories/workoutCloudRepository";
 import { TrainingCloudRepository } from "../../services/repositories/trainingCloudRepository";
-import { CheckInRepository } from "../../services/repositories/trackfitDataLayer";
+import { CheckInRepository, HistoryRepository } from "../../services/repositories/trackfitDataLayer";
 import AuthScreen from "./AuthScreen";
 
 export default function AuthGate({ children }) {
@@ -28,6 +28,7 @@ export default function AuthGate({ children }) {
 
       if (restoredSession) {
         CheckInRepository.setActiveUser(restoredSession.user.id);
+        HistoryRepository.setActiveUser(restoredSession.user.id);
         try {
           await Promise.all([
             WorkoutCloudRepository.getAll(),
@@ -39,12 +40,22 @@ export default function AuthGate({ children }) {
         }
       } else {
         CheckInRepository.setActiveUser(null);
+        HistoryRepository.setActiveUser(null);
       }
 
       if (mounted) setLoading(false);
     }
 
     void restoreSession();
+
+    // Re-attempt completed-workout uploads after connectivity returns.
+    // Pending sessions stay in their original account cache until confirmed.
+    const retryWhenOnline = () => {
+      if (!navigator.onLine) return;
+      void HistoryRepository.retryPending().catch((error) =>
+        console.warn("Completed workout sync will retry at next sign-in.", error));
+    };
+    window.addEventListener("online", retryWhenOnline);
 
     const { data } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
       if (!mounted) return;
@@ -54,6 +65,7 @@ export default function AuthGate({ children }) {
 
       if (nextSession) {
         CheckInRepository.setActiveUser(nextSession.user.id);
+        HistoryRepository.setActiveUser(nextSession.user.id);
         try {
           await Promise.all([
             WorkoutCloudRepository.getAll(),
@@ -65,6 +77,7 @@ export default function AuthGate({ children }) {
         }
       } else {
         CheckInRepository.setActiveUser(null);
+        HistoryRepository.setActiveUser(null);
       }
 
       if (mounted) setLoading(false);
@@ -72,6 +85,7 @@ export default function AuthGate({ children }) {
 
     return () => {
       mounted = false;
+      window.removeEventListener("online", retryWhenOnline);
       data.subscription.unsubscribe();
     };
   }, []);

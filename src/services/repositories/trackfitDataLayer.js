@@ -4,10 +4,16 @@ import { toDailyCheckInCloudPayload, fromDailyCheckInCloudRow } from "../checkIn
 import { checkInCacheKey, pendingCheckInsKey, mergeCloudCheckIns } from "./checkInCacheHelpers";
 import { mergeImportedSteps } from "./watchStepSave";
 import { TrainingCloudRepository } from "./trainingCloudRepository";
+import { workoutHistoryCacheKey, pendingWorkoutIdsKey, toCompletedWorkoutPayload } from "./completedWorkoutSync";
 
 const WORKOUT_KEY_PREFIX = "trackfit_workout_";
+const LEGACY_WORKOUT_HISTORY_KEY = "trackfit_workout_history";
+const LEGACY_WORKOUT_CLAIM_KEY = "trackfit_workout_history_legacy_claimed";
 const SAVED_WORKOUTS_KEY = "trackfit_saved_workouts";
-const WORKOUT_HISTORY_KEY = "trackfit_workout_history";
+// Historical unowned workout history is intentionally retained, but never assigned to a new login automatically.
+let activeWorkoutAccountId = null;
+const activeWorkoutHistoryKey = () => activeWorkoutAccountId ? workoutHistoryCacheKey(activeWorkoutAccountId) : null;
+const activeWorkoutPendingKey = () => activeWorkoutAccountId ? pendingWorkoutIdsKey(activeWorkoutAccountId) : null;
 const CHECKINS_KEY = "trackfit_checkins"; // Legacy browser-wide cache. Never show it across accounts.
 const LEGACY_CLAIM_KEY = "trackfit_checkins_legacy_claimed";
 let activeCheckInAccountId = null;
@@ -33,36 +39,37 @@ function newestFirst(left, right) { return new Date(right.completedAt || right.u
 function syncQuietly(action) { Promise.resolve(action).catch((error) => console.warn("TrackFit cloud sync deferred:", error)); }
 
 async function syncCompletedWorkout(record) {
-  if (!supabase) return;
+  const expectedAccount = activeWorkoutAccountId;
+  if (!supabase || !expectedAccount || !record?.id) return { cloudSaved: false };
   try {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
+    const { data: auth, error: userError } = await supabase.auth.getUser();
     if (userError) throw userError;
-    const userId = userData.user?.id;
-    if (!userId) return;
-    const completedAt = record.completedAt || new Date().toISOString();
-    const durationSeconds = Number(record.durationSeconds ?? record.seconds) || 0;
-    const startedAt = new Date(new Date(completedAt).getTime() - durationSeconds * 1000).toISOString();
-    const { data, error } = await supabase.from("workout_sessions").insert({
-      user_id: userId,
-      title: record.title || "Completed workout",
-      status: "completed",
-      started_at: startedAt,
-      completed_at: completedAt,
-      duration_seconds: durationSeconds,
-      exercises: record.exercises || [],
-      total_volume: Number(record.volume) || 0,
-      notes: record.notes || null,
-      prs: record.prs || [],
-      completed_sets: Number(record.completedSets ?? record.doneSets) || 0,
-      total_sets: Number(record.totalSets) || 0,
-    }).select("id").single();
+    if (auth.user?.id !== expectedAccount || activeWorkoutAccountId !== expectedAccount) return { cloudSaved: false };
+    const payload = toCompletedWorkoutPayload(record, expectedAccount);
+    // Older cloud rows have no local_id. Update by cloud id rather than
+    // accidentally inserting a duplicate when their duration is edited.
+    const query = record.cloudId && record.id === record.cloudId
+      ? supabase.from("workout_sessions").update({ ...payload, local_id: null })
+        .eq("id", record.cloudId).eq("user_id", expectedAccount)
+      : supabase.from("workout_sessions").upsert(payload, { onConflict: "user_id,local_id" });
+    const { data, error } = await query.select("id").single();
     if (error) throw error;
-    if (data?.id) {
-      const current = readJson(WORKOUT_HISTORY_KEY, []);
-      writeJson(WORKOUT_HISTORY_KEY, current.map((item) => item.id === record.id ? { ...item, id: data.id } : item));
+    if (!data?.id || activeWorkoutAccountId !== expectedAccount) return { cloudSaved: false };
+    const current = HistoryRepository.getAll();
+    const latest = current.find((item) => item.id === record.id);
+    const cacheKey = activeWorkoutHistoryKey();
+    if (latest && cacheKey) {
+      writeJson(cacheKey, current.map((item) => item.id === record.id ? { ...item, cloudId: data.id } : item));
     }
+    // Do not acknowledge an older upload if an edit was saved while in flight.
+    const pendingKey = activeWorkoutPendingKey();
+    if (pendingKey && latest && latest.updatedAt === record.updatedAt) {
+      writeJson(pendingKey, readJson(pendingKey, []).filter((id) => id !== record.id));
+    }
+    return { cloudSaved: true };
   } catch (error) {
-    console.warn("Workout cloud save failed; session remains stored locally.", error);
+    console.warn("Workout cloud save deferred; session remains pending locally.", error);
+    return { cloudSaved: false };
   }
 }
 
@@ -158,21 +165,92 @@ export const SavedWorkoutRepository = {
 };
 
 export const HistoryRepository = {
-  getAll() { return readJson(WORKOUT_HISTORY_KEY, []).sort(newestFirst); },
+  setActiveUser(userId) {
+    activeWorkoutAccountId = typeof userId === "string" && userId ? userId : null;
+  },
+  getActiveUser() { return activeWorkoutAccountId; },
+  getAll() {
+    const key = activeWorkoutHistoryKey();
+    return key ? readJson(key, []).sort(newestFirst) : [];
+  },
   getRecent(limit = 6) { return this.getAll().slice(0, limit); },
-  saveAll(history) { writeJson(WORKOUT_HISTORY_KEY, history); },
+  getLegacyCount() {
+    if (!activeWorkoutAccountId || localStorage.getItem(LEGACY_WORKOUT_CLAIM_KEY)) return 0;
+    return readJson(LEGACY_WORKOUT_HISTORY_KEY, []).length;
+  },
+  importLegacyForCurrentUser() {
+    if (!activeWorkoutAccountId || localStorage.getItem(LEGACY_WORKOUT_CLAIM_KEY)) return 0;
+    const legacy = readJson(LEGACY_WORKOUT_HISTORY_KEY, []);
+    if (!legacy.length) return 0;
+    const existing = this.getAll();
+    const identities = new Set(existing.map((item) =>
+      [item.title, item.completedAt, item.volume].join("|")));
+    const ids = new Set(existing.map((item) => item.id));
+    const imported = legacy.filter((item) => {
+      if (!item?.id || !item.completedAt || ids.has(item.id)) return false;
+      if (identities.has([item.title, item.completedAt, item.volume].join("|"))) return false;
+      ids.add(item.id);
+      return true;
+    }).map((item) => ({ ...item, updatedAt: new Date().toISOString() }));
+    this.saveAll([...existing, ...imported]);
+    // A legacy browser cache has no owner: import only after explicit consent.
+    // Never delete the original, so restoration remains possible if interrupted.
+    localStorage.setItem(LEGACY_WORKOUT_CLAIM_KEY, activeWorkoutAccountId);
+    for (const item of imported) {
+      this.markPending(item.id);
+      syncQuietly(syncCompletedWorkout(item));
+    }
+    return imported.length;
+  },
+  getPendingIds() {
+    const key = activeWorkoutPendingKey();
+    return key ? readJson(key, []) : [];
+  },
+  saveAll(history) {
+    const key = activeWorkoutHistoryKey();
+    if (!key) return;
+    writeJson(key, history);
+  },
+  markPending(recordId) {
+    const key = activeWorkoutPendingKey();
+    if (!key || !recordId) return;
+    writeJson(key, [...new Set([...readJson(key, []), recordId])]);
+  },
   add(record) {
-    const history = [record, ...this.getAll().filter((item) => item.id !== record.id)];
+    if (!activeWorkoutAccountId) throw new Error("Sign in to save completed workouts.");
+    const item = { ...record, updatedAt: new Date().toISOString() };
+    const history = [item, ...this.getAll().filter((x) => x.id !== item.id)];
     this.saveAll(history);
-    void syncCompletedWorkout(record);
+    this.markPending(item.id);
+    syncQuietly(syncCompletedWorkout(item));
     return history;
   },
   update(recordId, changes) {
-    const history = this.getAll().map((record) => record.id === recordId ? { ...record, ...changes } : record);
+    if (!activeWorkoutAccountId) return null;
+    const history = this.getAll().map((record) => record.id === recordId
+      ? { ...record, ...changes, updatedAt: new Date().toISOString() } : record);
+    const updated = history.find((record) => record.id === recordId) || null;
+    if (!updated) return null;
     this.saveAll(history);
-    return history.find((record) => record.id === recordId) || null;
+    this.markPending(recordId);
+    syncQuietly(syncCompletedWorkout(updated));
+    return updated;
   },
-  clear() { removeJson(WORKOUT_HISTORY_KEY); },
+  async retryPending() {
+    const expectedAccount = activeWorkoutAccountId;
+    if (!expectedAccount) return;
+    const pending = new Set(this.getPendingIds());
+    for (const record of this.getAll().filter((item) => pending.has(item.id))) {
+      if (activeWorkoutAccountId !== expectedAccount) return;
+      await syncCompletedWorkout(record);
+    }
+  },
+  clear() {
+    const key = activeWorkoutHistoryKey();
+    if (key) removeJson(key);
+    const pending = activeWorkoutPendingKey();
+    if (pending) removeJson(pending);
+  },
 };
 
 export const AIPlanRepository = {
