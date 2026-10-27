@@ -1,5 +1,6 @@
 import { supabase } from "../supabase";
 import { HistoryRepository } from "./trackfitDataLayer";
+import { mergeCompletedWorkouts, toCompletedWorkout } from "./completedWorkoutSync";
 
 async function getUserId() {
   if (!supabase) return null;
@@ -8,97 +9,52 @@ async function getUserId() {
   return data.user?.id || null;
 }
 
-function toWorkout(row) {
-  return {
-    id: row.id,
-    workoutId: row.template_id || row.id,
-    title: row.title || "Completed workout",
-    completedAt: row.completed_at || row.created_at,
-    startedAt: row.started_at,
-    seconds: row.duration_seconds || 0,
-    durationSeconds: row.duration_seconds || 0,
-    completedSets: row.completed_sets || 0,
-    doneSets: row.completed_sets || 0,
-    totalSets: row.total_sets || 0,
-    volume: Number(row.total_volume) || 0,
-    notes: row.notes || "",
-    prs: Array.isArray(row.prs) ? row.prs : [],
-    exercises: Array.isArray(row.exercises) ? row.exercises : [],
-  };
-}
-
+/**
+ * Cloud records are scoped twice: the authenticated user and the account
+ * currently active in the local repository. Pending local workouts never
+ * disappear merely because the server has not received them yet.
+ */
 export const WorkoutCloudRepository = {
-  getCached() {
-    return HistoryRepository.getAll();
-  },
+  getCached() { return HistoryRepository.getAll(); },
 
   async getAll() {
     if (!supabase) return this.getCached();
-
     try {
       const userId = await getUserId();
-      if (!userId) return this.getCached();
-
+      if (!userId || HistoryRepository.getActiveUser() !== userId) return this.getCached();
       const { data, error } = await supabase
         .from("workout_sessions")
         .select("*")
         .eq("user_id", userId)
+        .eq("status", "completed")
         .not("completed_at", "is", null)
         .order("completed_at", { ascending: false });
 
       if (error) throw error;
-
-      const workouts = (data || []).map(toWorkout);
-      HistoryRepository.saveAll(workouts);
-      return workouts;
+      if (HistoryRepository.getActiveUser() !== userId) return [];
+      const merged = mergeCompletedWorkouts(
+        (data || []).map(toCompletedWorkout),
+        HistoryRepository.getAll(),
+        HistoryRepository.getPendingIds(),
+      );
+      HistoryRepository.saveAll(merged);
+      // Retry in the foreground without holding up the app while offline.
+      // The pending queue and per-user idempotent upsert are the source of truth.
+      if (HistoryRepository.getPendingIds().length) {
+        Promise.resolve().then(() => HistoryRepository.retryPending())
+          .catch((reason) => console.warn("Pending workouts will retry later.", reason));
+      }
+      return merged;
     } catch (error) {
-      console.warn("Workout history cloud load failed; using local cache.", error);
+      console.warn("Workout history cloud load failed; keeping local records.", error);
       return this.getCached();
     }
   },
 
   async add(workout) {
+    // The local repository is responsible for exactly one cloud upsert.
+    // The previous implementation double-inserted when this helper was used.
     HistoryRepository.add(workout);
-
-    if (!supabase) return workout;
-
-    try {
-      const userId = await getUserId();
-      if (!userId) return workout;
-
-      const completedAt = workout.completedAt || new Date().toISOString();
-      const durationSeconds = Number(workout.durationSeconds ?? workout.seconds) || 0;
-      const startedAt = new Date(new Date(completedAt).getTime() - durationSeconds * 1000).toISOString();
-
-      const payload = {
-        user_id: userId,
-        title: workout.title || "Completed workout",
-        started_at: startedAt,
-        completed_at: completedAt,
-        duration_seconds: durationSeconds,
-        exercises: workout.exercises || [],
-        total_volume: Number(workout.volume) || 0,
-        notes: workout.notes || null,
-        prs: workout.prs || [],
-        completed_sets: Number(workout.completedSets ?? workout.doneSets) || 0,
-        total_sets: Number(workout.totalSets) || 0,
-      };
-
-      const { data, error } = await supabase
-        .from("workout_sessions")
-        .insert(payload)
-        .select("*")
-        .single();
-
-      if (error) throw error;
-
-      const saved = toWorkout(data);
-      const next = [saved, ...HistoryRepository.getAll().filter((item) => item.id !== workout.id && item.id !== saved.id)];
-      HistoryRepository.saveAll(next);
-      return saved;
-    } catch (error) {
-      console.warn("Workout cloud save failed; workout remains stored locally.", error);
-      return workout;
-    }
+    return workout;
   },
 };
