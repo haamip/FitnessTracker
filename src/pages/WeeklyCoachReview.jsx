@@ -293,7 +293,7 @@ export default function WeeklyCoachReview() {
             <p style={{margin:0}}>These records predate account-specific storage. Only restore them if they're yours.</p>
             <button type="button" onClick={restoreLegacyReviews}>Restore my older weekly reviews</button>
           </section>
-        )
+        )}
         {!answered && <p className="tf-weekly-save-help">Choose one answer for each question to save your review.</p>}
       </section>
       {saved && (
