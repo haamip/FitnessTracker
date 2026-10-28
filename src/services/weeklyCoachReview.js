@@ -1,4 +1,5 @@
 import { readJson, writeJson } from "./utils/storage";
+import { weeklyReviewCacheKey, pendingWeeklyReviewsKey, validReviewWeek } from "./weeklyReviewSync";
 
 const REVIEW_KEY = "trackfit_weekly_reviews_v1";
 
@@ -136,12 +137,71 @@ export function buildWeeklyFeedback(facts, answers = {}) {
     note: "This review uses your recorded workouts, activity and your answers. Missing data is not treated as a failed week." };
 }
 
+const LEGACY_REVIEW_KEY = "trackfit_weekly_reviews_v1";
+const LEGACY_REVIEW_CLAIM_KEY = "trackfit_weekly_reviews_legacy_claimed";
+let activeWeeklyAccountId = null;
+
 export const WeeklyReviewRepository = {
-  getAll() { return readJson(REVIEW_KEY, []); },
-  getByWeek(weekStart) { return this.getAll().find((x)=>x.weekStart === weekStart) || null; },
+  setActiveUser(userId) {
+    activeWeeklyAccountId = typeof userId === "string" && userId ? userId : null;
+  },
+  getActiveUser() { return activeWeeklyAccountId; },
+  getAll() {
+    return activeWeeklyAccountId
+      ? readJson(weeklyReviewCacheKey(activeWeeklyAccountId), []) : [];
+  },
+  getByWeek(weekStart) {
+    return this.getAll().find(record => record.weekStart === weekStart) || null;
+  },
+  saveAll(reviews) {
+    if (!activeWeeklyAccountId) throw new Error("Sign in to save weekly reviews.");
+    writeJson(weeklyReviewCacheKey(activeWeeklyAccountId), reviews
+      .filter(x => validReviewWeek(x?.weekStart))
+      .sort((a,b) => b.weekStart.localeCompare(a.weekStart)));
+  },
+  getPendingWeeks() {
+    return activeWeeklyAccountId
+      ? readJson(pendingWeeklyReviewsKey(activeWeeklyAccountId), []) : [];
+  },
+  markPending(weekStart) {
+    if (!activeWeeklyAccountId || !validReviewWeek(weekStart)) return;
+    const key = pendingWeeklyReviewsKey(activeWeeklyAccountId);
+    writeJson(key, [...new Set([...readJson(key, []), weekStart])]);
+  },
+  acknowledge(weekStart, syncRevision) {
+    if (!activeWeeklyAccountId) return false;
+    const record = this.getByWeek(weekStart);
+    if (!record || record.syncRevision !== syncRevision) return false;
+    const key = pendingWeeklyReviewsKey(activeWeeklyAccountId);
+    writeJson(key, readJson(key, []).filter(x => x !== weekStart));
+    return true;
+  },
   save(review) {
-    const result = [{ ...review, savedAt: new Date().toISOString() }, ...this.getAll().filter(x=>x.weekStart !== review.weekStart)].sort((a,b)=>b.weekStart.localeCompare(a.weekStart));
-    writeJson(REVIEW_KEY, result);
-    return result[0];
+    if (!activeWeeklyAccountId || !validReviewWeek(review?.weekStart))
+      throw new Error("Sign in and choose a valid review week.");
+    const result = {
+      ...review, savedAt: new Date().toISOString(), syncRevision: crypto.randomUUID(),
+    };
+    this.saveAll([result, ...this.getAll().filter(x => x.weekStart !== review.weekStart)]);
+    this.markPending(review.weekStart);
+    return result;
+  },
+  getLegacyCount() {
+    if (!activeWeeklyAccountId || localStorage.getItem(LEGACY_REVIEW_CLAIM_KEY)) return 0;
+    return readJson(LEGACY_REVIEW_KEY, []).length;
+  },
+  importLegacyForCurrentUser() {
+    if (!activeWeeklyAccountId || localStorage.getItem(LEGACY_REVIEW_CLAIM_KEY)) return 0;
+    const current = this.getAll();
+    const occupied = new Set(current.map(x => x.weekStart));
+    const imported = readJson(LEGACY_REVIEW_KEY, [])
+      .filter(x => validReviewWeek(x?.weekStart) && !occupied.has(x.weekStart))
+      .map(x => ({ ...x, syncRevision: crypto.randomUUID() }));
+    this.saveAll([...current, ...imported]);
+    for (const row of imported) this.markPending(row.weekStart);
+    // Old browser-wide data has no owner. Require explicit user confirmation
+    // and retain the old backup instead of silently assigning it on login.
+    localStorage.setItem(LEGACY_REVIEW_CLAIM_KEY, activeWeeklyAccountId);
+    return imported.length;
   },
 };
