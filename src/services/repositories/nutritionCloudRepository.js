@@ -33,7 +33,7 @@ async function uploadOne(meal) {
     const current = NutritionRepository.getAll().find(x => x.id === meal.id);
     // An edit might have happened while the previous upload was in flight.
     // Keep it pending, rather than overwriting newer local values.
-    if (!current || current.updatedAt !== meal.updatedAt) return false;
+    if (!current || current.syncVersion !== meal.syncVersion) return false;
     NutritionRepository.add(fromNutritionCloudRow(data));
     NutritionRepository.acknowledge(meal.id);
     return true;
@@ -113,7 +113,7 @@ export const NutritionCloudRepository = {
   async save(meal) {
     const userId = NutritionRepository.getActiveUser();
     if (!userId || !isNutritionId(meal?.id)) throw new Error("Sign in to save your meal.");
-    const record = { ...meal, updatedAt: new Date().toISOString() };
+    const record = { ...meal, updatedAt: new Date().toISOString(), syncVersion: crypto.randomUUID() };
     NutritionRepository.add(record);
     NutritionRepository.markPending(record.id);
     try {
