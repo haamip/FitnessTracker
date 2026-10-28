@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, Camera, Trash2 } from "lucide-react";
 import { CardioRepository, CheckInRepository, HistoryRepository, NutritionRepository } from "../services/repositories/trackfitDataLayer";
 import { buildWeeklyFeedback, getWeekStart, getWeeklyFacts, WeeklyReviewRepository } from "../services/weeklyCoachReview";
+import { WeeklyReviewCloudRepository } from "../services/weeklyReviewCloudRepository";
 import { deleteWeeklyPhoto, getWeeklyPhoto, putWeeklyPhoto } from "../services/weeklyPhotos";
 import { requestTrackFitCoach } from "../services/ai/secureCoachClient";
 import { Sparkles } from "lucide-react";
@@ -122,10 +123,34 @@ export default function WeeklyCoachReview() {
   const [week, setWeek] = useState(currentWeek);
   const [answers, setAnswers] = useState(() => ({ ...EMPTY_ANSWERS, ...(WeeklyReviewRepository.getByWeek(currentWeek)?.answers || {}) }));
   const [saved, setSaved] = useState(() => Boolean(WeeklyReviewRepository.getByWeek(currentWeek)));
+  const [backupPending, setBackupPending] = useState(() => WeeklyReviewCloudRepository.getPendingCount());
+  const [backupMessage, setBackupMessage] = useState("");
+  const [backupBusy, setBackupBusy] = useState(false);
+  const [legacyReviewCount, setLegacyReviewCount] = useState(() => WeeklyReviewRepository.getLegacyCount());
+  const dirtyRef = useRef(false);
+  const weekRef = useRef(currentWeek);
   const [photoRevision, setPhotoRevision] = useState(0);
   const [aiFeedback, setAIFeedback] = useState(null);
   const [aiError, setAIError] = useState("");
   const [aiBusy, setAIBusy] = useState(false);
+  useEffect(() => {
+    let active = true;
+    const accountId = WeeklyReviewRepository.getActiveUser();
+    async function hydrate() {
+      const result = await WeeklyReviewCloudRepository.load();
+      if (!active || WeeklyReviewRepository.getActiveUser() !== accountId) return;
+      setBackupPending(WeeklyReviewCloudRepository.getPendingCount());
+      setLegacyReviewCount(WeeklyReviewRepository.getLegacyCount());
+      if (!dirtyRef.current) {
+        const record = result.reviews.find(x => x.weekStart === weekRef.current);
+        setAnswers({ ...EMPTY_ANSWERS, ...(record?.answers || {}) });
+        setSaved(Boolean(record));
+      }
+    }
+    void hydrate();
+    return () => { active = false; };
+  }, []);
+
   const facts = useMemo(() => getWeeklyFacts({
     checkIns: CheckInRepository.getAll(),
     workouts: HistoryRepository.getAll(),
@@ -136,6 +161,8 @@ export default function WeeklyCoachReview() {
   const answeredCount = questions.filter((q) => Boolean(answers[q.key])).length;
   const answered = answeredCount === questions.length;
   function setWeekAndAnswers(newWeek) {
+    dirtyRef.current = false;
+    weekRef.current = newWeek;
     const review = WeeklyReviewRepository.getByWeek(newWeek);
     setWeek(newWeek);
     setAnswers({ ...EMPTY_ANSWERS, ...(review?.answers || {}) });
@@ -143,12 +170,54 @@ export default function WeeklyCoachReview() {
     setAIFeedback(null);
     setAIError("");
   }
-  function save() {
-    if (!answered) return;
-    WeeklyReviewRepository.save({ weekStart: week, answers });
-    setSaved(true);
+  async function save() {
+    if (!answered || backupBusy) return;
+    setBackupBusy(true);
+    setBackupMessage("Weekly answers saved on this device. Checking cloud backup...");
     setAIFeedback(null);
     setAIError("");
+    try {
+      const operation = WeeklyReviewCloudRepository.save({ weekStart: week, answers });
+      // Local storage is updated before the remote request begins.
+      setSaved(true);
+      dirtyRef.current = false;
+      setBackupPending(WeeklyReviewCloudRepository.getPendingCount());
+      const result = await operation;
+      setBackupPending(WeeklyReviewCloudRepository.getPendingCount());
+      setBackupMessage(result.cloudSaved
+        ? "Your weekly answers are backed up to your account."
+        : "Saved on this device. Cloud backup will retry when connected.");
+    } catch (error) {
+      setBackupMessage(error instanceof Error ? error.message : "Unable to save your weekly review.");
+    } finally {
+      setBackupBusy(false);
+    }
+  }
+  async function retryReviewSync() {
+    if (backupBusy) return;
+    setBackupBusy(true);
+    try {
+      await WeeklyReviewCloudRepository.retryPending();
+      setBackupPending(WeeklyReviewCloudRepository.getPendingCount());
+      setBackupMessage(WeeklyReviewCloudRepository.getPendingCount()
+        ? "Some weekly reviews still need cloud backup."
+        : "Your weekly reviews are backed up.");
+    } finally {
+      setBackupBusy(false);
+    }
+  }
+  async function restoreLegacyReviews() {
+    if (!window.confirm("Older weekly reviews were saved on this device before TrackFit separated accounts. Only restore them if they belong to your signed-in account. Restore and back them up?")) return;
+    const added = WeeklyReviewRepository.importLegacyForCurrentUser();
+    setLegacyReviewCount(0);
+    setBackupPending(WeeklyReviewCloudRepository.getPendingCount());
+    const record = WeeklyReviewRepository.getByWeek(weekRef.current);
+    if (!dirtyRef.current) {
+      setAnswers({ ...EMPTY_ANSWERS, ...(record?.answers || {}) });
+      setSaved(Boolean(record));
+    }
+    setBackupMessage(`${added} weekly review(s) restored on this device. Cloud backup will retry.`);
+    await retryReviewSync();
   }
   async function generateWeeklyAdvice() {
     if (aiBusy || !saved || week !== currentWeek) return;
@@ -195,7 +264,7 @@ export default function WeeklyCoachReview() {
                   <label key={value} className={`tf-weekly-choice${checked ? " is-selected" : ""}`}>
                     <input className="tf-weekly-choice__radio" type="radio"
                       name={question.key} value={value} checked={checked}
-                      onChange={() => { setAnswers((x) => ({...x, [question.key]: value})); setSaved(false); }} />
+                      onChange={() => { dirtyRef.current = true; setAnswers((x) => ({...x, [question.key]: value})); setSaved(false); }} />
                     <span className="tf-weekly-choice__indicator" aria-hidden="true" />
                     <span className="tf-weekly-choice__text">{label}</span>
                   </label>
@@ -205,9 +274,26 @@ export default function WeeklyCoachReview() {
           </fieldset>
         ))}
         <label className="form-card tf-weekly-notes"><strong>Anything else for your coach? <span>(optional)</span></strong>
-          <textarea rows={3} maxLength={800} value={answers.note} onChange={(event)=>{setAnswers((x)=>({...x,note:event.target.value}));setSaved(false);}} placeholder="Wins, challenges, injuries, what you'd like to change..." />
+          <textarea rows={3} maxLength={800} value={answers.note} onChange={(event)=>{dirtyRef.current = true;setAnswers((x)=>({...x,note:event.target.value}));setSaved(false);}} placeholder="Wins, challenges, injuries, what you'd like to change..." />
         </label>
-        <button type="button" disabled={!answered} onClick={save} className="v4-save-checkin tf-weekly-save">{saved ? "Saved — update review" : "Save my weekly check-in"}</button>
+        <button type="button" disabled={!answered || backupBusy} onClick={save} className="v4-save-checkin tf-weekly-save">{backupBusy ? "Saving..." : saved ? "Saved — update review" : "Save my weekly check-in"}</button>
+        {backupMessage && <p role="status" className="tf-weekly-save-help">{backupMessage}</p>}
+        {backupPending > 0 && (
+          <section className="form-card" style={{display:"grid",gap:10}} aria-label="Weekly review cloud backup">
+            <strong>{backupPending} weekly review{backupPending === 1 ? "" : "s"} awaiting cloud backup</strong>
+            <p style={{margin:0}}>Your answers stay on this device and retry when you're online.</p>
+            <button type="button" disabled={backupBusy} onClick={retryReviewSync}>
+              {backupBusy ? "Syncing..." : "Retry weekly review backup"}
+            </button>
+          </section>
+        )}
+        {legacyReviewCount > 0 && (
+          <section className="form-card" style={{display:"grid",gap:10}}>
+            <strong>{legacyReviewCount} older weekly review{legacyReviewCount === 1 ? "" : "s"} found on this device</strong>
+            <p style={{margin:0}}>These records predate account-specific storage. Only restore them if they're yours.</p>
+            <button type="button" onClick={restoreLegacyReviews}>Restore my older weekly reviews</button>
+          </section>
+        )}
         {!answered && <p className="tf-weekly-save-help">Choose one answer for each question to save your review.</p>}
       </section>
       {saved && (
