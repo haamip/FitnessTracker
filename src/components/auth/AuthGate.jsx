@@ -92,6 +92,12 @@ export default function AuthGate({ children }) {
         CardioRepository.setActiveUser(nextSession.user.id);
         NutritionRepository.setActiveUser(nextSession.user.id);
         WeeklyReviewRepository.setActiveUser(nextSession.user.id);
+        // Defer getUser-based cloud restoration until the auth callback exits.
+        window.setTimeout(() => {
+          if (!mounted || WeeklyReviewRepository.getActiveUser() !== nextSession.user.id) return;
+          void WeeklyReviewCloudRepository.load().catch(error =>
+            console.warn("Weekly review cloud restore deferred.", error));
+        }, 0);
         window.setTimeout(() => {
           if (!mounted || NutritionRepository.getActiveUser() !== nextSession.user.id) return;
           void NutritionCloudRepository.retryPending().catch(error =>
@@ -101,7 +107,7 @@ export default function AuthGate({ children }) {
           await Promise.all([
             WorkoutCloudRepository.getAll(),
             CardioCloudRepository.getAll(),
-            WeeklyReviewCloudRepository.load(),
+
             TrainingCloudRepository.hydrate(),
             CheckInRepository.hydrateForUser(nextSession.user.id),
           ]);
