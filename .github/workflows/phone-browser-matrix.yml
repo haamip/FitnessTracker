@@ -1,0 +1,66 @@
+name: TrackFit General Phones + iPhone Safari Matrix
+
+on:
+  pull_request:
+    branches: [ui-app-shell]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "index.html"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.*"
+      - "playwright.devices.config.js"
+      - "tests/device-matrix/**"
+      - ".github/workflows/phone-browser-matrix.yml"
+  push:
+    branches: [ui-app-shell]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "index.html"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.*"
+      - "playwright.devices.config.js"
+      - "tests/device-matrix/**"
+      - ".github/workflows/phone-browser-matrix.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phone-browser-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mobile-browser-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout TrackFit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Install Chromium and WebKit with runtime packages
+        run: npx playwright install --with-deps chromium webkit
+      - name: Test generic Android-sized phones and iPhone Safari WebKit
+        run: npx playwright test --config=playwright.devices.config.js
+      - name: Upload failures, traces and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trackfit-general-phone-browser-results
+          path: |
+            playwright-report/
+            test-results/device-matrix/
+          if-no-files-found: ignore
+          retention-days: 7
