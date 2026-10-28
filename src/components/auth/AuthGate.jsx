@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { isSupabaseConfigured, supabase } from "../../services/supabase";
 import { WorkoutCloudRepository } from "../../services/repositories/workoutCloudRepository";
 import { CardioCloudRepository } from "../../services/repositories/cardioCloudRepository";
+import { NutritionCloudRepository } from "../../services/repositories/nutritionCloudRepository";
 import { TrainingCloudRepository } from "../../services/repositories/trainingCloudRepository";
 import { CheckInRepository, HistoryRepository, CardioRepository, NutritionRepository } from "../../services/repositories/trackfitDataLayer";
 import AuthScreen from "./AuthScreen";
@@ -32,6 +33,11 @@ export default function AuthGate({ children }) {
         HistoryRepository.setActiveUser(restoredSession.user.id);
         CardioRepository.setActiveUser(restoredSession.user.id);
         NutritionRepository.setActiveUser(restoredSession.user.id);
+        window.setTimeout(() => {
+          if (!mounted || NutritionRepository.getActiveUser() !== restoredSession.user.id) return;
+          void NutritionCloudRepository.retryPending().catch(error =>
+            console.warn("Food backup will retry when connected.", error));
+        }, 0);
         try {
           await Promise.all([
             WorkoutCloudRepository.getAll(),
@@ -62,6 +68,8 @@ export default function AuthGate({ children }) {
         console.warn("Completed workout sync will retry at next sign-in.", error));
       void CardioCloudRepository.retryPending().catch((error) =>
         console.warn("Cardio sync will retry on next sign-in.", error));
+      void NutritionCloudRepository.retryPending().catch((error) =>
+        console.warn("Food sync will retry on next sign-in.", error));
     };
     window.addEventListener("online", retryWhenOnline);
 
@@ -76,6 +84,11 @@ export default function AuthGate({ children }) {
         HistoryRepository.setActiveUser(nextSession.user.id);
         CardioRepository.setActiveUser(nextSession.user.id);
         NutritionRepository.setActiveUser(nextSession.user.id);
+        window.setTimeout(() => {
+          if (!mounted || NutritionRepository.getActiveUser() !== nextSession.user.id) return;
+          void NutritionCloudRepository.retryPending().catch(error =>
+            console.warn("Food backup will retry when connected.", error));
+        }, 0);
         try {
           await Promise.all([
             WorkoutCloudRepository.getAll(),
