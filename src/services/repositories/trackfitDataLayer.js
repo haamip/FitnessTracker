@@ -471,6 +471,11 @@ export const NutritionRepository = {
     return activeNutritionAccountId ? readJson(NUTRITION_KEY, []).length : 0;
   },
   clear() {
-    if (activeNutritionAccountId) removeJson(nutritionCacheKey(activeNutritionAccountId));
+    if (!activeNutritionAccountId) return;
+    // Explicitly clearing the cache clears its pending bookkeeping too.
+    // This is device-only; it never deletes records from Supabase.
+    removeJson(nutritionCacheKey(activeNutritionAccountId));
+    removeJson(nutritionPendingKey(activeNutritionAccountId));
+    removeJson(nutritionDeletionsKey(activeNutritionAccountId));
   },
 };
