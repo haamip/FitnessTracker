@@ -1,0 +1,70 @@
+name: TrackFit iPhone Simulator Smoke (Manual)
+
+# macOS + Xcode simulator minutes cost more than Linux tests.
+# Run manually once per release; iPhone Safari-sized browser tests run on PRs.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: iphone-simulator-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  iphone-simulator:
+    runs-on: macos-15
+    timeout-minutes: 75
+    steps:
+      - name: Checkout TrackFit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Show Xcode environment
+        run: |
+          xcodebuild -version
+          xcrun simctl list devices available
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install locked web dependencies
+        run: npm ci
+      - name: Install Capacitor iOS (fixed version)
+        run: npm install --no-save --package-lock=false @capacitor/core@8.3.0 @capacitor/ios@8.3.0 @capacitor/cli@8.3.0
+      - name: Build iPhone web assets with dummy auth settings
+        env:
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_ANON_KEY: ci-iphone-test-placeholder
+        run: npm run build
+      - name: Generate iOS native shell and synchronize
+        run: |
+          npx cap add ios
+          npx cap sync ios
+      - name: Build unsigned iOS Simulator app
+        run: |
+          mkdir -p ios-test-results
+          xcodebuild \
+            -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath ios-simulator-build \
+            CODE_SIGNING_ALLOWED=NO \
+            -quiet build > ios-test-results/build.log 2>&1 || {
+              tail -n 100 ios-test-results/build.log
+              exit 1
+            }
+      - name: Boot iPhone simulator, install TrackFit and capture screen
+        run: bash native/ios/simulator-smoke.sh
+      - name: Upload iPhone simulator evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trackfit-iphone-simulator
+          path: ios-test-results/
+          if-no-files-found: ignore
+          retention-days: 7
