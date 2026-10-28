@@ -1,8 +1,6 @@
 import { readJson, writeJson } from "./utils/storage";
 import { weeklyReviewCacheKey, pendingWeeklyReviewsKey, validReviewWeek } from "./weeklyReviewSync";
 
-const REVIEW_KEY = "trackfit_weekly_reviews_v1";
-
 function number(value) {
   const n = Number(value);
   return Number.isFinite(n) && n > 0 ? n : 0;
