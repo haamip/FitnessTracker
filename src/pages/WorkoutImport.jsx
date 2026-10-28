@@ -4,6 +4,8 @@ import { AlertTriangle, ArrowLeft, CheckCircle2, FileText, Sparkles, Trash2, Upl
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { SavedWorkoutRepository } from "../services/repositories/trackfitDataLayer";
+import { TrainingCloudRepository } from "../services/repositories/trainingCloudRepository";
+import { supabase } from "../services/supabase";
 import { parseWorkoutText } from "../services/workoutTextParser";
 import { parseWorkoutWithAI } from "../services/aiWorkoutImporter";
 import { isUsableWorkoutExercise } from "../services/workoutImportValidation";
@@ -31,7 +33,9 @@ async function extractPdfText(file) {
     pages.push(pageText.trim());
   }
 
-  return pages.join("\n");
+  const extracted = pages.join("\n").trim();
+  if (!extracted) throw new Error("This appears to be a scanned/image-only PDF. Use a text-based PDF or paste your workout.");
+  return extracted;
 }
 
 function createWorkoutExercises(draft) {
@@ -75,6 +79,7 @@ export default function WorkoutImport() {
   const [status, setStatus] = useState("");
   const [saveError, setSaveError] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const exerciseCount = useMemo(() => draft.length, [draft]);
   const reviewCount = useMemo(
     () => draft.filter((exercise) => !isUsableWorkoutExercise(exercise)).length,
@@ -114,7 +119,7 @@ export default function WorkoutImport() {
       if (!workoutName.trim() && result.workoutName) setWorkoutName(result.workoutName);
       const needsReview = result.exercises.filter((exercise) => exercise.needsReview).length;
       setStatus(
-        `${result.exercises.length} exercises found with AI${needsReview ? `, ${needsReview} need review` : ""}.`,
+        `${result.exercises.length} exercises found using live AI${needsReview ? `, ${needsReview} need review` : ""}. Check exercise names, sets and reps before saving.`,
       );
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "The AI reader could not parse this workout.");
@@ -171,6 +176,10 @@ export default function WorkoutImport() {
       setStatus("PDF is too large. Choose a file under 10 MB.");
       return;
     }
+    if (!/\.pdf$/i.test(file.name)) {
+      setStatus("Choose a PDF file.");
+      return;
+    }
     setFileName(file.name);
     if (!workoutName.trim()) setWorkoutName(file.name.replace(/\.pdf$/i, ""));
     setStatus("Reading PDF...");
@@ -181,17 +190,19 @@ export default function WorkoutImport() {
       const result = runParser(text);
       setStatus(
         result.exercises.length
-          ? `PDF read: ${result.exercises.length} exercises found, ${result.reviewCount} need review.`
+          ? `PDF read: ${result.exercises.length} exercises found, ${result.reviewCount} need review. ${text.length > 16000 ? "Shorten the text below to use the AI reader." : "Tap AI reader for an improved interpretation."}`
           : "PDF text was read, but no exercises were recognised. Try the AI reader.",
       );
-    } catch {
-      setStatus("Could not read that PDF. Try copying and pasting its text instead.");
+    } catch (error) {
+      setDraft([]);
+      setIgnoredLines([]);
+      setStatus(error instanceof Error ? error.message : "Could not read that PDF. Try copying its text instead.");
     }
   }
 
-  function saveWorkout(startAfterSaving) {
-    if (!canSave) {
-      setSaveError("Add at least one exercise with a name, sets and reps before saving.");
+  async function saveWorkout(startAfterSaving) {
+    if (!canSave || saving) {
+      if (!canSave) setSaveError("Add at least one exercise with a name, sets and reps before saving.");
       return;
     }
 
@@ -202,21 +213,33 @@ export default function WorkoutImport() {
     const workoutId = `saved-${crypto.randomUUID()}`;
     const exercises = createWorkoutExercises(draft);
     const name = workoutName.trim() || "Imported workout";
+    setSaving(true);
+    setSaveError("");
 
     try {
-      SavedWorkoutRepository.save({
-        id: workoutId,
-        name,
-        detail: `${exercises.length} exercises`,
-        exercises,
-      });
-      if (!SavedWorkoutRepository.getById(workoutId)) {
-        throw new Error("The workout could not be found after saving.");
-      }
+      if (!supabase) throw new Error("TrackFit account connection is unavailable.");
+      const { data: before, error: authError } = await supabase.auth.getUser();
+      if (authError || !before.user || before.user.is_anonymous)
+        throw new Error("Sign into TrackFit before saving your imported workout.");
+
+      const template = { id: workoutId, name, detail: `${exercises.length} exercises`, exercises };
+      // Do not navigate or claim success until this is actually in the user's
+      // Supabase workout_templates table. A failed save leaves the editable
+      // draft intact so the user can retry without losing work.
+      const remote = await TrainingCloudRepository.saveTemplate(template);
+      if (!remote?.cloudId) throw new Error("Cloud backup was not confirmed. Try again.");
+      const { data: after } = await supabase.auth.getUser();
+      if (after.user?.id !== before.user.id)
+        throw new Error("Your account changed during saving. Sign back in and retry.");
+      SavedWorkoutRepository.save(template, { sync: false });
+      if (!SavedWorkoutRepository.getById(workoutId))
+        throw new Error("The workout was backed up but couldn't be shown on this device. Refresh your workouts.");
       if (startAfterSaving) SavedWorkoutRepository.createSession(workoutId);
       navigate(startAfterSaving ? `/workouts/${workoutId}` : "/workouts?refresh=saved");
     } catch (error) {
-      setSaveError(error instanceof Error ? `Could not save workout: ${error.message}` : "Could not save workout. Please try again.");
+      setSaveError(error instanceof Error ? `Workout not saved: ${error.message}` : "Could not save workout. Please try again.");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -267,7 +290,7 @@ export default function WorkoutImport() {
         <label className="v4-quick-card" style={{ cursor: "pointer" }}>
           <Upload size={24} />
           <strong>{fileName || "Choose PDF"}</strong>
-          <span>TrackFit reads the PDF on your device.</span>
+          <span>TrackFit reads text-based PDFs on your device. Only extracted text is sent to AI when you tap AI reader.</span>
           <input type="file" accept="application/pdf" onChange={handleFileChange} hidden />
         </label>
         {status && <p>{status}</p>}
@@ -357,10 +380,10 @@ export default function WorkoutImport() {
           {!canSave && <p className="tf-import-hint">Add a valid exercise to enable saving. The workout name is optional.</p>}
           {saveError && <p role="alert" className="tf-import-save-error">{saveError}</p>}
           <div className="tf-import-save-actions">
-            <button type="button" disabled={!canSave} onClick={() => saveWorkout(false)}>
-              {reviewCount ? `Save ${validCount} ready exercise${validCount === 1 ? "" : "s"}` : "Save workout"}
+            <button type="button" disabled={!canSave || saving || aiLoading} onClick={() => saveWorkout(false)}>
+              {saving ? "Saving to cloud..." : reviewCount ? `Save ${validCount} ready exercise${validCount === 1 ? "" : "s"}` : "Save workout"}
             </button>
-            <button type="button" disabled={!canSave} onClick={() => saveWorkout(true)}>Save and start workout</button>
+            <button type="button" disabled={!canSave || saving || aiLoading} onClick={() => saveWorkout(true)}>{saving ? "Saving to cloud..." : "Save and start workout"}</button>
           </div>
         </section>
       )}
