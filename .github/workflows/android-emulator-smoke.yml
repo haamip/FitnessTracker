@@ -1,0 +1,89 @@
+name: TrackFit Android Emulator Smoke (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_level:
+        description: "Android API level (29 = older budget phone, 35 = modern phone)"
+        required: true
+        type: choice
+        default: "35"
+        options: ["29", "35"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-emulator-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android-emulator:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - name: Checkout TrackFit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Capacitor Android (fixed version)
+        run: npm install --no-save --package-lock=false @capacitor/core@8.3.0 @capacitor/android@8.3.0 @capacitor/cli@8.3.0
+      - name: Prepare TrackFit native Health Connect registration
+        run: node native/android/prepare-web.mjs
+      - name: Build TrackFit native web content (test account only)
+        env:
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_ANON_KEY: ci-native-test-placeholder
+        run: npm run build
+      - name: Generate Android shell
+        run: npx cap add android
+      - name: Install Android 36 build platform
+        run: |
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -maxdepth 3 -type f -name sdkmanager | head -n 1)"
+          test -n "$SDKMANAGER" || exit 1
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+      - name: Apply TrackFit Android native bridge
+        run: |
+          node native/android/prepare-shell.mjs
+          npx cap sync android
+      - name: Build unsiged debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
+      - name: Enable KVM for emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Boot virtual Android and check TrackFit launches
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ inputs.api_level }}
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash native/android/emulator-smoke.sh
+      - name: Upload emulator screenshot and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trackfit-android-emulator-${{ inputs.api_level }}
+          path: emulator-results/
+          if-no-files-found: ignore
+          retention-days: 7
