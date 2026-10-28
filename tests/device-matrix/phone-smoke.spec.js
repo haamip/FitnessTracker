@@ -4,7 +4,7 @@ import { test, expect } from "@playwright/test";
  * The device matrix tests what is available before authentication.
  * A future test-account fixture is needed for workouts/food/HealthKit flows.
  */
-test("sign-in screen fits and is usable at this phone size", async ({ page }) => {
+test("sign-in screen fits and is usable at this phone size", async ({ page }, testInfo) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Welcome back." })).toBeVisible();
   await expect(page.getByLabel("Email address")).toBeVisible();
@@ -16,6 +16,7 @@ test("sign-in screen fits and is usable at this phone size", async ({ page }) =>
     documentWidth: document.documentElement.scrollWidth,
   }));
   expect(metrics.documentWidth, "Sign-in page must not scroll sideways").toBeLessThanOrEqual(metrics.viewportWidth + 2);
+  await page.screenshot({ path: testInfo.outputPath("trackfit-phone-screen.png"), fullPage: true });
 });
 
 test("sign-in and registration remain reachable via touch-size UI", async ({ page }) => {
