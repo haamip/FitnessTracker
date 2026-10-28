@@ -146,11 +146,11 @@ export const SavedWorkoutRepository = {
     writeJson(SAVED_WORKOUTS_KEY, workouts);
     workouts.forEach((workout) => syncQuietly(TrainingCloudRepository.saveTemplate(workout)));
   },
-  save(workout) {
+  save(workout, { sync = true } = {}) {
     const current = this.getAll().filter((item) => item.id !== workout.id);
     const next = [{ ...workout, updatedAt: new Date().toISOString() }, ...current];
     writeJson(SAVED_WORKOUTS_KEY, next);
-    syncQuietly(TrainingCloudRepository.saveTemplate(next[0]));
+    if (sync) syncQuietly(TrainingCloudRepository.saveTemplate(next[0]));
     return next;
   },
   createSession(workoutId) {
