@@ -3,6 +3,8 @@ import { isSupabaseConfigured, supabase } from "../../services/supabase";
 import { WorkoutCloudRepository } from "../../services/repositories/workoutCloudRepository";
 import { CardioCloudRepository } from "../../services/repositories/cardioCloudRepository";
 import { NutritionCloudRepository } from "../../services/repositories/nutritionCloudRepository";
+import { WeeklyReviewCloudRepository } from "../../services/weeklyReviewCloudRepository";
+import { WeeklyReviewRepository } from "../../services/weeklyCoachReview";
 import { TrainingCloudRepository } from "../../services/repositories/trainingCloudRepository";
 import { CheckInRepository, HistoryRepository, CardioRepository, NutritionRepository } from "../../services/repositories/trackfitDataLayer";
 import AuthScreen from "./AuthScreen";
@@ -33,6 +35,7 @@ export default function AuthGate({ children }) {
         HistoryRepository.setActiveUser(restoredSession.user.id);
         CardioRepository.setActiveUser(restoredSession.user.id);
         NutritionRepository.setActiveUser(restoredSession.user.id);
+        WeeklyReviewRepository.setActiveUser(restoredSession.user.id);
         window.setTimeout(() => {
           if (!mounted || NutritionRepository.getActiveUser() !== restoredSession.user.id) return;
           void NutritionCloudRepository.retryPending().catch(error =>
@@ -42,6 +45,7 @@ export default function AuthGate({ children }) {
           await Promise.all([
             WorkoutCloudRepository.getAll(),
             CardioCloudRepository.getAll(),
+            WeeklyReviewCloudRepository.load(),
             TrainingCloudRepository.hydrate(),
             CheckInRepository.hydrateForUser(restoredSession.user.id),
           ]);
@@ -53,6 +57,7 @@ export default function AuthGate({ children }) {
         HistoryRepository.setActiveUser(null);
         CardioRepository.setActiveUser(null);
         NutritionRepository.setActiveUser(null);
+        WeeklyReviewRepository.setActiveUser(null);
       }
 
       if (mounted) setLoading(false);
@@ -70,6 +75,8 @@ export default function AuthGate({ children }) {
         console.warn("Cardio sync will retry on next sign-in.", error));
       void NutritionCloudRepository.retryPending().catch((error) =>
         console.warn("Food sync will retry on next sign-in.", error));
+      void WeeklyReviewCloudRepository.retryPending().catch((error) =>
+        console.warn("Weekly review sync will retry on next sign-in.", error));
     };
     window.addEventListener("online", retryWhenOnline);
 
@@ -84,6 +91,7 @@ export default function AuthGate({ children }) {
         HistoryRepository.setActiveUser(nextSession.user.id);
         CardioRepository.setActiveUser(nextSession.user.id);
         NutritionRepository.setActiveUser(nextSession.user.id);
+        WeeklyReviewRepository.setActiveUser(nextSession.user.id);
         window.setTimeout(() => {
           if (!mounted || NutritionRepository.getActiveUser() !== nextSession.user.id) return;
           void NutritionCloudRepository.retryPending().catch(error =>
@@ -93,6 +101,7 @@ export default function AuthGate({ children }) {
           await Promise.all([
             WorkoutCloudRepository.getAll(),
             CardioCloudRepository.getAll(),
+            WeeklyReviewCloudRepository.load(),
             TrainingCloudRepository.hydrate(),
             CheckInRepository.hydrateForUser(nextSession.user.id),
           ]);
@@ -104,6 +113,7 @@ export default function AuthGate({ children }) {
         HistoryRepository.setActiveUser(null);
         CardioRepository.setActiveUser(null);
         NutritionRepository.setActiveUser(null);
+        WeeklyReviewRepository.setActiveUser(null);
       }
 
       if (mounted) setLoading(false);
