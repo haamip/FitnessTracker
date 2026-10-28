@@ -4,6 +4,7 @@ import { Beef, Camera, ClipboardPaste, Flame, Pencil, Plus, Trash2, Utensils, X 
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button";
 import { NutritionRepository } from "../services/repositories/trackfitDataLayer";
+import { mergeNutritionCache } from "../services/repositories/nutritionCacheHelpers";
 import { getOperationalDate, getShiftMealTypes, getShiftMode, SHIFT_MODE_EVENT } from "../services/shift/shiftModeService";
 import { isSupabaseConfigured, supabase } from "../services/supabase";
 import { parseMealText } from "../services/mealTextParser";
@@ -117,12 +118,20 @@ export default function Nutrition() {
           .eq("id", userId).maybeSingle(),
       ]);
       const { data, error } = response;
-      if (!active) return;
-      if (error) { setMessage(`Cloud sync issue: ${error.message}`); return; }
+      if (!active || NutritionRepository.getActiveUser() !== userId) return;
+      if (error) {
+        setMeals(NutritionRepository.getToday(operationalDate));
+        setMessage(`Cloud sync issue: ${error.message}. Showing your saved device copy.`);
+        return;
+      }
       const allCloudMeals = (data || []).map(fromDatabase);
-      const nextMeals = allCloudMeals.filter((meal) => meal.date === operationalDate);
+      const merged = mergeNutritionCache(allCloudMeals, NutritionRepository.getAll());
+      // Save ALL fetched days to the current account cache, not just today's
+      // rows. Previously yesterday's meals could be lost from offline history.
+      NutritionRepository.saveAll(merged);
+      const nextMeals = merged.filter((meal) => meal.date === operationalDate);
       setMeals(nextMeals);
-      const previouslyLogged = allCloudMeals.filter((meal) => meal.date !== operationalDate);
+      const previouslyLogged = merged.filter((meal) => meal.date !== operationalDate);
       const seen = new Set();
       setRecentMeals(previouslyLogged.filter((meal) => {
         const signature = [meal.name.toLowerCase(), meal.calories, meal.protein, meal.carbs, meal.fats].join("|");
@@ -137,8 +146,7 @@ export default function Nutrition() {
           protein: Number(profile.protein_target) > 0 ? Number(profile.protein_target) : PROTEIN_TARGET,
         });
       }
-      const otherDays = NutritionRepository.getAll().filter((meal) => meal.date !== operationalDate);
-      NutritionRepository.saveAll([...nextMeals, ...otherDays]);
+
     }
     loadMeals();
     return () => { active = false; };
@@ -287,6 +295,9 @@ export default function Nutrition() {
       if (isSupabaseConfigured && supabase) {
         const { data: sessionData } = await supabase.auth.getSession();
         const userId = sessionData.session?.user?.id;
+        if (!userId || NutritionRepository.getActiveUser() !== userId) {
+          throw new Error("Sign into your TrackFit account and try again.");
+        }
         if (userId) {
           const payload = {
             user_id: userId, entry_date: meal.date, meal_type: meal.type, name: meal.name,
@@ -330,6 +341,9 @@ export default function Nutrition() {
       if (isSupabaseConfigured && supabase) {
         const { data: sessionData } = await supabase.auth.getSession();
         const userId = sessionData.session?.user?.id;
+        if (!userId || NutritionRepository.getActiveUser() !== userId) {
+          throw new Error("Sign into your TrackFit account and try again.");
+        }
         if (userId) {
           const { data, error } = await supabase.from("nutrition_entries").insert({
             user_id: userId,
@@ -365,7 +379,7 @@ export default function Nutrition() {
     const meal = meals.find((item) => item.id === id);
     if (!meal || !window.confirm(`Delete ${meal.name} from today's food log?`)) return;
     setMessage("");
-    if (isSupabaseConfigured && supabase) { const { error } = await supabase.from("nutrition_entries").delete().eq("id", id); if (error) { setMessage(`Meal was not deleted: ${error.message}`); return; } }
+    if (isSupabaseConfigured && supabase) { const { error } = await supabase.from("nutrition_entries").delete().eq("id", id).eq("user_id", NutritionRepository.getActiveUser()); if (error) { setMessage(`Meal was not deleted: ${error.message}`); return; } }
     NutritionRepository.saveAll(NutritionRepository.getAll().filter((meal) => meal.id !== id)); setMeals((current) => current.filter((meal) => meal.id !== id)); signalTrackFitDataChange();
     if (editingMealId === id) cancelEdit();
     setMessage("Meal deleted.");
