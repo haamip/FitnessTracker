@@ -3,7 +3,7 @@ import { isSupabaseConfigured, supabase } from "../../services/supabase";
 import { WorkoutCloudRepository } from "../../services/repositories/workoutCloudRepository";
 import { CardioCloudRepository } from "../../services/repositories/cardioCloudRepository";
 import { TrainingCloudRepository } from "../../services/repositories/trainingCloudRepository";
-import { CheckInRepository, HistoryRepository, CardioRepository } from "../../services/repositories/trackfitDataLayer";
+import { CheckInRepository, HistoryRepository, CardioRepository, NutritionRepository } from "../../services/repositories/trackfitDataLayer";
 import AuthScreen from "./AuthScreen";
 
 export default function AuthGate({ children }) {
@@ -31,6 +31,7 @@ export default function AuthGate({ children }) {
         CheckInRepository.setActiveUser(restoredSession.user.id);
         HistoryRepository.setActiveUser(restoredSession.user.id);
         CardioRepository.setActiveUser(restoredSession.user.id);
+        NutritionRepository.setActiveUser(restoredSession.user.id);
         try {
           await Promise.all([
             WorkoutCloudRepository.getAll(),
@@ -45,6 +46,7 @@ export default function AuthGate({ children }) {
         CheckInRepository.setActiveUser(null);
         HistoryRepository.setActiveUser(null);
         CardioRepository.setActiveUser(null);
+        NutritionRepository.setActiveUser(null);
       }
 
       if (mounted) setLoading(false);
@@ -73,6 +75,7 @@ export default function AuthGate({ children }) {
         CheckInRepository.setActiveUser(nextSession.user.id);
         HistoryRepository.setActiveUser(nextSession.user.id);
         CardioRepository.setActiveUser(nextSession.user.id);
+        NutritionRepository.setActiveUser(nextSession.user.id);
         try {
           await Promise.all([
             WorkoutCloudRepository.getAll(),
@@ -87,6 +90,7 @@ export default function AuthGate({ children }) {
         CheckInRepository.setActiveUser(null);
         HistoryRepository.setActiveUser(null);
         CardioRepository.setActiveUser(null);
+        NutritionRepository.setActiveUser(null);
       }
 
       if (mounted) setLoading(false);

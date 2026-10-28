@@ -4,6 +4,7 @@ import { toDailyCheckInCloudPayload, fromDailyCheckInCloudRow } from "../checkIn
 import { checkInCacheKey, pendingCheckInsKey, mergeCloudCheckIns } from "./checkInCacheHelpers";
 import { mergeImportedSteps } from "./watchStepSave";
 import { TrainingCloudRepository } from "./trainingCloudRepository";
+import { nutritionCacheKey } from "./nutritionCacheHelpers";
 import { cardioCacheKey, cardioPendingKey, cardioDeletionsKey, canonicalCardioId } from "./cardioSyncHelpers";
 import { workoutHistoryCacheKey, pendingWorkoutIdsKey, toCompletedWorkoutPayload } from "./completedWorkoutSync";
 
@@ -34,7 +35,8 @@ function markCheckInPending(date) {
 const CARDIO_KEY = "trackfit_cardio"; // Unowned legacy records retained until explicit import.
 const CARDIO_LEGACY_CLAIM_KEY = "trackfit_cardio_legacy_claimed";
 let activeCardioAccountId = null;
-const NUTRITION_KEY = "trackfit_nutrition";
+const NUTRITION_KEY = "trackfit_nutrition"; // Historical unowned records; never attach to a login automatically.
+let activeNutritionAccountId = null;
 const AI_PLAN_KEY = "trackfit_ai_workout_plan";
 
 function removeJson(key) { localStorage.removeItem(key); }
@@ -417,4 +419,32 @@ export const CheckInRepository = {
     }
   },
 };
-export const NutritionRepository = { getAll() { return readJson(NUTRITION_KEY, []).sort(newestFirst); }, getToday(date = new Date().toISOString().slice(0, 10)) { return this.getAll().filter((meal) => meal.date === date); }, saveAll(meals) { writeJson(NUTRITION_KEY, meals); }, add(meal) { const meals = [meal, ...this.getAll()]; this.saveAll(meals); return meals; }, clear() { removeJson(NUTRITION_KEY); } };
+export const NutritionRepository = {
+  setActiveUser(userId) {
+    activeNutritionAccountId = typeof userId === "string" && userId ? userId : null;
+  },
+  getActiveUser() { return activeNutritionAccountId; },
+  getAll() {
+    return activeNutritionAccountId
+      ? readJson(nutritionCacheKey(activeNutritionAccountId), []).sort(newestFirst)
+      : [];
+  },
+  getToday(date = new Date().toISOString().slice(0, 10)) {
+    return this.getAll().filter((meal) => meal.date === date);
+  },
+  saveAll(meals) {
+    if (!activeNutritionAccountId) throw new Error("Sign in to save nutrition.");
+    writeJson(nutritionCacheKey(activeNutritionAccountId), meals);
+  },
+  add(meal) {
+    const meals = [meal, ...this.getAll().filter(x => x.id !== meal.id)];
+    this.saveAll(meals);
+    return meals;
+  },
+  getLegacyCount() {
+    return activeNutritionAccountId ? readJson(NUTRITION_KEY, []).length : 0;
+  },
+  clear() {
+    if (activeNutritionAccountId) removeJson(nutritionCacheKey(activeNutritionAccountId));
+  },
+};
