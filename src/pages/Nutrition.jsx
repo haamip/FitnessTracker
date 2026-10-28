@@ -4,9 +4,9 @@ import { Beef, Camera, ClipboardPaste, Flame, Pencil, Plus, Trash2, Utensils, X 
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button";
 import { NutritionRepository } from "../services/repositories/trackfitDataLayer";
-import { mergeNutritionCache } from "../services/repositories/nutritionCacheHelpers";
+import { NutritionCloudRepository } from "../services/repositories/nutritionCloudRepository";
 import { getOperationalDate, getShiftMealTypes, getShiftMode, SHIFT_MODE_EVENT } from "../services/shift/shiftModeService";
-import { isSupabaseConfigured, supabase } from "../services/supabase";
+import { supabase } from "../services/supabase";
 import { parseMealText } from "../services/mealTextParser";
 import { getFoodByBarcode, scaleFoodNutrients, searchFoodByName } from "../services/openFoodFacts";
 import FoodBarcodeScanner from "../components/FoodBarcodeScanner";
@@ -54,7 +54,6 @@ function resolveMealType(parsedType, mealTypes, shiftMode, fallback) {
   return mealTypes.find((type) => type === preferred) || fallback;
 }
 
-function fromDatabase(row) { return { id: row.id, date: row.entry_date, type: row.meal_type, name: row.name, calories: toNumber(row.calories), protein: toNumber(row.protein_g), carbs: toNumber(row.carbs_g), fats: toNumber(row.fats_g), createdAt: row.created_at }; }
 
 export default function Nutrition() {
   const location = useLocation();
@@ -87,6 +86,8 @@ export default function Nutrition() {
   const [findingFood, setFindingFood] = useState(false);
   const [message, setMessage] = useState(() => location.state?.scannedMeal ? "AI meal estimate loaded. Review serving sizes and all nutrition values before saving." : "");
   const [goals, setGoals] = useState({ calories: CALORIE_TARGET, protein: PROTEIN_TARGET });
+  const [pendingCount, setPendingCount] = useState(() => NutritionCloudRepository.getPendingCount());
+  const [syncBusy, setSyncBusy] = useState(false);
 
   useEffect(() => {
     const onShiftChange = (event) => {
@@ -104,41 +105,25 @@ export default function Nutrition() {
   useEffect(() => {
     let active = true;
     async function loadMeals() {
-      if (!isSupabaseConfigured || !supabase) return;
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData.session?.user?.id;
+      const userId = NutritionRepository.getActiveUser();
       if (!userId) return;
-      const lookback = new Date(operationalDate + "T12:00:00Z");
-      lookback.setUTCDate(lookback.getUTCDate() - 30);
-      const [response, profileResponse] = await Promise.all([
-        supabase.from("nutrition_entries").select("*").eq("user_id", userId)
-          .gte("entry_date", lookback.toISOString().slice(0, 10))
-          .order("created_at", { ascending: false }).limit(120),
+      const [result, profileResponse] = await Promise.all([
+        NutritionCloudRepository.loadForDate(operationalDate),
         supabase.from("profiles").select("calorie_target,protein_target")
           .eq("id", userId).maybeSingle(),
       ]);
-      const { data, error } = response;
       if (!active || NutritionRepository.getActiveUser() !== userId) return;
-      if (error) {
-        setMeals(NutritionRepository.getToday(operationalDate));
-        setMessage(`Cloud sync issue: ${error.message}. Showing your saved device copy.`);
-        return;
-      }
-      const allCloudMeals = (data || []).map(fromDatabase);
-      const merged = mergeNutritionCache(allCloudMeals, NutritionRepository.getAll());
-      // Save ALL fetched days to the current account cache, not just today's
-      // rows. Previously yesterday's meals could be lost from offline history.
-      NutritionRepository.saveAll(merged);
-      const nextMeals = merged.filter((meal) => meal.date === operationalDate);
-      setMeals(nextMeals);
-      const previouslyLogged = merged.filter((meal) => meal.date !== operationalDate);
+      const allMeals = result.meals;
+      setMeals(allMeals.filter(meal => meal.date === operationalDate));
+      setPendingCount(NutritionCloudRepository.getPendingCount());
       const seen = new Set();
-      setRecentMeals(previouslyLogged.filter((meal) => {
-        const signature = [meal.name.toLowerCase(), meal.calories, meal.protein, meal.carbs, meal.fats].join("|");
-        if (seen.has(signature)) return false;
-        seen.add(signature);
-        return true;
-      }).slice(0, 8));
+      setRecentMeals(allMeals.filter(meal => meal.date !== operationalDate)
+        .filter(meal => {
+          const signature = [meal.name.toLowerCase(), meal.calories, meal.protein, meal.carbs, meal.fats].join("|");
+          if (seen.has(signature)) return false;
+          seen.add(signature);
+          return true;
+        }).slice(0, 8));
       if (!profileResponse.error) {
         const profile = profileResponse.data || {};
         setGoals({
@@ -146,9 +131,13 @@ export default function Nutrition() {
           protein: Number(profile.protein_target) > 0 ? Number(profile.protein_target) : PROTEIN_TARGET,
         });
       }
-
+      if (result.offline && !NutritionCloudRepository.getPendingCount()) {
+        setMessage("Cloud connection unavailable. Showing your saved food history on this device.");
+      }
     }
-    loadMeals();
+    void loadMeals().catch(error => {
+      if (active) setMessage(`Could not refresh food history: ${error.message}`);
+    });
     return () => { active = false; };
   }, [operationalDate]);
 
@@ -291,34 +280,16 @@ export default function Nutrition() {
     setSaving(true);
     setMessage("");
     try {
-      let saved = meal;
-      if (isSupabaseConfigured && supabase) {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const userId = sessionData.session?.user?.id;
-        if (!userId || NutritionRepository.getActiveUser() !== userId) {
-          throw new Error("Sign into your TrackFit account and try again.");
-        }
-        if (userId) {
-          const payload = {
-            user_id: userId, entry_date: meal.date, meal_type: meal.type, name: meal.name,
-            calories: meal.calories, protein_g: meal.protein, carbs_g: meal.carbs, fats_g: meal.fats,
-          };
-          const query = existing
-            ? supabase.from("nutrition_entries").update(payload).eq("id", existing.id).eq("user_id", userId)
-            : supabase.from("nutrition_entries").insert(payload);
-          const { data, error } = await query.select().single();
-          if (error) throw error;
-          saved = fromDatabase(data);
-        }
-      }
-      const next = [saved, ...NutritionRepository.getAll().filter((item) => item.id !== saved.id && item.id !== existing?.id)];
-      NutritionRepository.saveAll(next);
-      setMeals(next.filter((item) => item.date === operationalDate));
+      const result = await NutritionCloudRepository.save(meal);
+      setMeals(NutritionRepository.getToday(operationalDate));
+      setPendingCount(NutritionCloudRepository.getPendingCount());
       signalTrackFitDataChange();
       setForm({ type: mealTypes[0], name: "", calories: "", protein: "", carbs: "", fats: "" });
       setEditingMealId(null);
       setPasteText("");
-      setMessage(existing ? "Meal updated." : "Meal saved.");
+      setMessage(result.cloudSaved
+        ? (existing ? "Meal updated and backed up." : "Meal saved and backed up.")
+        : "Meal saved on this device. Cloud backup is pending and will retry.");
       if (location.state?.scannedMeal) navigate(location.pathname, { replace: true, state: null });
     } catch (error) {
       setMessage(`Meal was not saved: ${error.message || "Please try again"}`);
@@ -338,36 +309,13 @@ export default function Nutrition() {
       createdAt: new Date().toISOString(),
     };
     try {
-      if (isSupabaseConfigured && supabase) {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const userId = sessionData.session?.user?.id;
-        if (!userId || NutritionRepository.getActiveUser() !== userId) {
-          throw new Error("Sign into your TrackFit account and try again.");
-        }
-        if (userId) {
-          const { data, error } = await supabase.from("nutrition_entries").insert({
-            user_id: userId,
-            entry_date: copy.date,
-            meal_type: copy.type,
-            name: copy.name,
-            calories: copy.calories,
-            protein_g: copy.protein,
-            carbs_g: copy.carbs,
-            fats_g: copy.fats,
-          }).select().single();
-          if (error) throw error;
-          const saved = fromDatabase(data);
-          NutritionRepository.add(saved);
-          setMeals((current) => [saved, ...current]);
-          signalTrackFitDataChange();
-          setMessage(`Added ${saved.name} again.`);
-          return;
-        }
-      }
-      NutritionRepository.add(copy);
+      const result = await NutritionCloudRepository.save(copy);
       setMeals(NutritionRepository.getToday(operationalDate));
+      setPendingCount(NutritionCloudRepository.getPendingCount());
       signalTrackFitDataChange();
-      setMessage(`Added ${copy.name} again.`);
+      setMessage(result.cloudSaved
+        ? "Meal repeated and backed up."
+        : "Meal repeated on this device. Cloud backup is pending.");
     } catch (error) {
       setMessage(`Could not repeat meal: ${error.message || "Please try again"}`);
     } finally {
@@ -376,13 +324,35 @@ export default function Nutrition() {
   }
 
   async function deleteMeal(id) {
-    const meal = meals.find((item) => item.id === id);
+    const meal = meals.find(item => item.id === id);
     if (!meal || !window.confirm(`Delete ${meal.name} from today's food log?`)) return;
     setMessage("");
-    if (isSupabaseConfigured && supabase) { const { error } = await supabase.from("nutrition_entries").delete().eq("id", id).eq("user_id", NutritionRepository.getActiveUser()); if (error) { setMessage(`Meal was not deleted: ${error.message}`); return; } }
-    NutritionRepository.saveAll(NutritionRepository.getAll().filter((meal) => meal.id !== id)); setMeals((current) => current.filter((meal) => meal.id !== id)); signalTrackFitDataChange();
-    if (editingMealId === id) cancelEdit();
-    setMessage("Meal deleted.");
+    try {
+      const result = await NutritionCloudRepository.remove(id);
+      setMeals(NutritionRepository.getToday(operationalDate));
+      setPendingCount(NutritionCloudRepository.getPendingCount());
+      signalTrackFitDataChange();
+      if (editingMealId === id) cancelEdit();
+      setMessage(result.cloudSaved ? "Meal deleted." : "Meal removed on this device; cloud deletion pending.");
+    } catch (error) {
+      setMessage(`Meal delete failed: ${error.message || "Please try again"}`);
+    }
+  }
+
+  async function retryNutritionSync() {
+    if (syncBusy) return;
+    setSyncBusy(true);
+    try {
+      await NutritionCloudRepository.retryPending();
+      const result = await NutritionCloudRepository.loadForDate(operationalDate);
+      setMeals(result.meals.filter(meal => meal.date === operationalDate));
+      setPendingCount(NutritionCloudRepository.getPendingCount());
+      setMessage(NutritionCloudRepository.getPendingCount()
+        ? "Some food changes are still awaiting cloud backup."
+        : "Food history is backed up.");
+    } finally {
+      setSyncBusy(false);
+    }
   }
 
   const calorieProgress = Math.min(100, (totals.calories / goals.calories) * 100);
@@ -402,6 +372,15 @@ export default function Nutrition() {
     </button>
     <div className="tf-food-secondary-macros"><span>Carbs <strong>{roundDisplay(totals.carbs)}g</strong></span><span>Fat <strong>{roundDisplay(totals.fats)}g</strong></span></div>
     {message && <p className="tf-food-feedback" role="status">{message}</p>}
+    {pendingCount > 0 && (
+      <section className="form-card" style={{ display: "grid", gap: 10 }} aria-label="Food cloud backup">
+        <strong>{pendingCount} food change{pendingCount === 1 ? "" : "s"} waiting for cloud backup</strong>
+        <p style={{ margin: 0 }}>Your food log is saved on this device. TrackFit will retry the cloud backup when you're connected.</p>
+        <button type="button" onClick={retryNutritionSync} disabled={syncBusy}>
+          {syncBusy ? "Retrying..." : "Retry food cloud backup"}
+        </button>
+      </section>
+    )}
     <form id="tf-nutrition-meal-form" className="form-card form-grid" onSubmit={handleSubmit}><div><p className="eyebrow">Quick log</p><h2>{editingMealId ? "Edit your meal" : "Add a meal"}</h2></div><label>Meal<select value={form.type} onChange={(e)=>updateField("type",e.target.value)}>{mealTypes.map((type)=><option key={type}>{type}</option>)}</select></label><label>What did you eat?<input placeholder="Chicken, rice and veg" value={form.name} onChange={(e)=>updateField("name",e.target.value)}/></label><div className="tf-food-input-row"><label>Calories<input type="number" inputMode="decimal" step="0.1" min="0" required value={form.calories} onChange={(e)=>updateField("calories",e.target.value)}/></label><label>Protein<input type="number" inputMode="decimal" step="0.1" min="0" required value={form.protein} onChange={(e)=>updateField("protein",e.target.value)}/></label></div><div className="tf-food-input-row"><label>Carbs<input type="number" inputMode="decimal" step="0.1" min="0" value={form.carbs} onChange={(e)=>updateField("carbs",e.target.value)}/></label><label>Fat<input type="number" inputMode="decimal" step="0.1" min="0" value={form.fats} onChange={(e)=>updateField("fats",e.target.value)}/></label></div><Button className="v4-save-checkin" type="submit" disabled={saving}><Plus size={17}/>{saving ? "Saving..." : editingMealId ? "Save changes" : "Add meal"}</Button>{editingMealId && <button type="button" className="tf-food-cancel-edit" onClick={cancelEdit}><X size={17}/> Cancel editing</button>}</form>
     <details id="tf-food-lookup" className="tf-food-tool">
       <summary>Find food by name or barcode</summary>
