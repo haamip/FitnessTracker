@@ -4,7 +4,7 @@ import { toDailyCheckInCloudPayload, fromDailyCheckInCloudRow } from "../checkIn
 import { checkInCacheKey, pendingCheckInsKey, mergeCloudCheckIns } from "./checkInCacheHelpers";
 import { mergeImportedSteps } from "./watchStepSave";
 import { TrainingCloudRepository } from "./trainingCloudRepository";
-import { nutritionCacheKey } from "./nutritionCacheHelpers";
+import { nutritionCacheKey, nutritionPendingKey, nutritionDeletionsKey, isNutritionId } from "./nutritionCacheHelpers";
 import { cardioCacheKey, cardioPendingKey, cardioDeletionsKey, canonicalCardioId } from "./cardioSyncHelpers";
 import { workoutHistoryCacheKey, pendingWorkoutIdsKey, toCompletedWorkoutPayload } from "./completedWorkoutSync";
 
@@ -440,6 +440,32 @@ export const NutritionRepository = {
     const meals = [meal, ...this.getAll().filter(x => x.id !== meal.id)];
     this.saveAll(meals);
     return meals;
+  },
+  getPendingIds() {
+    return activeNutritionAccountId ? readJson(nutritionPendingKey(activeNutritionAccountId), []) : [];
+  },
+  markPending(id) {
+    if (!activeNutritionAccountId || !isNutritionId(id)) return;
+    const key = nutritionPendingKey(activeNutritionAccountId);
+    writeJson(key, [...new Set([...readJson(key, []), id])]);
+  },
+  acknowledge(id) {
+    if (!activeNutritionAccountId) return;
+    const key = nutritionPendingKey(activeNutritionAccountId);
+    writeJson(key, readJson(key, []).filter(value => value !== id));
+  },
+  getDeletions() {
+    return activeNutritionAccountId ? readJson(nutritionDeletionsKey(activeNutritionAccountId), []) : [];
+  },
+  markDeletion(id) {
+    if (!activeNutritionAccountId || !isNutritionId(id)) return;
+    const key = nutritionDeletionsKey(activeNutritionAccountId);
+    writeJson(key, [...new Set([...readJson(key, []), id])]);
+  },
+  acknowledgeDeletion(id) {
+    if (!activeNutritionAccountId) return;
+    const key = nutritionDeletionsKey(activeNutritionAccountId);
+    writeJson(key, readJson(key, []).filter(value => value !== id));
   },
   getLegacyCount() {
     return activeNutritionAccountId ? readJson(NUTRITION_KEY, []).length : 0;
