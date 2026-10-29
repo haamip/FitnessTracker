@@ -47,7 +47,9 @@ export const TrainingCloudRepository = {
     }
 
     const activePlan = plans?.[0];
-    if (activePlan?.plan_data) writeJson(AI_PLAN_KEY, activePlan.plan_data);
+    // The cloud is authoritative after login. If another device deleted the
+    // active plan, an old local cache must not resurrect it on this device.
+    writeJson(AI_PLAN_KEY, Array.isArray(activePlan?.plan_data) ? activePlan.plan_data : []);
 
     for (const draft of drafts || []) {
       if (draft.local_id && Array.isArray(draft.exercises)) {
@@ -92,7 +94,7 @@ export const TrainingCloudRepository = {
 
   async savePlan(plan) {
     const user = await getUser();
-    if (!user) return;
+    if (!user) throw new Error("Sign into TrackFit before saving a training plan.");
 
     const { data: existing, error: readError } = await supabase
       .from("training_plans")
@@ -114,15 +116,17 @@ export const TrainingCloudRepository = {
     };
 
     const query = existing?.id
-      ? supabase.from("training_plans").update(payload).eq("id", existing.id)
+      ? supabase.from("training_plans").update(payload).eq("id", existing.id).eq("user_id", user.id)
       : supabase.from("training_plans").insert(payload);
-    const { error } = await query;
+    const { data: saved, error } = await query.select("id").single();
     if (error) throw error;
+    if (!saved?.id) throw new Error("Training plan was not confirmed in cloud storage.");
+    return saved;
   },
 
   async clearPlan() {
     const user = await getUser();
-    if (!user) return;
+    if (!user) throw new Error("Sign into TrackFit before deleting a training plan.");
     const { error } = await supabase
       .from("training_plans")
       .update({ is_active: false, updated_at: new Date().toISOString() })
