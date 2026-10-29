@@ -1,13 +1,12 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   CheckSquare,
   ChevronRight,
   Copy,
   Dumbbell,
   FileUp,
-  History,
   Pencil,
   Plus,
   Sparkles,
@@ -16,14 +15,11 @@ import {
   X,
 } from "lucide-react";
 import {
-  AIPlanRepository,
-  HistoryRepository,
   SavedWorkoutRepository,
   WorkoutRepository,
 } from "../services/repositories/trackfitDataLayer";
 import {
   STARTER_WORKOUTS,
-  createPlanDayExercises,
   createStarterWorkoutExercises,
 } from "../services/starterWorkouts";
 import "./TrackFitScreens.css";
@@ -39,10 +35,6 @@ function readHiddenStarters() {
   } catch {
     return [];
   }
-}
-
-function formatDate(value) {
-  return new Intl.DateTimeFormat("en-AU", { day: "2-digit", month: "short" }).format(new Date(value));
 }
 
 function freshCopy(exercises) {
@@ -63,40 +55,22 @@ function freshCopy(exercises) {
 
 export default function Workouts() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const refreshToken = searchParams.get("refresh") || "initial";
   const [savedWorkouts, setSavedWorkouts] = useState(() => SavedWorkoutRepository.getAll());
-  const [trainingDays, setTrainingDays] = useState(() => AIPlanRepository.getPlan());
   const [hiddenStarterIds, setHiddenStarterIds] = useState(readHiddenStarters);
   const [selectMode, setSelectMode] = useState(false);
-  const [historyRevision, setHistoryRevision] = useState(0);
-  const [legacyHistoryCount, setLegacyHistoryCount] = useState(() => HistoryRepository.getLegacyCount());
-  const [pendingHistoryCount, setPendingHistoryCount] = useState(() => HistoryRepository.getPendingIds().length);
-  const [retryingHistory, setRetryingHistory] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [search, setSearch] = useState("");
+  const [visibleCount, setVisibleCount] = useState(8);
 
-  const workoutHistory = useMemo(() => {
-    void refreshToken;
-    return HistoryRepository.getRecent(3);
-  }, [refreshToken, historyRevision]);
-
-  const hasTrainingPlan = trainingDays.length > 0;
-  const planCards = hasTrainingPlan
-    ? trainingDays.map((day) => ({
-        id: day.id,
-        name: day.name,
-        detail: day.focus || "Training session",
-        kind: "plan",
-        data: day,
-      }))
-    : STARTER_WORKOUTS
-        .filter((starter) => !hiddenStarterIds.includes(starter.id))
-        .map((starter) => ({ ...starter, kind: "starter" }));
-
+  const starterCards = STARTER_WORKOUTS
+    .filter(starter => !hiddenStarterIds.includes(starter.id))
+    .map(starter => ({ ...starter, kind: "starter" }));
   const allWorkouts = [
-    ...savedWorkouts.map((workout) => ({ ...workout, kind: "saved" })),
-    ...planCards.filter((plan) => !savedWorkouts.some((saved) => saved.id === plan.id)),
+    ...savedWorkouts.map(workout => ({ ...workout, kind: "saved" })),
+    ...starterCards,
   ];
+
+  const matchingWorkouts = allWorkouts.filter(workout => workout.name.toLowerCase().includes(search.trim().toLowerCase()));
 
   function exitSelectMode() {
     setSelectMode(false);
@@ -114,12 +88,6 @@ export default function Workouts() {
   function removeWorkout(workout) {
     if (workout.kind === "saved") {
       setSavedWorkouts(SavedWorkoutRepository.remove(workout.id));
-    } else if (workout.kind === "plan") {
-      const updated = trainingDays.filter((day) => day.id !== workout.id);
-      if (updated.length) AIPlanRepository.savePlan(updated);
-      else AIPlanRepository.clear();
-      WorkoutRepository.removeById(workout.id);
-      setTrainingDays(updated);
     } else {
       const next = [...new Set([...hiddenStarterIds, workout.id])];
       localStorage.setItem(HIDDEN_STARTERS_KEY, JSON.stringify(next));
@@ -130,9 +98,7 @@ export default function Workouts() {
   function deleteWorkout(workout) {
     const description = workout.kind === "starter"
       ? `Hide "${workout.name}" from your workout list? You can restore the starter workouts later.`
-      : workout.kind === "plan"
-        ? `Remove "${workout.name}" from your training plan?`
-        : `Delete "${workout.name}"?`;
+      : `Delete "${workout.name}"?`;
     if (!window.confirm(description)) return;
     removeWorkout(workout);
   }
@@ -149,7 +115,6 @@ export default function Workouts() {
     if (workout.kind === "saved") return workout.exercises || [];
     const active = WorkoutRepository.getById(workout.id);
     if (active?.length) return active;
-    if (workout.kind === "plan") return createPlanDayExercises(workout.data);
     return createStarterWorkoutExercises(workout.id);
   }
 
@@ -175,26 +140,6 @@ export default function Workouts() {
     }
   }
 
-  async function retryWorkoutCloudSync() {
-    if (retryingHistory) return;
-    setRetryingHistory(true);
-    try {
-      await HistoryRepository.retryPending();
-      setPendingHistoryCount(HistoryRepository.getPendingIds().length);
-      setHistoryRevision((value) => value + 1);
-    } finally {
-      setRetryingHistory(false);
-    }
-  }
-
-  function restoreLegacyHistory() {
-    if (!window.confirm("These workout records were saved on this device before TrackFit separated accounts. Only restore them if they belong to your signed-in account. Restore and back them up to the cloud?")) return;
-    const count = HistoryRepository.importLegacyForCurrentUser();
-    setLegacyHistoryCount(0);
-    setPendingHistoryCount(HistoryRepository.getPendingIds().length);
-    if (count) setHistoryRevision((value) => value + 1);
-  }
-
   function restoreStarters() {
     localStorage.removeItem(HIDDEN_STARTERS_KEY);
     setHiddenStarterIds([]);
@@ -210,15 +155,16 @@ export default function Workouts() {
       <section className="v4-workout-hero">
         <div>
           <p className="eyebrow">Train</p>
-          <h1>Choose your workout</h1>
-          <p>Open a workout to train, or edit and save your own version.</p>
+          <h1>My workouts</h1>
+          <p>Your saved routines and quick starters. Your training plan and history now have their own pages.</p>
         </div>
       </section>
 
+      <p><Link to="/workouts">← Back to Train</Link></p>
       <section className="v4-workout-list">
         <div className="v4-section-heading tf-workouts-heading">
           <div>
-            <p className="eyebrow">All workouts</p>
+            <p className="eyebrow">My library</p>
             <h2>Your workouts</h2>
           </div>
           <button
@@ -230,6 +176,8 @@ export default function Workouts() {
             {selectMode ? "Cancel" : "Select"}
           </button>
         </div>
+
+        <label className="tf-library-search-label">Find a workout<input aria-label="Search saved workouts" type="search" placeholder="Search your workouts..." value={search} onChange={(event)=>{setSearch(event.target.value);setVisibleCount(8);}} /></label>
 
         {selectMode && (
           <div className="tf-workout-bulk-actions">
@@ -244,11 +192,11 @@ export default function Workouts() {
           </div>
         )}
 
-        {allWorkouts.length === 0 && (
+        {matchingWorkouts.length === 0 && (
           <p>No workouts here yet. Build or import one below.</p>
         )}
 
-        {allWorkouts.map((workout) => {
+        {matchingWorkouts.slice(0,visibleCount).map((workout) => {
           const selected = selectedIds.includes(workout.id);
           return (
             <article className="v4-workout-card tf-workout-card" key={workout.id}>
@@ -297,7 +245,9 @@ export default function Workouts() {
           );
         })}
 
-        {!hasTrainingPlan && hiddenStarterIds.length > 0 && (
+        {visibleCount < matchingWorkouts.length && <button type="button" className="tf-workout-restore" onClick={()=>setVisibleCount(n=>n+8)}>Show more workouts ({matchingWorkouts.length-visibleCount} remaining)</button>}
+
+        {hiddenStarterIds.length > 0 && (
           <button type="button" className="tf-workout-restore" onClick={restoreStarters}>
             Restore starter workouts
           </button>
@@ -311,50 +261,12 @@ export default function Workouts() {
         <Link className="v4-quick-card" to="/workouts/import">
           <FileUp size={24} /><strong>Import Workout</strong><span>Paste text or upload a PDF</span>
         </Link>
-        <Link className="v4-quick-card" to="/workouts/builder">
-          <Sparkles size={24} /><strong>Manage Plan</strong><span>{hasTrainingPlan ? "Edit your workouts" : "Build a plan"}</span>
+        <Link className="v4-quick-card" to="/plan">
+          <Sparkles size={24} /><strong>My plan</strong><span>View, build or delete training days</span>
         </Link>
       </section>
 
-      {pendingHistoryCount > 0 && (
-        <section className="form-card" style={{ display: "grid", gap: 10 }}>
-          <strong>{pendingHistoryCount} workout{pendingHistoryCount === 1 ? "" : "s"} saved on this device</strong>
-          <p style={{ margin: 0, lineHeight: 1.5 }}>Cloud backup is pending. Your workouts will retry when you're online or reopen TrackFit.</p>
-          <button type="button" className="tf-workout-restore" disabled={retryingHistory} onClick={retryWorkoutCloudSync}>
-            {retryingHistory ? "Retrying backup..." : "Retry cloud backup"}
-          </button>
-        </section>
-      )}
-
-      {legacyHistoryCount > 0 && (
-        <section className="form-card" style={{ display: "grid", gap: 10 }}>
-          <strong>Old workout history found on this device</strong>
-          <p style={{ margin: 0, lineHeight: 1.5 }}>There are {legacyHistoryCount} workout records saved before account-specific syncing. Only restore them if they're yours. They won't be assigned to your account automatically.</p>
-          <button type="button" onClick={restoreLegacyHistory} className="tf-workout-restore">
-            Restore my old workout history
-          </button>
-        </section>
-      )}
-
-      {workoutHistory.length > 0 && (
-        <section className="v4-workout-list">
-          <div className="v4-section-heading">
-            <div><p className="eyebrow">Recent</p><h2>Workout history</h2></div>
-          </div>
-          {workoutHistory.map((workout) => (
-            <Link className="v4-workout-card completed-workout-card" to={`/workouts/history/${workout.id}`} key={workout.id}>
-              <div className="v4-workout-card__body">
-                <div className="v4-workout-icon"><History size={22} /></div>
-                <div>
-                  <h3>{workout.title || "Completed workout"}</h3>
-                  <p>{workout.completedAt ? formatDate(workout.completedAt) : "Completed session"}</p>
-                </div>
-                <ChevronRight className="v4-chevron" size={22} />
-              </div>
-            </Link>
-          ))}
-        </section>
-      )}
+      <p><Link to="/workouts/history">View full workout history</Link></p>
     </motion.div>
   );
 }

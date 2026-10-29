@@ -14,7 +14,7 @@ const links = [
   { to: "/watch", label: "Watch & steps", icon: Watch },
   { to: "/logs", label: "Daily logs", icon: Activity },
   { to: "/coach/intelligence", label: "Coaching insights", icon: Brain },
-  { to: "/ai", label: "AI tools", icon: Sparkles },
+  { to: "/ai", label: "Ask AI Coach", icon: Sparkles },
   { to: "/profile", label: "Profile", icon: UserRound },
 ];
 

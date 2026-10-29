@@ -15,6 +15,8 @@ const CardioLog = lazy(() => import("./pages/CardioLog"));
 const Progress = lazy(() => import("./pages/Progress"));
 const Coach = lazy(() => import("./pages/Coach"));
 const Workouts = lazy(() => import("./pages/Workouts"));
+const TrainHome = lazy(() => import("./pages/TrainHome"));
+const WorkoutHistory = lazy(() => import("./pages/WorkoutHistory"));
 const AIWorkoutBuilder = lazy(() => import("./pages/AIWorkoutBuilder"));
 const WorkoutImport = lazy(() => import("./pages/WorkoutImport"));
 const CreateWorkout = lazy(() => import("./pages/CreateWorkout"));
@@ -71,7 +73,9 @@ function AppRoutes() {
             <Route path="/coach/weekly" element={<WeeklyCoachReview />} />
             <Route path="/coach/photos" element={<WeeklyProgressPhotos />} />
             <Route path="/ai" element={<AISuite />} />
-            <Route path="/workouts" element={<Workouts />} />
+            <Route path="/workouts" element={<TrainHome />} />
+            <Route path="/workouts/library" element={<Workouts />} />
+            <Route path="/workouts/history" element={<WorkoutHistory />} />
             <Route path="/workouts/builder" element={<AIWorkoutBuilder />} />
             <Route path="/workouts/import" element={<WorkoutImport />} />
             <Route path="/workouts/create" element={<CreateWorkout />} />
