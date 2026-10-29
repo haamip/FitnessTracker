@@ -11,6 +11,7 @@ const links = [
   { to: "/dashboard", label: "Detailed dashboard", icon: Gauge },
   { to: "/plan", label: "Training plan", icon: CalendarCheck2 },
   { to: "/checkin", label: "Daily check-in", icon: ClipboardList },
+  { to: "/nutrition/plans", label: "Meal plans", icon: ClipboardList },
   { to: "/watch", label: "Watch & steps", icon: Watch },
   { to: "/logs", label: "Daily logs", icon: Activity },
   { to: "/coach/intelligence", label: "Coaching insights", icon: Brain },
