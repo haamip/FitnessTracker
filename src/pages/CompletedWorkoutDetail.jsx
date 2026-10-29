@@ -17,8 +17,8 @@ export default function CompletedWorkoutDetail() {
   if (!workout) {
     return (
       <main className="screen completed-workout-detail">
-        <Link className="tf-back-link" to="/workouts">
-          <ArrowLeft size={20} /> Back to workouts
+        <Link className="tf-back-link" to="/workouts/history">
+          <ArrowLeft size={20} /> Back to history
         </Link>
         <section className="tf-history-empty">
           <strong>Workout not found</strong>
