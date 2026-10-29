@@ -50,6 +50,8 @@ export default function AIWorkoutBuilder() {
   const [equipment, setEquipment] = useState("full gym");
   const [injuryFocus, setInjuryFocus] = useState("none");
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [planVersion, setPlanVersion] = useState(1);
   const [exerciseLibrary, setExerciseLibrary] = useState([]);
   const [libraryLoading, setLibraryLoading] = useState(true);
@@ -104,20 +106,29 @@ export default function AIWorkoutBuilder() {
     ],
   );
 
-  function savePlan() {
-    AIPlanRepository.savePlan(plan);
-
-    plan.forEach((day) => {
-      WorkoutRepository.saveById(day.id, convertDayToWorkout(day));
-    });
-
-    setSaved(true);
-    navigate("/workouts");
+  async function savePlan() {
+    if (saving || libraryLoading || !plan.length) return;
+    setSaving(true);
+    setSaveError("");
+    try {
+      // Confirm the signed-in account's cloud plan before leaving this screen.
+      await AIPlanRepository.saveConfirmed(plan);
+      plan.forEach((day) => {
+        WorkoutRepository.saveById(day.id, convertDayToWorkout(day));
+      });
+      setSaved(true);
+      navigate("/plan");
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "Unable to save the training plan. Try again.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   function regeneratePlan() {
     setPlanVersion((currentVersion) => currentVersion + 1);
     setSaved(false);
+    setSaveError("");
   }
 
   return (
@@ -306,16 +317,15 @@ export default function AIWorkoutBuilder() {
 
         <button
           className="tf-save-plan-btn"
-          disabled={libraryLoading || plan.length === 0}
+          disabled={saving || libraryLoading || plan.length === 0}
           onClick={savePlan}
           type="button"
         >
           <Save size={20} />
-          {saved
-            ? "Training Plan Saved - go to Workouts"
-            : "Save Training Plan"}
+          {saving ? "Saving plan..." : saved ? "Plan saved" : "Save training plan"}
         </button>
       </div>
+      {saveError && <p role="alert" style={{ color: "#a6322b", fontWeight: 700, margin: 16 }}>{saveError}</p>}
     </main>
   );
 }
