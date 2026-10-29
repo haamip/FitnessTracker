@@ -59,6 +59,8 @@ export default function Workouts() {
   const [hiddenStarterIds, setHiddenStarterIds] = useState(readHiddenStarters);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [search, setSearch] = useState("");
+  const [visibleCount, setVisibleCount] = useState(8);
 
   const starterCards = STARTER_WORKOUTS
     .filter(starter => !hiddenStarterIds.includes(starter.id))
@@ -67,6 +69,8 @@ export default function Workouts() {
     ...savedWorkouts.map(workout => ({ ...workout, kind: "saved" })),
     ...starterCards,
   ];
+
+  const matchingWorkouts = allWorkouts.filter(workout => workout.name.toLowerCase().includes(search.trim().toLowerCase()));
 
   function exitSelectMode() {
     setSelectMode(false);
@@ -156,6 +160,7 @@ export default function Workouts() {
         </div>
       </section>
 
+      <p><Link to="/workouts">← Back to Train</Link></p>
       <section className="v4-workout-list">
         <div className="v4-section-heading tf-workouts-heading">
           <div>
@@ -172,6 +177,8 @@ export default function Workouts() {
           </button>
         </div>
 
+        <label className="tf-library-search-label">Find a workout<input aria-label="Search saved workouts" type="search" placeholder="Search your workouts..." value={search} onChange={(event)=>{setSearch(event.target.value);setVisibleCount(8);}} /></label>
+
         {selectMode && (
           <div className="tf-workout-bulk-actions">
             <span>{selectedIds.length} selected</span>
@@ -185,11 +192,11 @@ export default function Workouts() {
           </div>
         )}
 
-        {allWorkouts.length === 0 && (
+        {matchingWorkouts.length === 0 && (
           <p>No workouts here yet. Build or import one below.</p>
         )}
 
-        {allWorkouts.map((workout) => {
+        {matchingWorkouts.slice(0,visibleCount).map((workout) => {
           const selected = selectedIds.includes(workout.id);
           return (
             <article className="v4-workout-card tf-workout-card" key={workout.id}>
@@ -237,6 +244,8 @@ export default function Workouts() {
             </article>
           );
         })}
+
+        {visibleCount < matchingWorkouts.length && <button type="button" className="tf-workout-restore" onClick={()=>setVisibleCount(n=>n+8)}>Show more workouts ({matchingWorkouts.length-visibleCount} remaining)</button>}
 
         {hiddenStarterIds.length > 0 && (
           <button type="button" className="tf-workout-restore" onClick={restoreStarters}>
