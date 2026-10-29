@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, ChevronLeft, ChevronRight, Camera, Trash2 } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Camera, Sparkles } from "lucide-react";
 import { CardioRepository, CheckInRepository, HistoryRepository, NutritionRepository } from "../services/repositories/trackfitDataLayer";
 import { buildWeeklyFeedback, getWeekStart, getWeeklyFacts, WeeklyReviewRepository } from "../services/weeklyCoachReview";
 import { WeeklyReviewCloudRepository } from "../services/weeklyReviewCloudRepository";
-import { deleteWeeklyPhoto, getWeeklyPhoto, putWeeklyPhoto } from "../services/weeklyPhotos";
 import { requestTrackFitCoach } from "../services/ai/secureCoachClient";
-import { Sparkles } from "lucide-react";
 import "./TrackFitScreens.css";
 import "./WeeklyCoachReview.css";
 
@@ -17,7 +15,6 @@ const questions = [
   { key: "progression", label: "How is strength progressing?", options: [["improved","Improving"],["steady","Steady"],["stalled","Stalled"]] },
   { key: "recovery", label: "How are you feeling overall?", options: [["good","Good"],["okay","Okay"],["rough","Run down"]] },
 ];
-const angles = ["front", "side", "back"];
 const EMPTY_ANSWERS = { nutrition:"",steps:"",cardio:"",progression:"",recovery:"",note:"" };
 function shiftWeek(week, offset) {
   const date = new Date(week + "T12:00:00");
@@ -25,98 +22,6 @@ function shiftWeek(week, offset) {
   return getWeekStart(date);
 }
 
-function PhotoSlot({ weekStart, angle, refresh, onPhotoChange }) {
-  const [image, setImage] = useState("");
-  const [previousImage, setPreviousImage] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  useEffect(() => {
-    let active = true;
-    const urls = [];
-    async function load() {
-      try {
-        const [current, previous] = await Promise.all([
-          getWeeklyPhoto(weekStart, angle),
-          getWeeklyPhoto(shiftWeek(weekStart, -1), angle),
-        ]);
-        if (!active) return;
-        const currentUrl = current ? URL.createObjectURL(current.image) : "";
-        const previousUrl = previous ? URL.createObjectURL(previous.image) : "";
-        if (currentUrl) urls.push(currentUrl);
-        if (previousUrl) urls.push(previousUrl);
-        setImage(currentUrl);
-        setPreviousImage(previousUrl);
-      } catch {
-        if (active) setError("Photo storage is unavailable on this device.");
-      }
-    }
-    void load();
-    return () => { active = false; urls.forEach((url) => URL.revokeObjectURL(url)); };
-  }, [weekStart, angle, refresh]);
-
-  async function upload(event) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setBusy(true);
-    setError("");
-    try {
-      await putWeeklyPhoto(weekStart, angle, file);
-      onPhotoChange();
-    } catch (problem) {
-      setError(problem instanceof Error ? problem.message : "Photo could not be saved.");
-    } finally {
-      setBusy(false);
-      event.target.value = "";
-    }
-  }
-  async function remove() {
-    setBusy(true);
-    try {
-      await deleteWeeklyPhoto(weekStart, angle);
-      onPhotoChange();
-    } catch {
-      setError("Photo could not be deleted.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <article className="form-card tf-weekly-photo">
-      <h3 className="tf-weekly-photo__title">{angle}</h3>
-      <div className="tf-weekly-photo__grid">
-        {[["This week", image], ["Last week", previousImage]].map(([heading, url]) => (
-          <div className="tf-weekly-photo__column" key={heading}>
-            <span className="tf-weekly-photo__caption">{heading}</span>
-            <div className="tf-weekly-photo__preview">
-              {url
-                ? <img src={url} alt={`${angle} progress ${heading.toLowerCase()}`} />
-                : <div className="tf-weekly-photo__empty">
-                    <Camera aria-hidden="true" size={23} />
-                    <span>No photo yet</span>
-                  </div>}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="tf-weekly-photo__actions">
-        <label className={`tf-weekly-photo__upload${busy ? " is-busy" : ""}`}>
-          <Camera size={18} aria-hidden="true" />
-          <span>{busy ? "Saving photo..." : image ? "Replace photo" : "Add photo"}</span>
-          <input type="file" aria-label={`Upload ${angle} progress photo`}
-            accept="image/jpeg,image/png,image/webp"
-            onChange={upload} disabled={busy} />
-        </label>
-        {image && (
-          <button className="tf-weekly-photo__delete" type="button" disabled={busy} onClick={remove}>
-            <Trash2 size={16} aria-hidden="true" /> Delete photo
-          </button>
-        )}
-      </div>
-      {error && <p className="tf-weekly-photo__error" role="alert">{error}</p>}
-    </article>
-  );
-}
 
 export default function WeeklyCoachReview() {
   const currentWeek = getWeekStart();
@@ -129,7 +34,6 @@ export default function WeeklyCoachReview() {
   const [legacyReviewCount, setLegacyReviewCount] = useState(() => WeeklyReviewRepository.getLegacyCount());
   const dirtyRef = useRef(false);
   const weekRef = useRef(currentWeek);
-  const [photoRevision, setPhotoRevision] = useState(0);
   const [aiFeedback, setAIFeedback] = useState(null);
   const [aiError, setAIError] = useState("");
   const [aiBusy, setAIBusy] = useState(false);
@@ -319,10 +223,14 @@ export default function WeeklyCoachReview() {
           {aiError && <p role="alert" style={{margin:0,color:"#8a411f"}}>{aiError} Your standard weekly feedback above is still available.</p>}
         </section>
       )}
-      <section className="v4-workout-list tf-weekly-photos">
-        <div className="v4-section-heading"><div><p className="eyebrow">Progress pictures</p><h2>Compare week to week</h2></div></div>
-        <p>Optional front, side and back photos. Saved privately on this device only. They will not sync across devices yet. Clearing browser data can delete them.</p>
-        {angles.map((angle)=><PhotoSlot key={angle} angle={angle} weekStart={week} refresh={photoRevision} onPhotoChange={()=>setPhotoRevision((n)=>n+1)} />)}
+      <section className="form-card tf-weekly-photo-link">
+        <Camera size={25} aria-hidden="true" />
+        <div>
+          <h2>Progress photos</h2>
+          <p>Keep front, side and back comparisons on a separate private page, instead of scrolling through them here.</p>
+          <small>Photos stay only on this device. They aren't uploaded or used by AI.</small>
+        </div>
+        <Link to={`/coach/photos?week=${week}`} className="tf-weekly-photo-link__open">Open photos <ChevronRight size={18} aria-hidden="true" /></Link>
       </section>
       <nav className="tf-weekly-footer" aria-label="Related tracking"><Link to="/checkin">Daily check-in</Link><Link to="/workouts">Workouts</Link><Link to="/cardio">Cardio</Link></nav>
     </main>
