@@ -5,6 +5,7 @@ import { HistoryRepository } from "../services/repositories/trackfitDataLayer";
 import useTrackFitDataRefresh from "../hooks/useTrackFitDataRefresh";
 import "./TrackFitScreens.css";
 import "./TrainHome.css";
+import "./WorkoutHistory.css";
 
 const PAGE_SIZE = 10;
 const dateLabel = value => {
