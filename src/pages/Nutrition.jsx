@@ -360,6 +360,9 @@ export default function Nutrition() {
   return <motion.div className="screen checkin-v4" initial={{opacity:0,y:14}} animate={{opacity:1,y:0}} transition={{duration:0.25}}>
     <section className="v4-checkin-hero"><div><p className="eyebrow">Food · {shiftMode === "night" ? "Night shift" : "Day shift"}</p><h1>Shift day</h1><p>{shiftMode === "night" ? "After-midnight meals stay with the shift that started the night before." : "Meals use the current calendar day."} Log a meal below, or open a food lookup tool.</p></div></section>
     <section className="tf-food-summary"><article className="tf-food-target"><div className="tf-food-target__top"><div><Flame size={20}/><span>Calories</span></div><strong>{roundDisplay(totals.calories)} / {goals.calories}</strong></div><div className="progress-line"><span style={{width:`${calorieProgress}%`}}/></div></article><article className="tf-food-target"><div className="tf-food-target__top"><div><Beef size={20}/><span>Protein</span></div><strong>{roundDisplay(totals.protein)} / {goals.protein}g</strong></div><div className="progress-line"><span style={{width:`${proteinProgress}%`}}/></div></article></section>
+    <Link className="tf-food-photo-shortcut" to="/nutrition/plans">
+      <ClipboardPaste size={19}/> Meal Plans — create a daily template and compare your macros
+    </Link>
     <Link className="tf-food-photo-shortcut" to="/nutrition/scan">
       <Camera size={19}/> Estimate homemade meal or scan a dinner photo
     </Link>
