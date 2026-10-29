@@ -261,6 +261,16 @@ export const HistoryRepository = {
 export const AIPlanRepository = {
   getPlan() { return readJson(AI_PLAN_KEY, []); },
   savePlan(plan) { writeJson(AI_PLAN_KEY, plan); syncQuietly(TrainingCloudRepository.savePlan(plan)); },
+  // Use for user-facing plan changes so the UI never reports success before
+  // Supabase confirms the account's active plan was written or deactivated.
+  async saveConfirmed(plan) {
+    await TrainingCloudRepository.savePlan(plan);
+    writeJson(AI_PLAN_KEY, plan);
+  },
+  async deletePlan() {
+    await TrainingCloudRepository.clearPlan();
+    removeJson(AI_PLAN_KEY);
+  },
   clear() { removeJson(AI_PLAN_KEY); syncQuietly(TrainingCloudRepository.clearPlan()); },
 };
 
