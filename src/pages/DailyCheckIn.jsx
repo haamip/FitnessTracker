@@ -45,6 +45,8 @@ export default function DailyCheckIn() {
   const [form,setForm] = useState(initialValues);
   const [showDetails,setShowDetails] = useState(false);
   const [message,setMessage] = useState("");
+  const [saving,setSaving] = useState(false);
+  const [lastSaved,setLastSaved] = useState(() => CheckInRepository.getAll().find(x => x.date === todayKey()) || null);
   const [olderEntries, setOlderEntries] = useState(() => CheckInRepository.getLegacyCount());
   function importOlderEntries() {
     const count = CheckInRepository.importLegacyForCurrentUser();
@@ -107,6 +109,7 @@ export default function DailyCheckIn() {
   function field(name,value){setForm((current)=>({...current,[name]:value}));setMessage("");}
   async function save(event){
     event.preventDefault();
+    if (saving) return;
     const today = todayKey();
     const stepsText = String(form.steps).trim();
     const steps = stepsText === "" ? null : Number(stepsText);
@@ -135,12 +138,24 @@ export default function DailyCheckIn() {
       else delete update[key];
     });
     update.bodyFeel=form.bodyFeel;
+    setSaving(true);
     try {
-      const result = await CheckInRepository.saveAll([update,...records.filter((x)=>x.date!==today)]);
+      // Local write happens synchronously; don't leave the user staring at a
+      // button while an unreliable network request is in flight.
+      const backup = CheckInRepository.saveAll([update,...records.filter((x)=>x.date!==today)]);
+      setLastSaved(update);
       completeDailyCheckIn();
-      setMessage(result?.cloudSaved ? "Check-in saved on your phone and backed up to your account. Good mahi." : "Check-in saved on your phone. Cloud backup pending; it'll retry when you sign in again.");
-    }catch{
-      setMessage("Couldn't save your check-in on this device. Try again.");
+      setMessage("Today's check-in saved on this phone. Backing up to your account...");
+      const result = await backup;
+      setMessage(result?.cloudSaved
+        ? "Today's check-in saved and backed up to your account. Good mahi."
+        : "Today's check-in saved on your phone. Cloud backup is pending and will retry.");
+    } catch (error) {
+      setMessage(error instanceof Error
+        ? `Could not save today's check-in: ${error.message}`
+        : "Couldn't save your check-in on this device. Try again.");
+    } finally {
+      setSaving(false);
     }
   }
   return (
@@ -227,8 +242,16 @@ export default function DailyCheckIn() {
           <button type="button" onClick={importOlderEntries}>Import my older check-ins</button>
         </section>
       )}
-      {message && <p role="status">{message}</p>}
-      <button className="v4-save-checkin" type="submit"><Save size={18} /> Save daily check-in</button>
+      {lastSaved && (
+        <section className="form-card" aria-label="Today's check-in status" style={{ display:"grid", gap:6 }}>
+          <strong>Today's check-in is recorded</strong>
+          <p style={{ margin:0, lineHeight:1.6 }}>Feeling: {lastSaved.mood || "Not selected"} · {lastSaved.activityType === "both" ? "Workout and cardio" : lastSaved.activityType || "Rest"}
+            {lastSaved.steps !== null && lastSaved.steps !== "" && lastSaved.steps !== undefined ? ` · ${Number(lastSaved.steps).toLocaleString()} steps` : ""}</p>
+          <small>You can change your answers and save again at any time today.</small>
+        </section>
+      )}
+      {message && <p role="status" aria-live="polite" style={{ fontWeight:700, lineHeight:1.55 }}>{message}</p>}
+      <button className="v4-save-checkin" type="submit" disabled={saving}><Save size={18} /> {saving ? "Saving and backing up..." : lastSaved ? "Update today's check-in" : "Save daily check-in"}</button>
       <p style={{marginTop:16,fontSize:13}}><Watch size={15} /> {watchAvailable
         ? "TrackFit only reads steps when you ask and give permission. Your manual entry still works."
         : "Copy your watch steps here for now. Automatic importing needs the native TrackFit app, not the website."}</p>
