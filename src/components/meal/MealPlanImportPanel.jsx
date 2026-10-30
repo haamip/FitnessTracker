@@ -54,17 +54,14 @@ export default function MealPlanImportPanel({ onImport, disabled = false }) {
       setMessage("No meal entries detected. Try one per line: Breakfast: Oats | 480 kcal | P 35g | C 60g | F 12g");
       return;
     }
-    if (onImport(meals, fileName)) {
-      setExpanded(false);
-      setMessage("");
-    } else {
+    if (!onImport(meals, fileName)) {
       setMessage("Import cancelled. Your existing meal plan has not changed.");
+      return;
     }
+    setExpanded(false);
     // No plan is saved to the cloud until the user checks values and taps Save.
-    if (truncated || reviewCount) {
-      setMessage((truncated ? "First 20 meals imported. " : "") +
-        (reviewCount ? reviewCount + " meal(s) missing calories or protein — complete them before saving." : "Review your meals before saving."));
-    }
+    setMessage((truncated ? "First 20 meals imported. " : "") +
+      (reviewCount ? reviewCount + " meal(s) missing calories or protein — complete them before saving." : "Meals added to editor. Review before saving."));
   }
 
   return (
