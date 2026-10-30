@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight, CalendarCheck2, Dumbbell, Plus, Sparkles, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarCheck2, Plus, Sparkles, Trash2 } from "lucide-react";
 import { AIPlanRepository, WorkoutRepository } from "../services/repositories/trackfitDataLayer";
 import "./TrackFitScreens.css";
 
@@ -96,11 +96,6 @@ export default function PlanSetup() {
         </>
       )}
       {message && <p role="status" style={{ marginTop: 16, fontWeight: 700 }}>{message}</p>}
-      <p style={{ marginTop: 18 }}>
-        <Link to="/checkin"><CalendarCheck2 size={17} aria-hidden="true" /> Daily check-in</Link>
-        {" · "}
-        <Link to="/coach/intelligence"><Dumbbell size={17} aria-hidden="true" /> Coaching insights</Link>
-      </p>
     </main>
   );
 }
