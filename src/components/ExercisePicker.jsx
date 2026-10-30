@@ -18,8 +18,6 @@ const muscleFilters = [
   "calves",
 ];
 
-const FALLBACK_EXERCISE_IMAGE = "/exercise-images/trackfit-fallback.svg";
-
 const equipmentFilters = [
   "all",
   "barbell",
@@ -60,25 +58,6 @@ function formatLabel(value) {
   return value;
 }
 
-function ExerciseAvatar({ exercise }) {
-  const [hasImage, setHasImage] = useState(Boolean(exercise.image));
-  const imageSource = exercise.image || FALLBACK_EXERCISE_IMAGE;
-
-  return (
-    <span className="tf-picker-art">
-      {hasImage ? (
-        <img
-          alt=""
-          loading="lazy"
-          src={imageSource}
-          onError={() => setHasImage(false)}
-        />
-      ) : (
-        "TF"
-      )}
-    </span>
-  );
-}
 
 /*
   Exercise Picker v3
@@ -309,7 +288,6 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
 
         {preview && (
           <article className="tf-picker-preview">
-            <ExerciseAvatar exercise={preview} />
             <div>
               <strong>{preview.name}</strong>
               <span>
@@ -353,7 +331,7 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
               <a href="https://github.com/yuhonas/free-exercise-db" target="_blank" rel="noreferrer">
                 Free Exercise DB
               </a>{" "}
-              (Unlicense). Images need internet unless already cached.
+              (Unlicense). Exercise details may be available offline.
             </small>
           )}
         </div>
@@ -371,7 +349,6 @@ export default function ExercisePicker({ isOpen, onClose, onSelectExercise }) {
                 key={exercise.id}
                 onClick={() => setPreviewExercise(exercise)}
               >
-                <ExerciseAvatar exercise={exercise} />
 
                 <span>
                   <strong>{exercise.name}</strong>
