@@ -6158,3 +6158,19 @@ body,
   font-size: 13px;
   font-weight: 800;
 }
+/* Text-first exercise UI: no art thumbnails or placeholder squares. */
+.tf-picker-preview { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.tf-picker-preview > div { min-width: 0; }
+.tf-picker-preview .tf-picker-preview-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tf-picker-item { grid-template-columns: minmax(0,1fr) auto; gap: 12px; }
+.tf-picker-item > span { min-width: 0; }
+.tf-exercise-detail-page .tf-exercise-detail-hero { grid-template-columns: minmax(0,1fr); gap: 5px; padding: 22px; }
+.tf-exercise-detail-page .tf-exercise-detail-hero h1 { line-height: 1.16; overflow-wrap: break-word; }
+.tf-compact-exercise-card .tf-compact-exercise-card__button { grid-template-columns: minmax(0,1fr) 24px; min-height: 72px; gap: 12px; }
+.gym-focus-card .gym-focus-card__title { padding: 18px 6px 4px; }
+.gym-focus-card .gym-focus-card__title h2 { line-height: 1.14; overflow-wrap: break-word; }
+@media(max-width:430px){
+ .tf-picker-preview { grid-template-columns: minmax(0,1fr); }
+ .tf-picker-item { grid-template-columns: minmax(0,1fr) auto; }
+ .tf-exercise-detail-page .tf-exercise-detail-hero { grid-template-columns: minmax(0,1fr); }
+}
