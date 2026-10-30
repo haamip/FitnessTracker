@@ -49,7 +49,7 @@ export default function WeeklyProgressPhotos() {
       <section className="v4-workout-list tf-weekly-photos">
         {ANGLES.map(angle => <WeeklyPhotoSlot key={angle} angle={angle} weekStart={week} refresh={revision} onPhotoChange={() => setRevision(x => x+1)} />)}
       </section>
-      <p><Link to="/coach/weekly">Back to weekly coaching review</Link></p>
+
     </main>
   );
 }
