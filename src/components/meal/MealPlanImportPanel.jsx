@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { FileUp, ClipboardPaste, AlertTriangle } from "lucide-react";
-import { parseMealPlanText } from "../services/mealPlanImporter";
+import { parseMealPlanText } from "../../services/mealPlanImporter";
 import "./MealPlanImportPanel.css";
 
 async function extractTextFromPdf(file) {
