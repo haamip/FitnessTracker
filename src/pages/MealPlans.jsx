@@ -75,7 +75,7 @@ export default function MealPlans(){
       "Replace the current editor with the imported meals? Your saved meal plan will stay unchanged until you choose Save meal plan."
     )) return false;
     setRows(meals);
-    if (!name.trim() && fileName) setName(fileName.replace(/\\.(pdf|txt)$/i, "").slice(0, 120));
+    if (!name.trim() && fileName) setName(fileName.replace(/\.(pdf|txt)$/i, "").slice(0, 120));
     setDirty(true);
     setMessage(`${meals.length} meals added to your draft. Check the amounts, fill missing macros, then save the plan.`);
     return true;
