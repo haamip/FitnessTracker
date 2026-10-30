@@ -232,7 +232,7 @@ export default function WeeklyCoachReview() {
         </div>
         <Link to={`/coach/photos?week=${week}`} className="tf-weekly-photo-link__open">Open photos <ChevronRight size={18} aria-hidden="true" /></Link>
       </section>
-      <nav className="tf-weekly-footer" aria-label="Related tracking"><Link to="/checkin">Daily check-in</Link><Link to="/workouts">Workouts</Link><Link to="/cardio">Cardio</Link></nav>
+
     </main>
   );
 }

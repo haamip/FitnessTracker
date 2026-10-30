@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, ClipboardList, Plus, Save, Trash2, Utensils } from "lucide-react";
 import { MealPlanRepository } from "../services/mealPlanRepository";
+import MealPlanImportPanel from "../components/meal/MealPlanImportPanel";
 import { macroComparison, validateMealPlan } from "../services/mealPlanMath";
 import { NutritionRepository } from "../services/repositories/trackfitDataLayer";
 import { NutritionCloudRepository } from "../services/repositories/nutritionCloudRepository";
@@ -69,6 +70,16 @@ export default function MealPlans(){
     return ()=>{active=false};
   },[date]);
   const comparison=useMemo(()=>macroComparison(savedPlan?.meals||[],logged),[savedPlan,logged]);
+  function importPlan(meals, fileName) {
+    if ((dirty || savedPlan) && !window.confirm(
+      "Replace the current editor with the imported meals? Your saved meal plan will stay unchanged until you choose Save meal plan."
+    )) return false;
+    setRows(meals);
+    if (!name.trim() && fileName) setName(fileName.replace(/\.(pdf|txt)$/i, "").slice(0, 120));
+    setDirty(true);
+    setMessage(`${meals.length} meals added to your draft. Check the amounts, fill missing macros, then save the plan.`);
+    return true;
+  }
   function edit(id,field,value){
     setRows(current=>current.map(row=>row.id===id?{...row,[field]:value}:row));
     setDirty(true);setMessage("");
@@ -141,6 +152,8 @@ export default function MealPlans(){
             {dirty && <p role="status">Your edits below are a draft. The comparison uses your last saved plan.</p>}
           </> : <p>Once you save a meal plan, its daily targets will appear here beside your actual logged calories and macros.</p>}
         </section>
+
+        <MealPlanImportPanel onImport={importPlan} disabled={busy} />
 
         <section className="tf-meal-plan-editor">
           <div className="tf-meal-plan-heading"><div><p className="eyebrow">Plan builder</p><h2>{savedPlan?"Edit your meal plan":"Build your meal plan"}</h2></div><Utensils size={23}/></div>
