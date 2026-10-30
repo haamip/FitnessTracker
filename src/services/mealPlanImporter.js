@@ -10,10 +10,10 @@ const HEADINGS = [
   ["Post-shift meal",/^(post.shift meal)$/i],
 ];
 const METRIC = {
-  calories:[/\b(?:calories|kcal)\s*[:=\-]?\s*(\d+(?:\.\d+)?)/i,/\b(\d+(?:\.\d+)?)\s*(?:kcal|calories)\b/i],
-  protein:[/\b(?:protein|pro|p)\s*[:=\-]?\s*(\d+(?:\.\d+)?)\s*g?\b/i,/\b(\d+(?:\.\d+)?)\s*g\s*protein\b/i],
-  carbs:[/\b(?:carbs?|carbohydrates?|c)\s*[:=\-]?\s*(\d+(?:\.\d+)?)\s*g?\b/i,/\b(\d+(?:\.\d+)?)\s*g\s*carbs?\b/i],
-  fats:[/\b(?:fats?|f)\s*[:=\-]?\s*(\d+(?:\.\d+)?)\s*g?\b/i,/\b(\d+(?:\.\d+)?)\s*g\s*fats?\b/i],
+  calories:[/\b(?:calories|kcal)\s*[:=-]?\s*(\d+(?:\.\d+)?)/i,/\b(\d+(?:\.\d+)?)\s*(?:kcal|calories)\b/i],
+  protein:[/\b(?:protein|pro|p)\s*[:=-]?\s*(\d+(?:\.\d+)?)\s*g?\b/i,/\b(\d+(?:\.\d+)?)\s*g\s*protein\b/i],
+  carbs:[/\b(?:carbs?|carbohydrates?|c)\s*[:=-]?\s*(\d+(?:\.\d+)?)\s*g?\b/i,/\b(\d+(?:\.\d+)?)\s*g\s*carbs?\b/i],
+  fats:[/\b(?:fats?|f)\s*[:=-]?\s*(\d+(?:\.\d+)?)\s*g?\b/i,/\b(\d+(?:\.\d+)?)\s*g\s*fats?\b/i],
 };
 const mealPrefix = /^(breakfast|brekkie|lunch|dinner|tea|snack|smoko|shake|protein shake|pre.shift meal|post.shift meal|morning snack|afternoon snack)\s*[:\-\u2014]\s*/i;
 const headingOnly = /^(?:meal plan|daily menu|meal \d+|total|totals|nutrition|macros|day \d+|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s*:?\s*$/i;
@@ -29,7 +29,7 @@ function extractMetric(text, key) {
 }
 function stripNutrition(text) {
   return text
-    .replace(/\b(?:calories|kcal|protein|pro|carbohydrates|carbs|fat|fats|[pcf])\s*[:=\-]?\s*\d+(?:\.\d+)?\s*g?\b/gi," ")
+    .replace(/\b(?:calories|kcal|protein|pro|carbohydrates|carbs|fat|fats|[pcf])\s*[:=-]?\s*\d+(?:\.\d+)?\s*g?\b/gi," ")
     .replace(/\b\d+(?:\.\d+)?\s*(?:kcal|calories|g\s*(?:protein|carbs?|fats?))\b/gi," ")
     .replace(/[|•,;]+/g," ")
     .replace(/\s{2,}/g," ")
