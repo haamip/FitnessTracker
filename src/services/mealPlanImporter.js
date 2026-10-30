@@ -33,7 +33,7 @@ function stripNutrition(text) {
     .replace(/\b\d+(?:\.\d+)?\s*(?:kcal|calories|g\s*(?:protein|carbs?|fats?))\b/gi," ")
     .replace(/[|•,;]+/g," ")
     .replace(/\s{2,}/g," ")
-    .replace(/^[\s\d.)\-*]+/,"")
+    .replace(/^\s*(?:[-*•]|\d+[.)])\s+/,"")
     .replace(/[\s\-:]+$/,"")
     .trim();
 }
@@ -58,7 +58,7 @@ export function parseMealPlanText(input, { maxMeals = 20 } = {}) {
     }
     const metrics = Object.fromEntries(Object.keys(METRIC).map(key=>[key,extractMetric(rest,key)]));
     const named = stripNutrition(rest).slice(0,120);
-    if (!named || /^(?:kcal|calories|protein|carbs|fat|total)\b/i.test(named)) {
+    if (!named || /^(?:kcal|calories|protein|carbs|fat|total)$/i.test(named)) {
       ignored += 1;
       continue;
     }
