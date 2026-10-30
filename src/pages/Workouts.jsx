@@ -5,7 +5,6 @@ import {
   CheckSquare,
   ChevronRight,
   Copy,
-  Dumbbell,
   FileUp,
   Pencil,
   Plus,
@@ -219,9 +218,6 @@ export default function Workouts() {
               ) : (
                 <>
                   <Link className="tf-workout-card__main" to={`/workouts/${workout.id}`}>
-                    <span className="v4-workout-icon">
-                      {workout.kind === "plan" ? <Sparkles size={22} /> : <Dumbbell size={22} />}
-                    </span>
                     <span className="tf-workout-card__text">
                       <strong>{workout.name}</strong>
                       <small>{workout.detail || "Saved workout"}</small>
