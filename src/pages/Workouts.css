@@ -147,3 +147,12 @@
 }
 
 .tf-library-search-label{display:grid;gap:6px;color:#445948;font-size:13px;font-weight:800}.tf-library-search-label input{min-height:46px;padding:10px 13px;border:1px solid #d5e1d1;border-radius:12px;background:white;color:#243829;font-size:16px;width:100%}
+
+/* Remove arbitrary leading workout artwork; keep selection controls and navigation. */
+.tf-workout-list-page .tf-workout-card__main { grid-template-columns: minmax(0,1fr) 24px; gap: 12px; }
+.tf-workout-list-page .tf-workout-card__main.tf-workout-card__select { grid-template-columns: 50px minmax(0,1fr); }
+.tf-workout-list-page .tf-workout-card__select .tf-workout-card__text { grid-column: 2 / -1; }
+@media(max-width:390px){
+ .tf-workout-list-page .tf-workout-card__main { grid-template-columns:minmax(0,1fr) 24px; }
+ .tf-workout-list-page .tf-workout-card__main.tf-workout-card__select { grid-template-columns:42px minmax(0,1fr); }
+}

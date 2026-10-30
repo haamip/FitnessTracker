@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import ExercisePicker from "../components/ExercisePicker";
 import { createStarterWorkoutExercises } from "../services/starterWorkouts";
-import ExerciseImage from "../components/ui/ExerciseImage";
 import RestTimer from "../components/ui/RestTimer";
 import SetLogger from "../components/ui/SetLogger";
 import WorkoutSummary from "../components/ui/WorkoutSummary";
@@ -676,10 +675,6 @@ export default function WorkoutDetail() {
             >
               <ChevronRight size={20} />
             </button>
-          </div>
-
-          <div className="gym-focus-card__art">
-            <ExerciseImage exercise={currentExercise} size={108} />
           </div>
 
           <div className="gym-focus-card__title">

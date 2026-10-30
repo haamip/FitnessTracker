@@ -10,7 +10,6 @@ import {
   Sparkles,
   Trophy,
 } from "lucide-react";
-import ExerciseImage from "../components/ui/ExerciseImage";
 import {
   findExerciseById,
   formatKg,
@@ -99,9 +98,6 @@ export default function ExerciseDetail() {
 
       {/* Exercise identity block: quick visual + the most useful metadata. */}
       <section className="tf-exercise-detail-hero">
-        <div className="tf-exercise-hero-art" aria-hidden="true">
-          <ExerciseImage exercise={exercise} />
-        </div>
         <div>
           <p>Exercise Detail</p>
           <h1>{exercise.name}</h1>
