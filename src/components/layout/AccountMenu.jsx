@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   Activity, Brain, CalendarCheck2, ClipboardList, Gauge, LogOut,
-  Menu, Settings2, Sparkles, UserRound, Watch, X,
+  Menu, MessageSquarePlus, Settings2, Sparkles, UserRound, Watch, X,
 } from "lucide-react";
 import { supabase } from "../../services/supabase";
 import "./AccountMenu.css";
@@ -16,6 +16,7 @@ const links = [
   { to: "/logs", label: "Daily logs", icon: Activity },
   { to: "/coach/intelligence", label: "Coaching insights", icon: Brain },
   { to: "/ai", label: "Ask AI Coach", icon: Sparkles },
+  { to: "/feedback", label: "Send feedback", icon: MessageSquarePlus },
   { to: "/profile", label: "Profile", icon: UserRound },
 ];
 
