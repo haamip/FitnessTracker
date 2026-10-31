@@ -18,8 +18,8 @@ const watches = [
   { id: "garmin", name: "Garmin", help: "In Garmin Connect, enable sharing steps to Health Connect if your app/device supports it." },
   { id: "polar", name: "Polar", help: "In Polar Flow, enable Health Connect step sharing. Available metrics depend on your watch and app." },
   { id: "other", name: "Another watch", help: "Check whether your watch's official phone app can write steps to Android Health Connect." },
-  { id: "apple", name: "Apple Watch", help: "Apple Watch uses Apple Health on iPhone. TrackFit's Android Health Connect integration cannot read it. iPhone sync is not available yet." },
-  { id: "none", name: "No watch", help: "No problem. You can enter steps in your daily check-in." },
+  { id: "apple", name: "Apple Watch", help: "On iPhone, Apple Watch steps appear in Apple Health. TrackFit reads Apple Health after you choose to allow Steps access." },
+  { id: "none", name: "No watch / Phone only", help: "Your iPhone can count steps directly in Apple Health. Many Android phones can supply steps through Health Connect. If there's no data yet, enter steps manually." },
 ];
 
 function readTodaysCheckIn() {
@@ -68,7 +68,11 @@ export default function WatchSync() {
 
   const connectedReader = nativeApp && Boolean(provider);
   const selectedWatch = watches.find((watch) => watch.id === watchChoice);
-  const canSync = connectedReader && Boolean(watchChoice) && watchChoice !== "none" && watchChoice !== "apple";
+  const compatibleChoice = provider?.platform === "ios"
+    ? ["apple", "none", "garmin", "polar", "other"].includes(watchChoice)
+    : watchChoice !== "apple";
+  const canSync = connectedReader && Boolean(watchChoice) && compatibleChoice;
+  const isApple = provider?.platform === "ios";
   const steps = Number(entry?.steps);
   const savedSteps = entry?.steps != null && Number.isFinite(steps) ? steps.toLocaleString() : "Not synced";
   const source = entry?.stepsSource === "health_connect" ? stepSourceName(entry.stepsMode) :
@@ -88,7 +92,7 @@ export default function WatchSync() {
     const mode = watchStepSource(choice);
     setStepSourceMode(userId, mode);
     setSourceMode(mode);
-    if (choice === "none" || choice === "apple") {
+    if ((isApple && ["samsung", "pixel_fitbit"].includes(choice)) || (!isApple && choice === "apple")) {
       setAutoWatchSyncEnabled(userId, false);
       setAutoEnabled(false);
     }
@@ -107,7 +111,7 @@ export default function WatchSync() {
     setStatus({
       state: enabled ? "ready" : "disabled",
       message: enabled
-        ? "Automatic step updates are on when you open or return to the Android app (up to once every 15 minutes). No background tracking."
+        ? "Automatic step updates are on when you open or return to the native app (up to once every 15 minutes). No background tracking."
         : "Automatic updates are off. You can still sync steps yourself.",
     });
   }
@@ -155,14 +159,14 @@ export default function WatchSync() {
     <main className="screen tf-watch-sync">
       <section className="tf-watch-sync__hero">
         <Watch size={30} aria-hidden="true" />
-        <p className="eyebrow">Wearables</p>
-        <h1>Connect your watch</h1>
-        <p>Choose your watch, then sync your daily steps. We'll handle the settings.</p>
+        <p className="eyebrow">Steps &amp; devices</p>
+        <h1>Connect your steps</h1>
+        <p>Using a watch or just your phone? Choose your setup and sync your steps.</p>
       </section>
 
       <section className="form-card tf-watch-sync__section">
         <fieldset className="tf-watch-sync__watch-options">
-          <legend>What watch do you have?</legend>
+          <legend>Where should we get your steps?</legend>
           <div className="tf-watch-sync__watch-grid">
             {watches.map((watch) => (
               <label key={watch.id} className={`tf-watch-sync__watch-choice${watchChoice === watch.id ? " is-selected" : ""}`}>
@@ -175,15 +179,15 @@ export default function WatchSync() {
         </fieldset>
         {selectedWatch && (
           <div className="tf-watch-sync__setup" role="status">
-            <strong>{watchChoice === "none" ? "Manual steps" : watchChoice === "apple" ? "iPhone required" : "One-time setup"}</strong>
+            <strong>{watchChoice === "apple" && !isApple ? "iPhone app required" : "One-time setup"}</strong>
             <p>{selectedWatch.help}</p>
-            {canSync && <small>When prompted, allow TrackFit to read steps from Health Connect.</small>}
+            {canSync && <small>When prompted, allow TrackFit to read Steps from {isApple ? "Apple Health" : "Health Connect"}. You can change this permission in your phone settings.</small>}
             {watchChoice === "samsung" && <small>Samsung Health can itself count phone steps. This setting filters by the Samsung Health app, not by watch hardware.</small>}
           </div>
         )}
 
-        {watchChoice && watchChoice !== "none" && watchChoice !== "apple" && (
-          connectedReader ? (
+        {watchChoice && (
+          canSync ? (
             <div className="tf-watch-sync__quick-actions">
               <button type="button" disabled={busy} onClick={syncSteps} className="tf-watch-sync__primary">
                 <RefreshCw size={18} aria-hidden="true" />
@@ -192,16 +196,20 @@ export default function WatchSync() {
               <label className="tf-watch-sync__auto">
                 <input type="checkbox" checked={autoEnabled} disabled={!userId || busy} onChange={(event) => toggleAuto(event.target.checked)} />
                 <span><strong>Update steps when I open TrackFit</strong>
-                  <small>Optional. Up to once every 15 minutes while using the app.</small>
+                  <small>Optional. Updates on app open and return, up to once every 15 minutes. No background tracking.</small>
                 </span>
               </label>
             </div>
           ) : (
             <div className="tf-watch-sync__notice" role="status">
               <AlertCircle size={20} aria-hidden="true" />
-              <span>{nativeApp
-                ? "This installed version can't access Health Connect. You'll need a compatible TrackFit Android build."
-                : "Watch syncing works in the installed TrackFit Android app, not this browser. You can still enter steps manually here."}</span>
+              <span>{!nativeApp
+                ? "Automatic steps need the installed TrackFit Android or iPhone app, not a browser. Manual steps still work."
+                : !connectedReader
+                  ? "This app build doesn't have a native steps connector yet. Install an updated native beta."
+                  : isApple
+                    ? "For iPhone, choose Apple Watch, No watch / Phone only, or another device that shares steps with Apple Health."
+                    : "Apple Watch steps need the TrackFit iPhone app. You can still enter steps manually."}</span>
             </div>
           )
         )}
@@ -223,7 +231,7 @@ export default function WatchSync() {
         <div><span>Today's steps</span><strong>{savedSteps}</strong><small>{entry ? source : "No steps recorded yet"}{syncedTime ? ` · synced ${syncedTime}` : ""}</small></div>
       </section>
 
-      {connectedReader && (
+      {connectedReader && !isApple && (
         <details className="form-card tf-watch-sync__advanced">
           <summary><span>Step accuracy &amp; advanced settings</span><ChevronDown size={20} aria-hidden="true" /></summary>
           <p>Only open these settings if your step totals don't match.</p>
