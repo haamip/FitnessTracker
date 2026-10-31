@@ -17,6 +17,15 @@ describe("watch connection diagnostic states", () => {
     bridge.getStatus.mockResolvedValue({ available: true, stepsGranted: true });
     expect((await inspectWatchConnection({ native: true, provider })).state).toBe("ready");
   });
+  it("does not claim Apple read permission just because the prompt was shown", async () => {
+    const bridge = { getStatus: vi.fn(async () => ({ available: true, authorizationRequested: false })) };
+    const provider = { platform: "ios", name: "Apple Health", bridge };
+    expect((await inspectWatchConnection({ native: true, provider })).state).toBe("permission-needed");
+    bridge.getStatus.mockResolvedValue({ available: true, authorizationRequested: true });
+    const status = await inspectWatchConnection({ native: true, provider });
+    expect(status.state).toBe("ready");
+    expect(status.message).toMatch(/permission private/);
+  });
   it("reports unavailable provider and failed status calls", async () => {
     const provider = { name: "Health Connect", bridge: { getStatus: async () => ({ available: false }) } };
     expect((await inspectWatchConnection({ native: true, provider })).state).toBe("unavailable");
