@@ -17,5 +17,9 @@ end
 target.build_configurations.each do |config|
   config.build_settings['CODE_SIGN_ENTITLEMENTS'] = 'App/TrackFit.entitlements'
 end
+attributes = project.root_object.attributes['TargetAttributes'] ||= {}
+target_attrs = attributes[target.uuid] ||= {}
+capabilities = target_attrs['SystemCapabilities'] ||= {}
+capabilities['com.apple.HealthKit'] = { 'enabled' => 1 }
 project.save
 puts 'TrackFit HealthKit Swift files added to the App target; entitlement configured.'
