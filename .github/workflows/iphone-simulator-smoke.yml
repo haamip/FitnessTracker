@@ -61,7 +61,7 @@ jobs:
         run: |
           mkdir -p ios-test-results
           xcodebuild \
-            -workspace ios/App/App.xcworkspace \
+            -project ios/App/App.xcodeproj \
             -scheme App \
             -configuration Debug \
             -sdk iphonesimulator \
