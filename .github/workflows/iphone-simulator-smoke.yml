@@ -4,6 +4,14 @@ name: TrackFit iPhone Simulator Smoke (Manual)
 # Run manually once per release; iPhone Safari-sized browser tests run on PRs.
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - feature/apple-healthkit-step-sync-20261031
+    paths:
+      - '.github/workflows/iphone-simulator-smoke.yml'
+      - 'native/ios/**'
+      - 'src/services/wearableBridge.js'
+      - 'src/pages/WatchSync.jsx'
 
 permissions:
   contents: read
@@ -34,20 +42,26 @@ jobs:
         run: npm ci
       - name: Install Capacitor iOS (fixed version)
         run: npm install --no-save --package-lock=false @capacitor/core@8.3.0 @capacitor/ios@8.3.0 @capacitor/cli@8.3.0
+      - name: Register native-only Apple Health bridge
+        run: node native/ios/prepare-web.mjs
       - name: Build iPhone web assets with dummy auth settings
         env:
           VITE_SUPABASE_URL: https://example.supabase.co
           VITE_SUPABASE_ANON_KEY: ci-iphone-test-placeholder
         run: npm run build
-      - name: Generate iOS native shell and synchronize
+      - name: Generate iOS native shell and HealthKit capability
         run: |
           npx cap add ios
+          node native/ios/prepare-shell.mjs
+          gem install xcodeproj --no-document
+          ruby native/ios/configure-xcode.rb
+          plutil -lint ios/App/App/Info.plist ios/App/App/TrackFit.entitlements
           npx cap sync ios
       - name: Build unsigned iOS Simulator app
         run: |
           mkdir -p ios-test-results
           xcodebuild \
-            -workspace ios/App/App.xcworkspace \
+            -project ios/App/App.xcodeproj \
             -scheme App \
             -configuration Debug \
             -sdk iphonesimulator \

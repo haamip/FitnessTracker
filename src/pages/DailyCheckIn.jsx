@@ -54,7 +54,8 @@ export default function DailyCheckIn() {
     setForm(initialValues());
     setMessage(`${count} older check-in${count === 1 ? "" : "s"} imported. Cloud sync will retry if you're offline.`);
   }
-  const [watchAvailable] = useState(() => Boolean(getWearableBridge()));
+  const [watchProvider] = useState(getWearableBridge);
+  const watchAvailable = Boolean(watchProvider);
   const [nativeApp] = useState(isTrackFitNativeApp);
   const [connection, setConnection] = useState(null);
   const [checkingConnection, setCheckingConnection] = useState(false);
@@ -96,7 +97,7 @@ export default function DailyCheckIn() {
       const backup = saved?.cloudSaved
         ? "and backed up to your TrackFit account"
         : "on this phone; cloud backup is pending and will retry when you sign in again";
-      setConnection({ state: "read-success", message: `${stepSourceName(record.stepsMode)} returned ${count} steps today. Saved ${backup}.` });
+      setConnection({ state: "read-success", message: `${record.stepsSource === "apple_health" ? "Apple Health" : stepSourceName(record.stepsMode)} returned ${count} steps today. Saved ${backup}.` });
       setMessage(`${count} steps saved in TrackFit. You can finish the rest of your check-in below whenever you like.`);
     } catch (error) {
       const detail = error instanceof Error ? error.message : "Watch steps could not be read.";
@@ -171,7 +172,7 @@ export default function DailyCheckIn() {
         </label>
         {watchAvailable && (
           <button type="button" disabled={watchLoading} onClick={syncWatchSteps}>
-            <Watch size={18} /> {watchLoading ? "Reading your steps..." : "Sync steps from watch"}
+            <Watch size={18} /> {watchLoading ? "Reading your steps..." : "Sync steps from phone or watch"}
           </button>
         )}
         {nativeApp && (
@@ -179,7 +180,7 @@ export default function DailyCheckIn() {
             {checkingConnection ? "Checking connection..." : "Check watch connection"}
           </button>
         )}
-        {nativeApp && watchAvailable && (
+        {nativeApp && watchProvider?.platform === "android" && (
           <button type="button" disabled={sourceChecking || watchLoading} onClick={checkStepSources}>
             {sourceChecking ? "Comparing sources..." : "Compare step sources"}
           </button>

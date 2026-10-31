@@ -32,6 +32,7 @@ export default function NativeWatchSnapshot() {
 
   if (!isNative) return null;
   const supported = Boolean(provider);
+  const healthSource = provider?.platform === "ios" ? "APPLE HEALTH" : "HEALTH CONNECT";
   const numeric = entry?.steps == null ? null : Number(entry.steps);
   const steps = Number.isFinite(numeric) ? numeric.toLocaleString() : "—";
   const lastRead = entry?.stepsSyncedAt ? new Date(entry.stepsSyncedAt) : null;
@@ -61,11 +62,11 @@ export default function NativeWatchSnapshot() {
   }
 
   return (
-    <section className="tf-native-watch" aria-label="Health Connect steps">
+    <section className="tf-native-watch" aria-label="Native health steps">
       <div className="tf-native-watch__heading">
         <div className="tf-native-watch__icon"><Watch size={21} aria-hidden="true" /></div>
         <div>
-          <span>TRACKFIT NATIVE / HEALTH CONNECT</span>
+          <span>TRACKFIT NATIVE / {healthSource}</span>
           <h2>Watch &amp; steps</h2>
         </div>
         <Link to="/watch" aria-label="Open watch connection settings"><ArrowUpRight size={19} /></Link>
@@ -74,18 +75,18 @@ export default function NativeWatchSnapshot() {
         <div className="tf-native-watch__count">
           <Footprints size={20} aria-hidden="true" />
           <strong>{steps}</strong>
-          <span>today{entry?.stepsSource === "health_connect" ? ` · ${stepSourceName(entry.stepsMode)}` : entry ? " · Daily check-in" : ""}{updatedAt ? ` · read ${updatedAt}` : ""}</span>
+          <span>today{entry?.stepsSource === "health_connect" ? ` · ${stepSourceName(entry.stepsMode)}` : entry?.stepsSource === "apple_health" ? " · Apple Health" : entry ? " · Daily check-in" : ""}{updatedAt ? ` · read ${updatedAt}` : ""}</span>
         </div>
         {supported ? (
           <button disabled={busy} type="button" onClick={sync} className="tf-native-watch__sync">
-            <RefreshCw size={18} aria-hidden="true" /> {busy ? "Syncing..." : "Sync watch"}
+            <RefreshCw size={18} aria-hidden="true" /> {busy ? "Syncing..." : "Sync steps"}
           </button>
         ) : (
           <Link to="/watch" className="tf-native-watch__sync">Set up watch</Link>
         )}
       </div>
       {feedback && <p role="status" className="tf-native-watch__feedback">{feedback}</p>}
-      <small>Choose Samsung Health only or combined steps in Watch &amp; Steps. Automatic sync follows the selected source.</small>
+      <small>{provider?.platform === "ios" ? "Read steps from Apple Health, with or without an Apple Watch. Auto-sync is optional and foreground-only." : "Choose Samsung Health only or combined steps in Watch & Steps. Automatic sync follows the selected source."}</small>
     </section>
   );
 }

@@ -1,0 +1,147 @@
+name: TrackFit iPhone TestFlight Beta (Manual)
+
+# Requires Apple Developer enrollment, an Apple Distribution certificate,
+# an App Store provisioning profile with HealthKit enabled, and App Store
+# Connect API credentials. Never uploads or signs without explicit dispatch.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trackfit-ios-testflight
+  cancel-in-progress: false
+
+jobs:
+  upload-testflight:
+    # Apple credentials must never be exposed to unreviewed feature branches.
+    if: github.ref == 'refs/heads/ui-app-shell'
+    runs-on: macos-26
+    timeout-minutes: 75
+    steps:
+      - name: Check out TrackFit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Require iPhone release secrets
+        env:
+          TEAM: ${{ secrets.TRACKFIT_IOS_TEAM_ID }}
+          CERT: ${{ secrets.TRACKFIT_IOS_DISTRIBUTION_P12_BASE64 }}
+          PASSWORD: ${{ secrets.TRACKFIT_IOS_DISTRIBUTION_P12_PASSWORD }}
+          PROFILE: ${{ secrets.TRACKFIT_IOS_PROFILE_BASE64 }}
+          KEYID: ${{ secrets.TRACKFIT_ASC_API_KEY_ID }}
+          ISSUER: ${{ secrets.TRACKFIT_ASC_API_ISSUER_ID }}
+          APIKEY: ${{ secrets.TRACKFIT_ASC_API_PRIVATE_KEY }}
+          DBURL: ${{ secrets.TRACKFIT_SUPABASE_URL }}
+          DBANON: ${{ secrets.TRACKFIT_SUPABASE_ANON_KEY }}
+        run: |
+          for key in TEAM CERT PASSWORD PROFILE KEYID ISSUER APIKEY DBURL DBANON; do
+            test -n "${!key}" || { echo "::error::Missing secret for $key"; exit 1; }
+          done
+
+      - name: Configure Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install web and pinned native tooling
+        run: |
+          npm ci
+          npm install --no-save --package-lock=false @capacitor/core@8.3.0 @capacitor/ios@8.3.0 @capacitor/cli@8.3.0
+
+      - name: Build native iOS assets using TrackFit Supabase
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.TRACKFIT_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.TRACKFIT_SUPABASE_ANON_KEY }}
+        run: |
+          node native/ios/prepare-web.mjs
+          npm run build
+
+      - name: Generate HealthKit-enabled iOS project
+        run: |
+          npx cap add ios
+          node native/ios/prepare-shell.mjs
+          gem install xcodeproj --no-document
+          ruby native/ios/configure-xcode.rb
+          npx cap sync ios
+          plutil -lint ios/App/App/Info.plist ios/App/App/TrackFit.entitlements
+
+      - name: Import Apple Distribution signing certificate
+        uses: apple-actions/import-codesign-certs@v7
+        with:
+          p12-file-base64: ${{ secrets.TRACKFIT_IOS_DISTRIBUTION_P12_BASE64 }}
+          p12-password: ${{ secrets.TRACKFIT_IOS_DISTRIBUTION_P12_PASSWORD }}
+
+      - name: Install App Store provisioning profile
+        env:
+          PROFILE_B64: ${{ secrets.TRACKFIT_IOS_PROFILE_BASE64 }}
+          EXPECTED_TEAM: ${{ secrets.TRACKFIT_IOS_TEAM_ID }}
+        run: |
+          umask 077
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          printf '%s' "$PROFILE_B64" | base64 --decode > "$RUNNER_TEMP/trackfit.mobileprovision"
+          security cms -D -i "$RUNNER_TEMP/trackfit.mobileprovision" > "$RUNNER_TEMP/trackfit-profile.plist"
+          name=$(/usr/libexec/PlistBuddy -c 'Print :Name' "$RUNNER_TEMP/trackfit-profile.plist")
+          uuid=$(/usr/libexec/PlistBuddy -c 'Print :UUID' "$RUNNER_TEMP/trackfit-profile.plist")
+          profile_team=$(/usr/libexec/PlistBuddy -c 'Print :TeamIdentifier:0' "$RUNNER_TEMP/trackfit-profile.plist")
+          test "$profile_team" = "$EXPECTED_TEAM" || { echo "::error::Provisioning profile belongs to the wrong Apple team"; exit 1; }
+          app_identifier=$(/usr/libexec/PlistBuddy -c 'Print :Entitlements:application-identifier' "$RUNNER_TEMP/trackfit-profile.plist")
+          test "$app_identifier" = "$EXPECTED_TEAM.nz.hakt.trackfit" || { echo "::error::Provisioning profile doesn't match nz.hakt.trackfit"; exit 1; }
+          test -n "$uuid" && test -n "$name"
+          cp "$RUNNER_TEMP/trackfit.mobileprovision" "$HOME/Library/MobileDevice/Provisioning Profiles/$uuid.mobileprovision"
+          echo "TRACKFIT_IOS_PROFILE_NAME=$name" >> "$GITHUB_ENV"
+
+      - name: Archive signed TrackFit iPhone release
+        env:
+          TEAM_ID: ${{ secrets.TRACKFIT_IOS_TEAM_ID }}
+        run: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/TrackFit.xcarchive" \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            PROVISIONING_PROFILE_SPECIFIER="$TRACKFIT_IOS_PROFILE_NAME" \
+            PRODUCT_BUNDLE_IDENTIFIER=nz.hakt.trackfit \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
+            MARKETING_VERSION="1.0" \
+            archive
+
+      - name: Export App Store Connect IPA
+        env:
+          TEAM_ID: ${{ secrets.TRACKFIT_IOS_TEAM_ID }}
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+          <key>method</key><string>app-store-connect</string>
+          <key>signingStyle</key><string>manual</string>
+          <key>teamID</key><string>REPLACE_TEAM</string>
+          <key>provisioningProfiles</key><dict>
+            <key>nz.hakt.trackfit</key><string>REPLACE_PROFILE</string>
+          </dict>
+          </dict></plist>
+          PLIST
+          /usr/libexec/PlistBuddy -c "Set :teamID $TEAM_ID" "$RUNNER_TEMP/ExportOptions.plist"
+          /usr/libexec/PlistBuddy -c "Set :provisioningProfiles:nz.hakt.trackfit $TRACKFIT_IOS_PROFILE_NAME" "$RUNNER_TEMP/ExportOptions.plist"
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/TrackFit.xcarchive" \
+            -exportPath "$RUNNER_TEMP/TrackFit-export" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
+          test -f "$RUNNER_TEMP/TrackFit-export/App.ipa"
+
+      - name: Upload beta to TestFlight (does not invite testers)
+        uses: apple-actions/upload-testflight-build@v5
+        with:
+          app-path: ${{ runner.temp }}/TrackFit-export/App.ipa
+          issuer-id: ${{ secrets.TRACKFIT_ASC_API_ISSUER_ID }}
+          api-key-id: ${{ secrets.TRACKFIT_ASC_API_KEY_ID }}
+          api-private-key: ${{ secrets.TRACKFIT_ASC_API_PRIVATE_KEY }}
+          backend: appstore-api

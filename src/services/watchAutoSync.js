@@ -24,7 +24,7 @@ export function setAutoWatchSyncEnabled(userId, enabled) {
 
 /**
  * Opt-in foreground sync. Background collection is NOT supported or claimed.
- * Only native Health Connect with previously granted Steps access is used.
+ * Uses native Health Connect or Apple Health after a user-initiated setup.
  * No permission dialog is ever triggered automatically.
  */
 export async function syncWatchOnForeground() {
@@ -37,7 +37,7 @@ export async function syncWatchOnForeground() {
     const userId = !error && data?.user?.id;
     if (!userId || !isAutoWatchSyncEnabled(userId)) return null;
     const status = await provider.bridge.getStatus();
-    if (!status?.available || !status.stepsGranted) return null;
+    if (!status?.available || (provider.platform === "ios" ? !status.authorizationRequested : !status.stepsGranted)) return null;
     const now = Date.now();
     const previous = Number(localStorage.getItem(attemptKey(userId)) || 0);
     if (previous > 0 && now - previous < MIN_INTERVAL_MS) return null;
@@ -48,7 +48,9 @@ export async function syncWatchOnForeground() {
     const existing = CheckInRepository.getAll().find((item) => item.date === date);
     // A temporary Health Connect source issue shouldn't reduce a previously
     // imported step total; the user can still manually correct the check-in.
-    if (existing?.stepsSource === record.stepsSource && (existing.stepsMode || "all") === sourceMode && Number(existing.steps) > record.steps) return null;
+    if (existing?.stepsSource === record.stepsSource &&
+        (provider.platform === "ios" || (existing.stepsMode || "all") === sourceMode) &&
+        Number(existing.steps) > record.steps) return null;
     const saved = await CheckInRepository.saveStepsFromWatch(date, record);
     window.dispatchEvent(new CustomEvent("trackfit:watch-auto-synced", { detail: { date, steps: record.steps, sourceMode, cloudSaved: Boolean(saved?.cloudSaved) } }));
     return record;
