@@ -25,7 +25,7 @@ public class TrackFitHealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         ])
     }
 
-    @objc func requestPermissions(_ call: CAPPluginCall) {
+    @objc public override func requestPermissions(_ call: CAPPluginCall) {
         guard let types = call.getArray("dataTypes") as? [String], types == ["steps"] else {
             call.reject("TrackFit only requests read access to steps.", "INVALID_SCOPE")
             return
