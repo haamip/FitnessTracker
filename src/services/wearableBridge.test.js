@@ -25,6 +25,23 @@ describe("generic wearable provider contract", () => {
     expect(bridge.requestPermissions).toHaveBeenCalledWith({ dataTypes: ["steps"] });
     expect(result).toMatchObject({ steps: 9700, stepsSource: "apple_health" });
   });
+  it("accepts iPhone authorization-requested state without falsely claiming read permission", async () => {
+    const bridge = {
+      getStatus: vi.fn(async () => ({ available: true, authorizationRequested: true })),
+      requestPermissions: vi.fn(),
+      readTodaySteps: vi.fn(async () => ({ date: "2026-10-17", steps: 8700, dataPresent: true })),
+    };
+    const saved = await readWearableSteps("2026-10-17", { platform: "ios", bridge });
+    expect(saved).toMatchObject({ steps: 8700, stepsSource: "apple_health" });
+    expect(bridge.requestPermissions).not.toHaveBeenCalled();
+  });
+  it("does not replace the user's check-in with missing or zero Apple Health data", async () => {
+    const bridge = {
+      getStatus: async () => ({ available: true, authorizationRequested: true }),
+      readTodaySteps: async () => ({ date: "2026-10-17", steps: 0, dataPresent: false }),
+    };
+    await expect(readWearableSteps("2026-10-17", { platform: "ios", bridge })).rejects.toThrow(/No readable/);
+  });
   it("rejects unavailable or invalid providers and watch readings", async () => {
     await expect(readWearableSteps("2026-10-17", null)).rejects.toThrow(/native TrackFit/);
     await expect(readWearableSteps("2026-10-17", { platform: "unknown" })).rejects.toThrow(/Unsupported/);
