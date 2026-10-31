@@ -36,8 +36,13 @@ const key = "<key>NSHealthShareUsageDescription</key>";
 if (!plist.includes(key)) {
   plist = plist.replace("<dict>", '<dict>\n\t' + key +
     '\n\t<string>TrackFit reads your daily step count from Apple Health when you choose to sync. We never change your Apple Health records.</string>');
-  writeFileSync(plistPath, plist);
 }
+const cameraKey = "<key>NSCameraUsageDescription</key>";
+if (!plist.includes(cameraKey)) {
+  plist = plist.replace("<dict>", '<dict>\n\t' + cameraKey +
+    '\n\t<string>TrackFit uses the camera only when you choose to scan a barcode or take a meal photo.</string>');
+}
+writeFileSync(plistPath, plist);
 const entitlements = join(app, "TrackFit.entitlements");
 writeFileSync(entitlements, `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
