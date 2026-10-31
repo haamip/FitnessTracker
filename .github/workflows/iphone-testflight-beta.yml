@@ -15,6 +15,8 @@ concurrency:
 
 jobs:
   upload-testflight:
+    # Apple credentials must never be exposed to unreviewed feature branches.
+    if: github.ref == 'refs/heads/ui-app-shell'
     runs-on: macos-26
     timeout-minutes: 75
     steps:
@@ -86,6 +88,8 @@ jobs:
           uuid=$(/usr/libexec/PlistBuddy -c 'Print :UUID' "$RUNNER_TEMP/trackfit-profile.plist")
           profile_team=$(/usr/libexec/PlistBuddy -c 'Print :TeamIdentifier:0' "$RUNNER_TEMP/trackfit-profile.plist")
           test "$profile_team" = "$EXPECTED_TEAM" || { echo "::error::Provisioning profile belongs to the wrong Apple team"; exit 1; }
+          app_identifier=$(/usr/libexec/PlistBuddy -c 'Print :Entitlements:application-identifier' "$RUNNER_TEMP/trackfit-profile.plist")
+          test "$app_identifier" = "$EXPECTED_TEAM.nz.hakt.trackfit" || { echo "::error::Provisioning profile doesn't match nz.hakt.trackfit"; exit 1; }
           test -n "$uuid" && test -n "$name"
           cp "$RUNNER_TEMP/trackfit.mobileprovision" "$HOME/Library/MobileDevice/Provisioning Profiles/$uuid.mobileprovision"
           echo "TRACKFIT_IOS_PROFILE_NAME=$name" >> "$GITHUB_ENV"
@@ -113,7 +117,6 @@ jobs:
         env:
           TEAM_ID: ${{ secrets.TRACKFIT_IOS_TEAM_ID }}
         run: |
-          /usr/libexec/PlistBuddy -c 'Clear dict' "$RUNNER_TEMP/ExportOptions.plist" 2>/dev/null || true
           cat > "$RUNNER_TEMP/ExportOptions.plist" <<'PLIST'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -132,7 +135,7 @@ jobs:
             -archivePath "$RUNNER_TEMP/TrackFit.xcarchive" \
             -exportPath "$RUNNER_TEMP/TrackFit-export" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
-          test -f "$RUNNER_TEMP/TrackFit-export/App.ipa" || test -n "$(find "$RUNNER_TEMP/TrackFit-export" -name '*.ipa' -print -quit)"
+          test -f "$RUNNER_TEMP/TrackFit-export/App.ipa"
 
       - name: Upload beta to TestFlight (does not invite testers)
         uses: apple-actions/upload-testflight-build@v5
