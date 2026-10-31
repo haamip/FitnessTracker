@@ -30,7 +30,7 @@ are zero after the prompt, ask the user to check Health permissions/data.
 5. `node native/ios/prepare-shell.mjs`
 6. `gem install xcodeproj --no-document && ruby native/ios/configure-xcode.rb`
 7. `npx cap sync ios`
-8. Build in Xcode or run GitHub Actions workflow **TrackFit iPhone Simulator Smoke**.
+8. Build from `ios/App/App.xcodeproj` in Xcode or run GitHub Actions workflow **TrackFit iPhone Simulator Smoke**.
 
 The simulator validates launching and native compilation, **not live step
 tracking**. Live verification requires an iPhone; no Apple Watch is required.
