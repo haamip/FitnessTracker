@@ -4,6 +4,14 @@ name: TrackFit iPhone Simulator Smoke (Manual)
 # Run manually once per release; iPhone Safari-sized browser tests run on PRs.
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - feature/apple-healthkit-step-sync-20261031
+    paths:
+      - '.github/workflows/iphone-simulator-smoke.yml'
+      - 'native/ios/**'
+      - 'src/services/wearableBridge.js'
+      - 'src/pages/WatchSync.jsx'
 
 permissions:
   contents: read
