@@ -10,7 +10,7 @@ import { supabase } from "../services/supabase";
 import { parseMealText } from "../services/mealTextParser";
 import { getFoodByBarcode, scaleFoodNutrients, searchFoodByName } from "../services/openFoodFacts";
 import FoodBarcodeScanner from "../components/FoodBarcodeScanner";
-import { getLibraryFoodByBarcode, submitFoodForReview } from "../services/foodLibrary";
+import { getLibraryFoodByBarcode, searchFoodLibrary, submitFoodForReview } from "../services/foodLibrary";
 import { getShiftStartTime } from "../services/shift/shiftModeService";
 import { signalTrackFitDataChange } from "../hooks/useTrackFitDataRefresh";
 import "./TrackFitScreens.css";
@@ -171,8 +171,25 @@ export default function Nutrition() {
     setMessage("");
     setFoodSearchResults([]);
     try {
-      const results = await searchFoodByName(foodSearch);
-      setFoodSearchResults(results);
+      const [shared, external] = await Promise.allSettled([
+        searchFoodLibrary(foodSearch),
+        searchFoodByName(foodSearch),
+      ]);
+      if (shared.status === "rejected" && external.status === "rejected") {
+        throw new Error("Food databases are unavailable. You can still log a meal manually.");
+      }
+      const results = [];
+      const barcodes = new Set();
+      for (const result of [shared, external]) {
+        if (result.status !== "fulfilled") continue;
+        for (const food of result.value) {
+          if (!barcodes.has(food.barcode)) {
+            barcodes.add(food.barcode);
+            results.push(food);
+          }
+        }
+      }
+      setFoodSearchResults(results.slice(0, 24));
       if (!results.length) setMessage("No matching packaged foods found. You can still add the food manually below.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Food search unavailable.");
@@ -427,12 +444,12 @@ export default function Nutrition() {
       </form>
       {foodSearchResults.length > 0 && (
         <div className="tf-food-search-results" aria-label="Food search results">
-          <small>{foodSearchResults.length} matching packaged foods. Select one to check its nutrition per 100 g.</small>
+          <small>{foodSearchResults.length} matching packaged foods from the shared TrackFit catalogue and Open Food Facts. Select one to review its nutrition per 100 g.</small>
           {foodSearchResults.map((food) => (
             <button type="button" key={food.barcode} className="tf-food-search-result"
               onClick={() => selectSearchedFood(food)}>
               <strong>{food.name}</strong>
-              <span>{food.brand || "Unbranded"} · {food.per100g.calories == null ? "Energy unknown" : `${Math.round(food.per100g.calories)} kcal`} / 100 g · {food.per100g.protein == null ? "Protein unknown" : `${roundDisplay(food.per100g.protein)}g protein`}</span>
+              <span>{food.source === "trackfit" ? (food.reviewStatus === "pending" ? "Your pending submission" : "TrackFit community") : "Open Food Facts"} · {food.brand || "Unbranded"} · {food.per100g.calories == null ? "Energy unknown" : `${Math.round(food.per100g.calories)} kcal`} / 100 g · {food.per100g.protein == null ? "Protein unknown" : `${roundDisplay(food.per100g.protein)}g protein`}</span>
             </button>
           ))}
         </div>
