@@ -31,6 +31,32 @@ export async function getLibraryFoodByBarcode(value) {
   return product ? normaliseProduct(product) : null;
 }
 
+/** Search the shared approved catalogue (and the signed-in user's own pending entries).
+ * Two scoped queries avoid unsafe PostgREST filter-string interpolation.
+ */
+export async function searchFoodLibrary(value) {
+  const term = String(value || "").trim().replace(/[^\p{L}\p{N}\s.'-]/gu, "").slice(0, 65);
+  if (term.length < 3 || !supabase) return [];
+  const pattern = `%${term.replace(/\s+/g, " ")}%`;
+  const lookups = await Promise.all([
+    supabase.from("food_products").select(fields).ilike("name", pattern).limit(18),
+    supabase.from("food_products").select(fields).ilike("brand", pattern).limit(18),
+  ]);
+  const rows = [];
+  for (const result of lookups) {
+    if (result.error) throw result.error;
+    rows.push(...(result.data || []));
+  }
+  const products = new Map();
+  for (const row of rows) {
+    const previous = products.get(row.barcode);
+    if (!previous || (row.status === "approved" && previous.status !== "approved")) {
+      products.set(row.barcode, row);
+    }
+  }
+  return [...products.values()].slice(0, 18).map(normaliseProduct);
+}
+
 function numberInRange(value, max, label, allowEmpty = false) {
   if (allowEmpty && (value === "" || value === null || value === undefined)) return null;
   if (value === "" || value === null || value === undefined) throw new Error(`Enter ${label} per 100 g.`);
