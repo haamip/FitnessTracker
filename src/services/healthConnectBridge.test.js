@@ -41,6 +41,16 @@ describe("Galaxy Health Connect native boundary", () => {
     await expect(readGalaxyDailySteps("2026-10-17", native, { sourceMode: "samsung_health" }))
       .rejects.toThrow(/cannot filter Samsung Health/);
   });
+  it("rejects old native apps that ignore the custom shift start", () => {
+    expect(() => validateHealthConnectSteps(
+      { date:"2026-11-01", steps:9800, sourceMode:"all" },
+      "2026-11-01", "all", "18:00"
+    )).toThrow(/latest TrackFit Android build/);
+    expect(validateHealthConnectSteps(
+      { date:"2026-11-01", steps:9800, sourceMode:"all", shiftStartTime:"18:00" },
+      "2026-11-01", "all", "18:00"
+    ).steps).toBe(9800);
+  });
   it("does not expose a web connection without an actual native Capacitor bridge", () => {
     expect(getHealthConnectBridge()).toBeNull();
   });
