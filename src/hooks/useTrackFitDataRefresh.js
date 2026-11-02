@@ -12,12 +12,14 @@ export default function useTrackFitDataRefresh() {
     window.addEventListener("storage", onFocus);
     window.addEventListener("trackfit:checkin-saved", onFocus);
     window.addEventListener("trackfit:data-changed", onFocus);
+    window.addEventListener("trackfit:shift-mode-changed", onFocus);
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("storage", onFocus);
       window.removeEventListener("trackfit:checkin-saved", onFocus);
       window.removeEventListener("trackfit:data-changed", onFocus);
+      window.removeEventListener("trackfit:shift-mode-changed", onFocus);
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [refresh]);

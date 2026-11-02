@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertCircle, CheckCircle2, ChevronDown, ExternalLink, Footprints, RefreshCw, Watch } from "lucide-react";
 import { CheckInRepository } from "../services/repositories/trackfitDataLayer";
-import { localDateKey } from "../services/cardioSummary";
+import { getOperationalDate, getShiftMode, getShiftStartTime, SHIFT_MODE_EVENT } from "../services/shift/shiftModeService";
 import { getWearableBridge, readWearableSteps } from "../services/wearableBridge";
 import { inspectWatchConnection, isTrackFitNativeApp } from "../services/watchConnectionStatus";
 import { isAutoWatchSyncEnabled, setAutoWatchSyncEnabled } from "../services/watchAutoSync";
@@ -23,7 +23,7 @@ const watches = [
 ];
 
 function readTodaysCheckIn() {
-  return CheckInRepository.getAll().find((record) => record.date === localDateKey()) || null;
+  return CheckInRepository.getAll().find((record) => record.date === getOperationalDate()) || null;
 }
 
 export default function WatchSync() {
@@ -40,9 +40,11 @@ export default function WatchSync() {
 
   useEffect(() => {
     const update = () => setEntry(readTodaysCheckIn());
+    window.addEventListener(SHIFT_MODE_EVENT, update);
     window.addEventListener("trackfit:checkin-saved", update);
     window.addEventListener("trackfit:watch-auto-synced", update);
     return () => {
+      window.removeEventListener(SHIFT_MODE_EVENT, update);
       window.removeEventListener("trackfit:checkin-saved", update);
       window.removeEventListener("trackfit:watch-auto-synced", update);
     };
@@ -67,6 +69,9 @@ export default function WatchSync() {
   }, []);
 
   const connectedReader = nativeApp && Boolean(provider);
+  const stepWindowLabel = getShiftMode() === "night"
+    ? `Shift steps (starting ${getShiftStartTime()}, through the next day)`
+    : "Calendar-day steps (midnight to midnight)";
   const selectedWatch = watches.find((watch) => watch.id === watchChoice);
   const canSync = connectedReader && Boolean(watchChoice) && watchChoice !== "none" && watchChoice !== "apple";
   const steps = Number(entry?.steps);
@@ -132,7 +137,7 @@ export default function WatchSync() {
     setOperation("sync");
     setStatus(null);
     try {
-      const day = localDateKey();
+      const day = getOperationalDate();
       const record = await readWearableSteps(day, provider, { sourceMode });
       const saved = await CheckInRepository.saveStepsFromWatch(day, record);
       setEntry(readTodaysCheckIn());
@@ -220,7 +225,7 @@ export default function WatchSync() {
 
       <section className="tf-watch-sync__summary" aria-label="Today's saved steps">
         <Footprints size={27} aria-hidden="true" />
-        <div><span>Today's steps</span><strong>{savedSteps}</strong><small>{entry ? source : "No steps recorded yet"}{syncedTime ? ` · synced ${syncedTime}` : ""}</small></div>
+        <div><span>{stepWindowLabel}</span><strong>{savedSteps}</strong><small>{entry ? source : "No steps recorded yet"}{syncedTime ? ` · synced ${syncedTime}` : ""}</small></div>
       </section>
 
       {connectedReader && (

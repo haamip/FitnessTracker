@@ -10,6 +10,7 @@
  * No watch or Health Connect/HealthKit plugin is bundled in the web build yet.
  */
 import { getHealthConnectBridge, readAndroidHealthSteps } from "./healthConnectBridge";
+import { getShiftMode } from "./shift/shiftModeService";
 
 function getNativeCapacitor() {
   if (typeof window === "undefined") return null;
@@ -45,6 +46,7 @@ export async function readWearableSteps(date, provider = getWearableBridge(), op
     return readAndroidHealthSteps(date, provider.bridge, options);
   }
   if (provider.platform !== "ios") throw new Error("Unsupported health provider.");
+  if (getShiftMode() === "night") throw new Error("Night-shift step windows need a compatible native Apple Health reader. Enter steps manually until iPhone support is available.");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error("Invalid day requested.");
   const bridge = provider.bridge;
   const status = await bridge.getStatus();

@@ -1,11 +1,11 @@
 import { CheckInRepository } from "./repositories/trackfitDataLayer";
-import { localDateKey } from "./cardioSummary";
+import { getOperationalDate, getShiftMode, getShiftStartTime } from "./shift/shiftModeService";
 import { getWearableBridge, readWearableSteps } from "./wearableBridge";
 import { supabase } from "./supabase";
 import { getStepSourceMode } from "./stepSourcePreference";
 
 const preferenceKey = (userId) => `trackfit_auto_watch_sync_${userId}`;
-const attemptKey = (userId) => `trackfit_auto_watch_sync_last_${userId}`;
+const attemptKey = (userId) => `trackfit_auto_watch_sync_last_${userId}_${getShiftMode()}_${getShiftMode() === "night" ? getShiftStartTime() : "00:00"}`;
 const MIN_INTERVAL_MS = 15 * 60 * 1000;
 let inFlight = false;
 
@@ -42,13 +42,13 @@ export async function syncWatchOnForeground() {
     const previous = Number(localStorage.getItem(attemptKey(userId)) || 0);
     if (previous > 0 && now - previous < MIN_INTERVAL_MS) return null;
     localStorage.setItem(attemptKey(userId), String(now));
-    const date = localDateKey();
+    const date = getOperationalDate();
     const sourceMode = getStepSourceMode(userId);
     const record = await readWearableSteps(date, provider, { sourceMode });
     const existing = CheckInRepository.getAll().find((item) => item.date === date);
     // A temporary Health Connect source issue shouldn't reduce a previously
     // imported step total; the user can still manually correct the check-in.
-    if (existing?.stepsSource === record.stepsSource && (existing.stepsMode || "all") === sourceMode && Number(existing.steps) > record.steps) return null;
+    if (getShiftMode() !== "night" && existing?.stepsSource === record.stepsSource && (existing.stepsMode || "all") === sourceMode && Number(existing.steps) > record.steps) return null;
     const saved = await CheckInRepository.saveStepsFromWatch(date, record);
     window.dispatchEvent(new CustomEvent("trackfit:watch-auto-synced", { detail: { date, steps: record.steps, sourceMode, cloudSaved: Boolean(saved?.cloudSaved) } }));
     return record;

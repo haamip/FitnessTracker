@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Button from "../components/ui/Button";
 import { supabase } from "../services/supabase";
+import { getShiftStartTime, setShiftStartTime } from "../services/shift/shiftModeService";
 import "./TrackFitScreens.css";
 
 const initialProfile = {
@@ -17,6 +18,7 @@ export default function Profile() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("Loading profile...");
   const [saving, setSaving] = useState(false);
+  const [nightStart, setNightStart] = useState(getShiftStartTime);
 
   useEffect(() => {
     let active = true;
@@ -81,7 +83,8 @@ export default function Profile() {
     });
 
     setSaving(false);
-    setStatus(error ? error.message : "Profile saved.");
+    if (!error) setShiftStartTime(nightStart);
+    setStatus(error ? error.message : "Profile saved. Shift start time saved on this device.");
   }
 
   return (
@@ -112,6 +115,12 @@ export default function Profile() {
             <option value="Australia/Adelaide">Adelaide</option>
             <option value="Australia/Perth">Perth</option>
           </select>
+        </label>
+
+        <label>
+          Night shift starts at
+          <input type="time" step="900" value={nightStart} onChange={(event) => setNightStart(event.target.value)} required />
+          <small>When Night mode is on, steps and meals use a 24-hour shift day beginning at this time (default 6:00pm). Day mode uses midnight. This preference is saved on this device.</small>
         </label>
 
         <label>

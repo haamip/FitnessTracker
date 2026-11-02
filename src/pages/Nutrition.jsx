@@ -10,6 +10,8 @@ import { supabase } from "../services/supabase";
 import { parseMealText } from "../services/mealTextParser";
 import { getFoodByBarcode, scaleFoodNutrients, searchFoodByName } from "../services/openFoodFacts";
 import FoodBarcodeScanner from "../components/FoodBarcodeScanner";
+import { getLibraryFoodByBarcode, submitFoodForReview } from "../services/foodLibrary";
+import { getShiftStartTime } from "../services/shift/shiftModeService";
 import { signalTrackFitDataChange } from "../hooks/useTrackFitDataRefresh";
 import "./TrackFitScreens.css";
 import "./NutritionSimple.css";
@@ -84,6 +86,9 @@ export default function Nutrition() {
   const [foodAmount, setFoodAmount] = useState("100");
   const [foundFood, setFoundFood] = useState(null);
   const [findingFood, setFindingFood] = useState(false);
+  const [showNewProduct, setShowNewProduct] = useState(false);
+  const [savingNewProduct, setSavingNewProduct] = useState(false);
+  const [productDraft, setProductDraft] = useState({ name: "", brand: "", calories: "", protein: "", carbs: "", fats: "" });
   const [message, setMessage] = useState(() => location.state?.scannedMeal ? "AI meal estimate loaded. Review serving sizes and all nutrition values before saving." : "");
   const [goals, setGoals] = useState({ calories: CALORIE_TARGET, protein: PROTEIN_TARGET });
   const [pendingCount, setPendingCount] = useState(() => NutritionCloudRepository.getPendingCount());
@@ -187,17 +192,23 @@ export default function Nutrition() {
     if (findingFood) return;
     setFindingFood(true);
     setFoundFood(null);
+    setShowNewProduct(false);
     setMessage("");
     try {
-      const product = await getFoodByBarcode(code);
+      let libraryProduct = null;
+      try { libraryProduct = await getLibraryFoodByBarcode(code); }
+      catch (error) { console.warn("TrackFit food catalogue unavailable; trying Open Food Facts.", error); }
+      const product = libraryProduct || await getFoodByBarcode(code);
       if (!product) {
-        setMessage("Product not found. You can still add a meal manually.");
+        setShowNewProduct(true);
+        setMessage("Barcode not found. Add the product from its nutrition label or log it manually.");
       } else {
         setFoundFood(product);
         setMessage(`Found ${product.name}. Check the pack label before logging.`);
       }
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not look up that product.");
+    } catch {
+      setShowNewProduct(true);
+      setMessage("Could not look up that barcode. You can still add the product from its label or log it manually.");
     } finally {
       setFindingFood(false);
     }
@@ -206,7 +217,23 @@ export default function Nutrition() {
   function handleScannedBarcode(code) {
     setBarcode(code);
     setFoundFood(null);
+    setShowNewProduct(false);
     void handleBarcodeLookup(code);
+  }
+
+  async function submitMissingProduct(event) {
+    event.preventDefault();
+    if (savingNewProduct) return;
+    setSavingNewProduct(true);
+    try {
+      const product = await submitFoodForReview({ ...productDraft, barcode });
+      setFoundFood(product);
+      setShowNewProduct(false);
+      setFoodAmount("100");
+      setMessage("Product saved to your TrackFit catalogue and submitted for review. Only you can see it until it is approved. Select your serving size before logging.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not submit the food product.");
+    } finally { setSavingNewProduct(false); }
   }
 
   function useFoundFood() {
@@ -358,7 +385,7 @@ export default function Nutrition() {
   const calorieProgress = Math.min(100, (totals.calories / goals.calories) * 100);
   const proteinProgress = Math.min(100, (totals.protein / goals.protein) * 100);
   return <motion.div className="screen checkin-v4" initial={{opacity:0,y:14}} animate={{opacity:1,y:0}} transition={{duration:0.25}}>
-    <section className="v4-checkin-hero"><div><p className="eyebrow">Food · {shiftMode === "night" ? "Night shift" : "Day shift"}</p><h1>Shift day</h1><p>{shiftMode === "night" ? "After-midnight meals stay with the shift that started the night before." : "Meals use the current calendar day."} Log a meal below, or open a food lookup tool.</p></div></section>
+    <section className="v4-checkin-hero"><div><p className="eyebrow">Food · {shiftMode === "night" ? "Night shift" : "Day shift"}</p><h1>Shift day</h1><p>{shiftMode === "night" ? `Meals stay with the shift beginning at ${getShiftStartTime()}. Set this in your Profile.` : "Meals use the current calendar day."} Log a meal below, or open a food lookup tool.</p></div></section>
     <section className="tf-food-summary"><article className="tf-food-target"><div className="tf-food-target__top"><div><Flame size={20}/><span>Calories</span></div><strong>{roundDisplay(totals.calories)} / {goals.calories}</strong></div><div className="progress-line"><span style={{width:`${calorieProgress}%`}}/></div></article><article className="tf-food-target"><div className="tf-food-target__top"><div><Beef size={20}/><span>Protein</span></div><strong>{roundDisplay(totals.protein)} / {goals.protein}g</strong></div><div className="progress-line"><span style={{width:`${proteinProgress}%`}}/></div></article></section>
     <Link className="tf-food-photo-shortcut" to="/nutrition/plans">
       <ClipboardPaste size={19}/> Meal Plans — create a daily template and compare your macros
@@ -411,10 +438,25 @@ export default function Nutrition() {
         </div>
       )}
       <label>Barcode
-        <input aria-label="Food barcode" type="text" inputMode="numeric" autoComplete="off" maxLength={14} value={barcode} onChange={(event) => { setBarcode(event.target.value.replace(/[^0-9]/g, "")); setFoundFood(null); }} placeholder="Scan number on package" />
+        <input aria-label="Food barcode" type="text" inputMode="numeric" autoComplete="off" maxLength={14} value={barcode} onChange={(event) => { setBarcode(event.target.value.replace(/[^0-9]/g, "")); setFoundFood(null); setShowNewProduct(false); }} placeholder="Scan number on package" />
       </label>
       <FoodBarcodeScanner onDetected={handleScannedBarcode} disabled={findingFood} />
       <Button type="button" disabled={findingFood || barcode.length < 8} onClick={() => handleBarcodeLookup()}>{findingFood ? "Searching..." : "Find food by number"}</Button>
+      {showNewProduct && !foundFood && <form className="form-card form-grid" onSubmit={submitMissingProduct} aria-label="Add missing packaged food">
+        <div><h3>Add missing packaged food</h3><p>Copy the numbers per 100 g from the nutrition label. Your submission stays private until it is reviewed for the shared TrackFit library.</p></div>
+        <strong>Barcode: {barcode}</strong>
+        <label>Product name<input required maxLength={120} value={productDraft.name} onChange={(e) => setProductDraft((v) => ({ ...v, name: e.target.value }))} /></label>
+        <label>Brand<input maxLength={80} value={productDraft.brand} onChange={(e) => setProductDraft((v) => ({ ...v, brand: e.target.value }))} /></label>
+        <div className="tf-food-input-row">
+          <label>Calories per 100 g<input required type="number" min="0" max="1000" step="0.1" value={productDraft.calories} onChange={(e) => setProductDraft((v) => ({ ...v, calories: e.target.value }))} /></label>
+          <label>Protein (g) per 100 g<input required type="number" min="0" max="100" step="0.1" value={productDraft.protein} onChange={(e) => setProductDraft((v) => ({ ...v, protein: e.target.value }))} /></label>
+        </div>
+        <div className="tf-food-input-row">
+          <label>Carbs (g) per 100 g<input type="number" min="0" max="100" step="0.1" value={productDraft.carbs} onChange={(e) => setProductDraft((v) => ({ ...v, carbs: e.target.value }))} /></label>
+          <label>Fat (g) per 100 g<input type="number" min="0" max="100" step="0.1" value={productDraft.fats} onChange={(e) => setProductDraft((v) => ({ ...v, fats: e.target.value }))} /></label>
+        </div>
+        <Button type="submit" disabled={savingNewProduct}>{savingNewProduct ? "Submitting..." : "Add food for review"}</Button>
+      </form>}
       {foundFood && <div id="tf-food-selected-product" className="v4-quick-card">
         <strong>{foundFood.name}</strong>
         <span>{foundFood.brand || "Brand not supplied"} · {foundFood.barcode}</span>
@@ -423,7 +465,9 @@ export default function Nutrition() {
           <input aria-label="Amount eaten in grams" type="number" inputMode="decimal" min="1" max="10000" step="1" value={foodAmount} onChange={(event) => setFoodAmount(event.target.value)} />
         </label>
         <Button type="button" onClick={useFoundFood}>Use these values in my meal</Button>
-        <small>Nutrition data from <a href={foundFood.sourceUrl} target="_blank" rel="noreferrer">Open Food Facts</a> (ODbL). Community-entered information may be incomplete; check your food packaging.</small>
+        <small>{foundFood.sourceUrl
+          ? <>Nutrition data from <a href={foundFood.sourceUrl} target="_blank" rel="noreferrer">Open Food Facts</a> (ODbL).</>
+          : <>TrackFit food catalogue · {foundFood.reviewStatus === "pending" ? "Your submission is awaiting review" : "Approved entry"}.</>} Check your food packaging before saving.</small>
       </div>}
     </section>
 
