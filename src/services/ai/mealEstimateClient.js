@@ -54,28 +54,40 @@ async function decodeImage(file) {
   }
 }
 
-/** Never upload the original full-resolution photo. Resize in browser memory. */
-export async function prepareMealPhoto(file) {
+/** Never upload the original full-resolution photo. Compress in browser memory. */
+async function preparePhoto(file, maxDimension, qualities) {
   validateMealPhoto(file);
   let decoded;
   try { decoded = await decodeImage(file); }
-  catch { throw new Error("This phone could not read the photo. Try a JPEG photo, lower camera resolution, or use a screenshot."); }
+  catch { throw new Error("This phone could not read the photo. Try a JPEG, lower camera resolution or use a screenshot."); }
   try {
     const { width, height } = imageDimensions(decoded.image);
     if (!width || !height) throw new Error("Invalid image dimensions.");
-    const scale = Math.min(1, 1100 / Math.max(width, height));
+    let scale = Math.min(1, maxDimension / Math.max(width, height));
     const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(width * scale));
-    canvas.height = Math.max(1, Math.round(height * scale));
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Photo processing isn't available in this browser.");
-    ctx.drawImage(decoded.image, 0, 0, canvas.width, canvas.height);
-    const data = canvas.toDataURL("image/jpeg", 0.72);
-    if (!data.startsWith("data:image/jpeg;base64,") || data.length > MAX_DATA_URL_LENGTH) {
-      throw new Error("Compressed photo is too large. Try a smaller image.");
+    for (let attempt = 0; attempt < qualities.length; attempt += 1) {
+      canvas.width = Math.max(1, Math.round(width * scale));
+      canvas.height = Math.max(1, Math.round(height * scale));
+      ctx.drawImage(decoded.image, 0, 0, canvas.width, canvas.height);
+      const data = canvas.toDataURL("image/jpeg", qualities[attempt]);
+      if (data.startsWith("data:image/jpeg;base64,") && data.length <= MAX_DATA_URL_LENGTH) {
+        return data;
+      }
+      scale *= 0.85;
     }
-    return data;
+    throw new Error("Compressed photo is too large. Try a smaller image.");
   } finally { decoded.close(); }
+}
+
+export function prepareMealPhoto(file) {
+  return preparePhoto(file, 1100, [0.72]);
+}
+
+// Retain more label text detail than a food photo, while respecting API limits.
+export function prepareNutritionLabelPhoto(file) {
+  return preparePhoto(file, 1800, [0.85, 0.72, 0.60, 0.50]);
 }
 
 /** Explicit opt-in: send a compressed photo or a short homemade recipe to an authenticated Edge Function. */
