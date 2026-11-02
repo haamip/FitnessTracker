@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 
 /**
@@ -115,6 +116,13 @@ class TrackFitHealthConnectPlugin : Plugin() {
             call.reject("Expected a valid local YYYY-MM-DD date.", "INVALID_DATE")
             return
         }
+        val shiftStartText = call.getString("shiftStartTime")
+        val shiftStart = try {
+            shiftStartText?.let { require(Regex("^([01]\\d|2[0-3]):[0-5]\\d$").matches(it)); LocalTime.parse(it) }
+        } catch (_: Exception) {
+            call.reject("Invalid night shift start time.", "INVALID_SHIFT_TIME")
+            return
+        }
         if (!available()) {
             call.reject("Health Connect is not available.", "UNAVAILABLE")
             return
@@ -125,8 +133,8 @@ class TrackFitHealthConnectPlugin : Plugin() {
                 throw SecurityException("Steps read permission is not granted")
             }
             val zone = ZoneId.systemDefault()
-            val from = day.atStartOfDay(zone).toInstant()
-            val to = day.plusDays(1).atStartOfDay(zone).toInstant()
+            val from = if (shiftStart == null) day.atStartOfDay(zone).toInstant() else day.atTime(shiftStart).atZone(zone).toInstant()
+            val to = if (shiftStart == null) day.plusDays(1).atStartOfDay(zone).toInstant() else day.plusDays(1).atTime(shiftStart).atZone(zone).toInstant()
             val end = minOf(to, Instant.now())
             require(end.isAfter(from)) { "The requested day is in the future." }
             val aggregate = hc.aggregate(
@@ -140,6 +148,7 @@ class TrackFitHealthConnectPlugin : Plugin() {
             val recordedSteps = aggregate[StepsRecord.COUNT_TOTAL]
             val steps = recordedSteps ?: 0L
             JSObject().put("date", requested)
+                .put("shiftStartTime", shiftStartText ?: "")
                 .put("steps", steps)
                 .put("sourceMode", sourceMode)
                 .put("dataPresent", recordedSteps != null)
