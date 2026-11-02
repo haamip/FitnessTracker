@@ -12,6 +12,7 @@ import { getFoodByBarcode, scaleFoodNutrients, searchFoodByName } from "../servi
 import FoodBarcodeScanner from "../components/FoodBarcodeScanner";
 import { getLibraryFoodByBarcode, searchFoodLibrary, submitFoodForReview } from "../services/foodLibrary";
 import { getShiftStartTime } from "../services/shift/shiftModeService";
+import { readNutritionLabel } from "../services/ai/nutritionLabelClient";
 import { signalTrackFitDataChange } from "../hooks/useTrackFitDataRefresh";
 import "./TrackFitScreens.css";
 import "./NutritionSimple.css";
@@ -89,6 +90,10 @@ export default function Nutrition() {
   const [showNewProduct, setShowNewProduct] = useState(false);
   const [savingNewProduct, setSavingNewProduct] = useState(false);
   const [productDraft, setProductDraft] = useState({ name: "", brand: "", calories: "", protein: "", carbs: "", fats: "" });
+  const [nutritionLabelFile, setNutritionLabelFile] = useState(null);
+  const [labelReading, setLabelReading] = useState(false);
+  const [labelStatus, setLabelStatus] = useState("");
+  const [verifiedLabel, setVerifiedLabel] = useState(false);
   const [message, setMessage] = useState(() => location.state?.scannedMeal ? "AI meal estimate loaded. Review serving sizes and all nutrition values before saving." : "");
   const [goals, setGoals] = useState({ calories: CALORIE_TARGET, protein: PROTEIN_TARGET });
   const [pendingCount, setPendingCount] = useState(() => NutritionCloudRepository.getPendingCount());
@@ -210,6 +215,9 @@ export default function Nutrition() {
     setFindingFood(true);
     setFoundFood(null);
     setShowNewProduct(false);
+    setLabelStatus("");
+    setNutritionLabelFile(null);
+    setVerifiedLabel(false);
     setMessage("");
     try {
       let libraryProduct = null;
@@ -238,9 +246,39 @@ export default function Nutrition() {
     void handleBarcodeLookup(code);
   }
 
+  async function scanNutritionLabel() {
+    if (labelReading || !nutritionLabelFile) return;
+    setLabelReading(true);
+    setLabelStatus("");
+    setVerifiedLabel(false);
+    try {
+      const label = await readNutritionLabel({ file: nutritionLabelFile, onProgress: setLabelStatus });
+      setProductDraft((current) => ({
+        ...current,
+        name: label.productName || current.name,
+        brand: label.brand || current.brand,
+        calories: label.calories === null ? "" : String(label.calories),
+        protein: label.protein === null ? "" : String(label.protein),
+        carbs: label.carbs === null ? "" : String(label.carbs),
+        fats: label.fats === null ? "" : String(label.fats),
+      }));
+      setLabelStatus(label.basis === "unavailable"
+        ? `AI could not confirm per-100g numbers. Enter them from the pack manually. ${label.notes}`
+        : `AI filled values ${label.basis === "derivedFromServing" ? "calculated from serving size" : "per 100 g"}. Verify every field against the pack before submitting. ${label.notes}`);
+    } catch (error) {
+      setLabelStatus(error instanceof Error ? error.message : "Could not read that label. Enter the values manually.");
+    } finally {
+      setLabelReading(false);
+    }
+  }
+
   async function submitMissingProduct(event) {
     event.preventDefault();
     if (savingNewProduct) return;
+    if (!verifiedLabel) {
+      setMessage("Please confirm the nutrition information matches the packaging before submitting.");
+      return;
+    }
     setSavingNewProduct(true);
     try {
       const product = await submitFoodForReview({ ...productDraft, barcode });
@@ -462,6 +500,19 @@ export default function Nutrition() {
       {showNewProduct && !foundFood && <form className="form-card form-grid" onSubmit={submitMissingProduct} aria-label="Add missing packaged food">
         <div><h3>Add missing packaged food</h3><p>Copy the numbers per 100 g from the nutrition label. Your submission stays private until it is reviewed for the shared TrackFit library.</p></div>
         <strong>Barcode: {barcode}</strong>
+        <div className="v4-quick-card" style={{ display: "grid", gap: 10 }}>
+          <strong><Camera size={17} aria-hidden="true" /> Have a nutrition-label photo?</strong>
+          <p>Take a clear photo of the nutritional information panel. AI can fill the numbers per 100 g. The photo is processed on request and not stored in your food catalogue.</p>
+          <label>Take or choose label photo
+            <input type="file" accept="image/*" capture="environment" disabled={labelReading || savingNewProduct}
+              onChange={(event) => { setNutritionLabelFile(event.target.files?.[0] || null); setLabelStatus(""); setVerifiedLabel(false); }} />
+          </label>
+          <Button type="button" disabled={!nutritionLabelFile || labelReading || savingNewProduct} onClick={scanNutritionLabel}>
+            <Camera size={17} /> {labelReading ? "Reading label..." : "Read nutrition label with AI"}
+          </Button>
+          <small>Uses one of your daily AI requests. Check the actual label: AI can misread small print.</small>
+          {labelStatus && <p role="status">{labelStatus}</p>}
+        </div>
         <label>Product name<input required maxLength={120} value={productDraft.name} onChange={(e) => setProductDraft((v) => ({ ...v, name: e.target.value }))} /></label>
         <label>Brand<input maxLength={80} value={productDraft.brand} onChange={(e) => setProductDraft((v) => ({ ...v, brand: e.target.value }))} /></label>
         <div className="tf-food-input-row">
@@ -472,7 +523,11 @@ export default function Nutrition() {
           <label>Carbs (g) per 100 g<input type="number" min="0" max="100" step="0.1" value={productDraft.carbs} onChange={(e) => setProductDraft((v) => ({ ...v, carbs: e.target.value }))} /></label>
           <label>Fat (g) per 100 g<input type="number" min="0" max="100" step="0.1" value={productDraft.fats} onChange={(e) => setProductDraft((v) => ({ ...v, fats: e.target.value }))} /></label>
         </div>
-        <Button type="submit" disabled={savingNewProduct}>{savingNewProduct ? "Submitting..." : "Add food for review"}</Button>
+        <label style={{ display: "flex", alignItems: "start", gap: 10 }}>
+          <input type="checkbox" checked={verifiedLabel} onChange={(e) => setVerifiedLabel(e.target.checked)} />
+          <span>I checked these per-100g values against the package. I understand this product requires review before other TrackFit members can use it.</span>
+        </label>
+        <Button type="submit" disabled={savingNewProduct || labelReading || !verifiedLabel}>{savingNewProduct ? "Submitting..." : "Add food for review"}</Button>
       </form>}
       {foundFood && <div id="tf-food-selected-product" className="v4-quick-card">
         <strong>{foundFood.name}</strong>
