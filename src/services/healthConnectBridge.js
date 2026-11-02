@@ -11,6 +11,7 @@
  * StepsRecord.COUNT_TOTAL, not sum per-app records (avoid duplicates).
  * The date range must use the phone's local start/end of day.
  */
+import { getShiftMode, getShiftStartTime } from "./shift/shiftModeService";
 
 export function getHealthConnectBridge() {
   if (typeof window === "undefined") return null;
@@ -25,11 +26,14 @@ export function getHealthConnectBridge() {
   return bridge;
 }
 
-export function validateHealthConnectSteps(record, requestedDate, sourceMode = "all") {
+export function validateHealthConnectSteps(record, requestedDate, sourceMode = "all", shiftStartTime = null) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(requestedDate)) throw new Error("Invalid day requested.");
   if (!record || record.date !== requestedDate) throw new Error("Watch data was returned for the wrong date.");
   if (record?.dataPresent === false) {
     throw new Error(`Health Connect has no readable Steps records for ${requestedDate}. Check the date and confirm your health app shares Steps.`);
+  }
+  if (shiftStartTime && record?.shiftStartTime !== shiftStartTime) {
+    throw new Error("Install the latest TrackFit Android build for night-shift step tracking. Your previous total was not changed.");
   }
   if (sourceMode === "samsung_health" && record?.sourceMode !== "samsung_health") {
     throw new Error("This TrackFit Android version cannot filter Samsung Health steps. Install the latest native APK.");
@@ -58,8 +62,9 @@ export async function readAndroidHealthSteps(date, bridge = getHealthConnectBrid
     const result = await bridge.requestPermissions({ dataTypes: ["steps"] });
     if (!result?.stepsGranted) throw new Error("Steps permission wasn't granted. You can still enter steps manually.");
   }
-  const result = await bridge.readTodaySteps({ date, sourceMode });
-  return validateHealthConnectSteps(result, date, sourceMode);
+  const shiftStartTime = getShiftMode() === "night" ? getShiftStartTime() : null;
+  const result = await bridge.readTodaySteps({ date, sourceMode, ...(shiftStartTime ? { shiftStartTime } : {}) });
+  return validateHealthConnectSteps(result, date, sourceMode, shiftStartTime);
 }
 
 // Backward-compatible alias while existing Galaxy-specific callers transition.
