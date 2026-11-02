@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Activity, Footprints, HeartPulse, Save, Watch } from "lucide-react";
@@ -8,11 +8,11 @@ import { getWearableBridge, readWearableSteps } from "../services/wearableBridge
 import { inspectWatchConnection, isTrackFitNativeApp } from "../services/watchConnectionStatus";
 import { inspectStepSources } from "../services/wearableDiagnostics";
 import { getCurrentStepSourceMode, stepSourceName } from "../services/stepSourcePreference";
+import { getOperationalDate, SHIFT_MODE_EVENT } from "../services/shift/shiftModeService";
 import "./TrackFitScreens.css";
 
 function todayKey() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+  return getOperationalDate();
 }
 function initialValues() {
   const today = todayKey();
@@ -47,6 +47,15 @@ export default function DailyCheckIn() {
   const [message,setMessage] = useState("");
   const [saving,setSaving] = useState(false);
   const [lastSaved,setLastSaved] = useState(() => CheckInRepository.getAll().find(x => x.date === todayKey()) || null);
+  useEffect(() => {
+    const handleShiftChange = () => {
+      setForm(initialValues());
+      setLastSaved(CheckInRepository.getAll().find((row) => row.date === todayKey()) || null);
+      setMessage("Shift reporting window changed. Sync again to refresh your steps for this window.");
+    };
+    window.addEventListener(SHIFT_MODE_EVENT, handleShiftChange);
+    return () => window.removeEventListener(SHIFT_MODE_EVENT, handleShiftChange);
+  }, []);
   const [olderEntries, setOlderEntries] = useState(() => CheckInRepository.getLegacyCount());
   function importOlderEntries() {
     const count = CheckInRepository.importLegacyForCurrentUser();
@@ -96,7 +105,7 @@ export default function DailyCheckIn() {
       const backup = saved?.cloudSaved
         ? "and backed up to your TrackFit account"
         : "on this phone; cloud backup is pending and will retry when you sign in again";
-      setConnection({ state: "read-success", message: `${stepSourceName(record.stepsMode)} returned ${count} steps today. Saved ${backup}.` });
+      setConnection({ state: "read-success", message: `${stepSourceName(record.stepsMode)} returned ${count} steps for this reporting window. Saved ${backup}.` });
       setMessage(`${count} steps saved in TrackFit. You can finish the rest of your check-in below whenever you like.`);
     } catch (error) {
       const detail = error instanceof Error ? error.message : "Watch steps could not be read.";
