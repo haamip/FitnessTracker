@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Activity, ArrowDownUp, CheckCircle2, Info, RotateCw } from "lucide-react";
-import { localDateKey } from "../services/cardioSummary";
+import { getOperationalDate } from "../services/shift/shiftModeService";
 import { CheckInRepository } from "../services/repositories/trackfitDataLayer";
 import { getWearableBridge } from "../services/wearableBridge";
 import { inspectStepSources } from "../services/wearableDiagnostics";
@@ -22,7 +22,7 @@ export default function StepSourceAudit({ sourceMode = "all" }) {
   const [native] = useState(isTrackFitNativeApp);
   const [provider] = useState(getWearableBridge);
   const [comparison, setComparison] = useState(null);
-  const [saved, setSaved] = useState(() => CheckInRepository.getAll().find((entry) => entry.date === localDateKey()) || null);
+  const [saved, setSaved] = useState(() => CheckInRepository.getAll().find((entry) => entry.date === getOperationalDate()) || null);
   const [checkedAt, setCheckedAt] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -38,7 +38,7 @@ export default function StepSourceAudit({ sourceMode = "all" }) {
     setComparison(null);
     setError("");
     try {
-      const data = await inspectStepSources(localDateKey(), provider);
+      const data = await inspectStepSources(getOperationalDate(), provider);
       setComparison(data);
       setCheckedAt(new Date().toISOString());
       setSaved(CheckInRepository.getAll().find((entry) => entry.date === data.date) || null);
