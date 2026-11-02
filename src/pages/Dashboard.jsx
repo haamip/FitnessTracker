@@ -6,9 +6,8 @@ import {
 } from "lucide-react";
 import { buildCoachDashboard } from "../services/engines/coachIntelligenceEngine";
 import { CheckInRepository, NutritionRepository } from "../services/repositories/trackfitDataLayer";
-import { getOperationalDate } from "../services/shift/shiftModeService";
+import { getOperationalDate, getShiftMode } from "../services/shift/shiftModeService";
 import useTrackFitDataRefresh from "../hooks/useTrackFitDataRefresh";
-import { localDateKey } from "../services/cardioSummary";
 import "./Dashboard.css";
 
 function number(value) {
@@ -21,7 +20,7 @@ export default function Dashboard() {
   const coach = useMemo(() => { void revision; return buildCoachDashboard(); }, [revision]);
   const checkIns = useMemo(() => { void revision; return CheckInRepository.getAll(); }, [revision]);
   const latestCheckIn = checkIns[0] || null;
-  const todaysCheckIn = checkIns.find((record) => record.date === localDateKey());
+  const todaysCheckIn = checkIns.find((record) => record.date === getOperationalDate());
   const meals = useMemo(() => { void revision; return NutritionRepository.getToday(getOperationalDate()); }, [revision]);
   const todayNutrition = meals.reduce((sum, meal) => ({
     calories: sum.calories + number(meal.calories),
@@ -64,7 +63,7 @@ export default function Dashboard() {
           <Link to="/watch"><Watch size={16} aria-hidden="true" /> Watch & Steps <ArrowUpRight size={16} aria-hidden="true" /></Link>
         </div>
         <div className="tf-dashboard-daily">
-          <Link to="/checkin"><Footprints size={20} aria-hidden="true" /><span>Steps today</span><strong>{todaysCheckIn && Number.isFinite(Number(todaysCheckIn.steps)) ? Number(todaysCheckIn.steps).toLocaleString() : "Not logged"}</strong><small>{todaysCheckIn?.stepsSource === "health_connect" ? "Health Connect" : "Daily check-in"}</small></Link>
+          <Link to="/checkin"><Footprints size={20} aria-hidden="true" /><span>{getShiftMode() === "night" ? "Steps this shift" : "Steps today"}</span><strong>{todaysCheckIn && Number.isFinite(Number(todaysCheckIn.steps)) ? Number(todaysCheckIn.steps).toLocaleString() : "Not logged"}</strong><small>{todaysCheckIn?.stepsSource === "health_connect" ? "Health Connect" : "Daily check-in"}</small></Link>
           <Link to="/nutrition"><Flame size={20} aria-hidden="true" /><span>Calories logged</span><strong>{Math.round(todayNutrition.calories).toLocaleString()}</strong><small>{meals.length} meals this shift day</small></Link>
         </div>
       </section>
