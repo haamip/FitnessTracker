@@ -1,4 +1,5 @@
 import { getWearableBridge } from "./wearableBridge";
+import { getShiftMode, getShiftStartTime } from "./shift/shiftModeService";
 
 /** Human-readable, on-device-only comparison. Never used as a step total. */
 export function formatStepSourceComparison(data, expectedDay) {
@@ -32,6 +33,10 @@ export async function inspectStepSources(date, provider = getWearableBridge()) {
   if (provider?.platform !== "android" || typeof provider.bridge?.diagnoseTodaySteps !== "function") {
     throw new Error("Source comparison needs TrackFit Native on Android with the Health Connect connector.");
   }
-  const result = await provider.bridge.diagnoseTodaySteps({ date });
+  const shiftStartTime = getShiftMode() === "night" ? getShiftStartTime() : null;
+  const result = await provider.bridge.diagnoseTodaySteps({ date, ...(shiftStartTime ? { shiftStartTime } : {}) });
+  if (shiftStartTime && result.shiftStartTime !== shiftStartTime) {
+    throw new Error("Install the updated Android APK for night-shift step comparisons.");
+  }
   return formatStepSourceComparison(result, date);
 }
