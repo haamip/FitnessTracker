@@ -164,6 +164,13 @@ class TrackFitHealthConnectPlugin : Plugin() {
      */
     @PluginMethod
     fun diagnoseTodaySteps(call: PluginCall) {
+        val shiftStartText = call.getString("shiftStartTime")
+        val shiftStart = try {
+            shiftStartText?.let { require(Regex("^([01]\\d|2[0-3]):[0-5]\\d$").matches(it)); LocalTime.parse(it) }
+        } catch (_: Exception) {
+            call.reject("Invalid night shift start time.", "INVALID_SHIFT_TIME")
+            return
+        }
         val dateText = call.getString("date") ?: run {
             call.reject("Expected a local YYYY-MM-DD date.", "INVALID_DATE")
             return
@@ -183,8 +190,9 @@ class TrackFitHealthConnectPlugin : Plugin() {
                 throw SecurityException("Steps read permission is not granted")
             }
             val zone = ZoneId.systemDefault()
-            val start = day.atStartOfDay(zone).toInstant()
-            val end = minOf(day.plusDays(1).atStartOfDay(zone).toInstant(), Instant.now())
+            val start = if (shiftStart == null) day.atStartOfDay(zone).toInstant() else day.atTime(shiftStart).atZone(zone).toInstant()
+            val dayEnd = if (shiftStart == null) day.plusDays(1).atStartOfDay(zone).toInstant() else day.plusDays(1).atTime(shiftStart).atZone(zone).toInstant()
+            val end = minOf(dayEnd, Instant.now())
             require(end.isAfter(start)) { "The requested day is in the future." }
             val interval = TimeRangeFilter.between(start, end)
 
@@ -241,6 +249,7 @@ class TrackFitHealthConnectPlugin : Plugin() {
             }
             JSObject()
                 .put("date", dateText)
+                .put("shiftStartTime", shiftStartText ?: "")
                 .put("zone", zone.id)
                 .put("from", start.toString())
                 .put("through", end.toString())
