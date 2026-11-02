@@ -1,5 +1,5 @@
 import { CheckInRepository } from "./repositories/trackfitDataLayer";
-import { localDateKey } from "./cardioSummary";
+import { getOperationalDate } from "./shift/shiftModeService";
 import { getWearableBridge, readWearableSteps } from "./wearableBridge";
 import { supabase } from "./supabase";
 import { getStepSourceMode } from "./stepSourcePreference";
@@ -42,7 +42,7 @@ export async function syncWatchOnForeground() {
     const previous = Number(localStorage.getItem(attemptKey(userId)) || 0);
     if (previous > 0 && now - previous < MIN_INTERVAL_MS) return null;
     localStorage.setItem(attemptKey(userId), String(now));
-    const date = localDateKey();
+    const date = getOperationalDate();
     const sourceMode = getStepSourceMode(userId);
     const record = await readWearableSteps(date, provider, { sourceMode });
     const existing = CheckInRepository.getAll().find((item) => item.date === date);
