@@ -206,7 +206,7 @@ export default function Nutrition() {
         setFoundFood(product);
         setMessage(`Found ${product.name}. Check the pack label before logging.`);
       }
-    } catch (error) {
+    } catch {
       setShowNewProduct(true);
       setMessage("Could not look up that barcode. You can still add the product from its label or log it manually.");
     } finally {
