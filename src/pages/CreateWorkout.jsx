@@ -61,6 +61,9 @@ export default function CreateWorkout() {
   const [name, setName] = useState(() => original?.name || "");
   const [exercises, setExercises] = useState(() => original?.exercises || []);
   const [pickerOpen, setPickerOpen] = useState(false);
+  // Keep the number being typed separate from the saved sets array.
+  // Otherwise clearing "3" briefly produces 0 and a controlled input jumps back to 3.
+  const [setCountDrafts, setSetCountDrafts] = useState({});
   const canSave = Boolean(name.trim() && exercises.length);
 
   function addExercise(exercise) {
@@ -92,6 +95,23 @@ export default function CreateWorkout() {
       }
       return updatePrescribedReps(exercise, value);
     }));
+  }
+
+  function changeSetCount(exerciseId, rawValue) {
+    setSetCountDrafts((current) => ({ ...current, [exerciseId]: rawValue }));
+    // Preserve empty or incomplete input while typing, then update real sets on a valid number.
+    if (!/^\\d+$/.test(rawValue)) return;
+    const count = Number(rawValue);
+    if (count >= 1 && count <= 30) editExercise(exerciseId, "sets", count);
+  }
+
+  function finishSetCount(exerciseId) {
+    // If a draft isn't a valid count, revert to the last saved number on blur.
+    setSetCountDrafts((current) => {
+      const next = { ...current };
+      delete next[exerciseId];
+      return next;
+    });
   }
 
   function saveWorkout(startNow = false) {
@@ -163,8 +183,9 @@ export default function CreateWorkout() {
                     aria-label={`Sets for ${exercise.name}`}
                     min={1}
                     max={30}
-                    value={exercise.sets?.length || 1}
-                    onChange={(event) => editExercise(exercise.id, "sets", event.target.value)}
+                    value={setCountDrafts[exercise.id] ?? (exercise.sets?.length || 1)}
+                    onChange={(event) => changeSetCount(exercise.id, event.target.value)}
+                    onBlur={() => finishSetCount(exercise.id)}
                     style={{ width: "100%", padding: 10, borderRadius: 10 }}
                   />
                 </label>
