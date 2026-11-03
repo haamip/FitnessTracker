@@ -72,3 +72,43 @@
   .auth-panel-inner { width: min(100%, 430px); }
 }
 @media (prefers-reduced-motion: reduce) { .auth-field, .auth-submit { transition: none; } }
+
+/* Clear, accessible password setup for invited beta testers. */
+.auth-password-field { padding-right: 5px; }
+.auth-visibility {
+  flex: 0 0 44px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #516558;
+  cursor: pointer;
+}
+.auth-visibility:hover { background: #f0f5ed; color: #1b3c2a; }
+.auth-visibility:focus-visible { outline: 2px solid #3d7651; outline-offset: 1px; }
+.auth-password-rules {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 7px;
+  margin: -8px 0 23px;
+  padding: 0 3px;
+  list-style: none;
+  color: #637269;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.auth-password-rules li { display: flex; align-items: center; gap: 9px; }
+.auth-password-rules li svg { flex: 0 0 auto; }
+.auth-password-rules .auth-rule-met { color: #23603d; font-weight: 650; }
+.auth-password-match {
+  margin: -12px 0 18px;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+.auth-match-success { color: #23603d; }
+.auth-match-error { color: #aa433b; }
