@@ -1,23 +1,51 @@
 import { useState } from "react";
-import { ArrowRight, Dumbbell, LockKeyhole, Mail } from "lucide-react";
+import { ArrowRight, Check, Circle, Dumbbell, Eye, EyeOff, LockKeyhole, Mail } from "lucide-react";
 import { supabase } from "../../services/supabase";
 import "./AuthScreen.css";
+
+const passwordRequirements = [
+  { label: "At least 8 characters", check: (value) => value.length >= 8 },
+  { label: "One uppercase letter", check: (value) => /[A-Z]/.test(value) },
+  { label: "One lowercase letter", check: (value) => /[a-z]/.test(value) },
+  { label: "One number", check: (value) => /[0-9]/.test(value) },
+  { label: "One special character", check: (value) => /[^A-Za-z0-9\s]/.test(value) },
+];
 
 export default function AuthScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [mode, setMode] = useState("signin");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
 
   const isSignup = mode === "signup";
+  const passwordChecks = passwordRequirements.map((requirement) => ({
+    ...requirement,
+    passed: requirement.check(password),
+  }));
+  const meetsPasswordRequirements = passwordChecks.every((requirement) => requirement.passed);
+  const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
 
   async function submit(event) {
     event.preventDefault();
     if (busy) return;
-    setBusy(true);
     setMessage("");
 
+    if (isSignup) {
+      if (!meetsPasswordRequirements) {
+        setMessage("Please meet all the password requirements before creating an account.");
+        return;
+      }
+      if (!passwordsMatch) {
+        setMessage("Your passwords don't match. Please try again.");
+        return;
+      }
+    }
+
+    setBusy(true);
     try {
       const result = isSignup
         ? await supabase.auth.signUp({ email, password })
@@ -39,6 +67,10 @@ export default function AuthScreen() {
 
   function toggleMode() {
     setMode(isSignup ? "signin" : "signup");
+    setPassword("");
+    setConfirmPassword("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setMessage("");
   }
 
@@ -83,19 +115,78 @@ export default function AuthScreen() {
             </div>
 
             <label htmlFor="trackfit-password">Password</label>
-            <div className="auth-field">
+            <div className="auth-field auth-password-field">
               <LockKeyhole size={19} aria-hidden="true" />
               <input
                 id="trackfit-password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 autoComplete={isSignup ? "new-password" : "current-password"}
-                placeholder="At least 6 characters"
-                minLength={6}
+                placeholder={isSignup ? "Create a strong password" : "Enter your password"}
+                minLength={isSignup ? 8 : 6}
                 required
+                aria-describedby={isSignup ? "trackfit-password-rules" : undefined}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
               />
+              <button
+                className="auth-visibility"
+                type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
+                onClick={() => setShowPassword((visible) => !visible)}
+              >
+                {showPassword ? <EyeOff size={20} aria-hidden="true" /> : <Eye size={20} aria-hidden="true" />}
+              </button>
             </div>
+
+            {isSignup && (
+              <>
+                <ul className="auth-password-rules" id="trackfit-password-rules" aria-label="Password requirements">
+                  {passwordChecks.map((requirement) => (
+                    <li key={requirement.label} className={requirement.passed ? "auth-rule-met" : ""}>
+                      {requirement.passed
+                        ? <Check size={15} aria-hidden="true" />
+                        : <Circle size={13} aria-hidden="true" />}
+                      <span>{requirement.label}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <label htmlFor="trackfit-confirm-password">Confirm password</label>
+                <div className="auth-field auth-password-field auth-confirm-field">
+                  <LockKeyhole size={19} aria-hidden="true" />
+                  <input
+                    id="trackfit-confirm-password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    placeholder="Enter your password again"
+                    minLength={8}
+                    required
+                    value={confirmPassword}
+                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    aria-describedby={confirmPassword ? "trackfit-password-match" : undefined}
+                  />
+                  <button
+                    className="auth-visibility"
+                    type="button"
+                    aria-label={showConfirmPassword ? "Hide confirmation password" : "Show confirmation password"}
+                    aria-pressed={showConfirmPassword}
+                    onClick={() => setShowConfirmPassword((visible) => !visible)}
+                  >
+                    {showConfirmPassword ? <EyeOff size={20} aria-hidden="true" /> : <Eye size={20} aria-hidden="true" />}
+                  </button>
+                </div>
+                {confirmPassword && (
+                  <p
+                    id="trackfit-password-match"
+                    className={"auth-password-match " + (passwordsMatch ? "auth-match-success" : "auth-match-error")}
+                    role="status"
+                  >
+                    {passwordsMatch ? "Passwords match." : "Passwords don't match yet."}
+                  </p>
+                )}
+              </>
+            )}
 
             <button className="auth-submit" type="submit" disabled={busy}>
               <span>{busy ? "Please wait..." : isSignup ? "Create account" : "Sign in"}</span>
