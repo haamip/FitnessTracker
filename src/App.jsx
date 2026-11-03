@@ -3,6 +3,7 @@ import { Suspense, lazy } from "react";
 import { BrowserRouter, Navigate, Routes, Route, useParams } from "react-router-dom";
 import MobileShell from "./components/layout/MobileShell";
 import AuthGate from "./components/auth/AuthGate";
+import OnboardingGate from "./components/auth/OnboardingGate";
 import DailyCheckInGate from "./components/auth/DailyCheckInGate";
 import "./pages/WorkoutCompleteOverlay.css";
 import "./components/common/TrackFitCard.css";
@@ -103,7 +104,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthGate>
-        <AppRoutes />
+        <OnboardingGate>
+          <AppRoutes />
+        </OnboardingGate>
       </AuthGate>
     </BrowserRouter>
   );
