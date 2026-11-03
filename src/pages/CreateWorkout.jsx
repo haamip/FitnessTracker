@@ -71,7 +71,9 @@ export default function CreateWorkout() {
   const [draftRestored, setDraftRestored] = useState(Boolean(initial.draft));
   const [pickerOpen, setPickerOpen] = useState(false);
   const latestDraft = useRef({ name, exercises });
-  latestDraft.current = { name, exercises };
+  useEffect(() => {
+    latestDraft.current = { name, exercises };
+  }, [name, exercises]);
 
   // Save each committed change, even if the workout isn't named yet.
   useEffect(() => {
