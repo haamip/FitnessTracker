@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowDown, ArrowLeft, ArrowUp, Plus, Save, Trash2 } from "lucide-react";
 import ExercisePicker from "../components/ExercisePicker";
-import { SavedWorkoutRepository } from "../services/repositories/trackfitDataLayer";
+import { HistoryRepository, SavedWorkoutRepository } from "../services/repositories/trackfitDataLayer";
+import { WorkoutBuilderDraftRepository } from "../services/repositories/workoutBuilderDraftRepository";
 import "./TrackFitScreens.css";
 
 function newSet(reps) {
@@ -57,24 +58,60 @@ export default function CreateWorkout() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const editId = searchParams.get("edit");
-  const [original] = useState(() => editId ? SavedWorkoutRepository.getById(editId) : null);
-  const [name, setName] = useState(() => original?.name || "");
-  const [exercises, setExercises] = useState(() => original?.exercises || []);
+  const [initial] = useState(() => {
+    const accountId = HistoryRepository.getActiveUser();
+    const original = editId ? SavedWorkoutRepository.getById(editId) : null;
+    const draft = WorkoutBuilderDraftRepository.get(accountId, editId);
+    return { accountId, original, draft };
+  });
+  const { accountId, original } = initial;
+  const [name, setName] = useState(() => initial.draft?.name ?? original?.name ?? "");
+  const [exercises, setExercises] = useState(() => initial.draft?.exercises ?? original?.exercises ?? []);
+  const [hasDraftChanges, setHasDraftChanges] = useState(Boolean(initial.draft));
+  const [draftRestored, setDraftRestored] = useState(Boolean(initial.draft));
   const [pickerOpen, setPickerOpen] = useState(false);
+  const latestDraft = useRef({ name, exercises });
+  useEffect(() => {
+    latestDraft.current = { name, exercises };
+  }, [name, exercises]);
+
+  // Save each committed change, even if the workout isn't named yet.
+  useEffect(() => {
+    if (!hasDraftChanges) return;
+    WorkoutBuilderDraftRepository.save(accountId, editId, { name, exercises });
+  }, [accountId, editId, hasDraftChanges, name, exercises]);
+
+  // Phone calls/backgrounding can suspend or terminate a mobile browser tab.
+  useEffect(() => {
+    if (!hasDraftChanges) return;
+    const flushDraft = () => WorkoutBuilderDraftRepository.save(accountId, editId, latestDraft.current);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") flushDraft();
+    };
+    window.addEventListener("pagehide", flushDraft);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.removeEventListener("pagehide", flushDraft);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [accountId, editId, hasDraftChanges]);
   // Keep the number being typed separate from the saved sets array.
   // Otherwise clearing "3" briefly produces 0 and a controlled input jumps back to 3.
   const [setCountDrafts, setSetCountDrafts] = useState({});
   const canSave = Boolean(name.trim() && exercises.length);
 
   function addExercise(exercise) {
+    setHasDraftChanges(true);
     setExercises((current) => [...current, fromLibrary(exercise)]);
   }
 
   function removeExercise(id) {
+    setHasDraftChanges(true);
     setExercises((current) => current.filter((exercise) => exercise.id !== id));
   }
 
   function moveExercise(index, direction) {
+    setHasDraftChanges(true);
     setExercises((current) => {
       const nextIndex = index + direction;
       if (nextIndex < 0 || nextIndex >= current.length) return current;
@@ -85,6 +122,7 @@ export default function CreateWorkout() {
   }
 
   function editExercise(id, field, value) {
+    setHasDraftChanges(true);
     setExercises((current) => current.map((exercise) => {
       if (exercise.id !== id) return exercise;
       if (field === "sets") {
@@ -124,12 +162,23 @@ export default function CreateWorkout() {
       detail: `${exercises.length} exercises`,
       exercises,
     });
+    WorkoutBuilderDraftRepository.clear(accountId, editId);
     if (startNow) {
       SavedWorkoutRepository.createSession(id);
       navigate(`/workouts/${id}`);
     } else {
       navigate("/workouts?refresh=created");
     }
+  }
+
+  function discardDraft() {
+    if (!window.confirm("Discard your unfinished workout changes?")) return;
+    WorkoutBuilderDraftRepository.clear(accountId, editId);
+    setName(original?.name || "");
+    setExercises(original?.exercises || []);
+    setSetCountDrafts({});
+    setHasDraftChanges(false);
+    setDraftRestored(false);
   }
 
   return (
@@ -143,6 +192,16 @@ export default function CreateWorkout() {
         </div>
       </section>
 
+      {hasDraftChanges && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, padding: 14, borderRadius: 12, border: "1px solid #555" }}>
+          <p role="status" style={{ margin: 0, fontSize: 14 }}>
+            {draftRestored ? "Recovered your unfinished workout. " : ""}
+            Changes save automatically on this device.
+          </p>
+          <button type="button" onClick={discardDraft}>Discard draft</button>
+        </div>
+      )}
+
       <section className="v4-workout-list">
         <div className="v4-section-heading">
           <div><p className="eyebrow">Step 1</p><h2>Workout name</h2></div>
@@ -153,7 +212,7 @@ export default function CreateWorkout() {
           maxLength={80}
           placeholder="e.g. Heavy Shoulders & Arms"
           value={name}
-          onChange={(event) => setName(event.target.value)}
+          onChange={(event) => { setHasDraftChanges(true); setName(event.target.value); }}
           style={{ width: "100%", padding: 16, borderRadius: 12 }}
         />
       </section>
