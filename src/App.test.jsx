@@ -5,6 +5,10 @@ vi.mock("./components/auth/AuthGate", () => ({
   default: ({ children }) => children,
 }));
 
+vi.mock("./components/auth/OnboardingGate", () => ({
+  default: ({ children }) => children,
+}));
+
 vi.mock("./components/auth/DailyCheckInGate", () => ({
   default: ({ children }) => children,
 }));
