@@ -5,7 +5,7 @@ import "./AuthScreen.css";
 
 // Keep beta confirmation links on the real app, not Supabase's localhost default.
 // Developers can override this when testing a separate auth callback.
-export const getSignupRedirectUrl = () =>
+const getSignupRedirectUrl = () =>
   import.meta.env.VITE_AUTH_REDIRECT_URL ||
   (import.meta.env.DEV ? window.location.origin : "https://fitness-tracker-rosy-nu.vercel.app");
 
