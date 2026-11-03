@@ -2,19 +2,12 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Button from "../components/ui/Button";
 import { supabase } from "../services/supabase";
+import { FITNESS_GOALS, SHIFT_PATTERNS, PROFILE_FIELDS, getDefaultProfile, normalizeProfile, buildProfilePayload } from "../services/profileGoals";
 import { getShiftStartTime, setShiftStartTime } from "../services/shift/shiftModeService";
 import "./TrackFitScreens.css";
 
-const initialProfile = {
-  display_name: "",
-  timezone: "Australia/Adelaide",
-  calorie_target: 2500,
-  protein_target: 185,
-  water_target_l: 4,
-};
-
 export default function Profile() {
-  const [profile, setProfile] = useState(initialProfile);
+  const [profile, setProfile] = useState(getDefaultProfile);
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("Loading profile...");
   const [saving, setSaving] = useState(false);
@@ -31,10 +24,10 @@ export default function Profile() {
         return;
       }
 
-      setEmail(userData.user.email || "");
+      if (active) setEmail(userData.user.email || "");
       const { data, error } = await supabase
         .from("profiles")
-        .select("display_name, timezone, calorie_target, protein_target, water_target_l")
+        .select(PROFILE_FIELDS.join(","))
         .eq("id", userData.user.id)
         .maybeSingle();
 
@@ -44,14 +37,12 @@ export default function Profile() {
         return;
       }
 
-      setProfile({ ...initialProfile, ...(data || {}) });
+      setProfile(normalizeProfile(data));
       setStatus("");
     }
 
     void loadProfile();
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, []);
 
   function updateField(field, value) {
@@ -60,31 +51,23 @@ export default function Profile() {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    if (!supabase) return;
+    if (!supabase || saving) return;
     setSaving(true);
     setStatus("");
 
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError || !userData.user) {
-      setStatus("Your login session could not be found.");
+    try {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) throw new Error("Your login session could not be found.");
+      const payload = buildProfilePayload(userData.user.id, profile);
+      const { error } = await supabase.from("profiles").upsert(payload, { onConflict: "id" });
+      if (error) throw error;
+      setShiftStartTime(nightStart);
+      setStatus("Goals and profile saved. Your AI Coach can now use your updated targets.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Couldn't save your profile.");
+    } finally {
       setSaving(false);
-      return;
     }
-
-    const { error } = await supabase.from("profiles").upsert({
-      id: userData.user.id,
-      display_name: profile.display_name.trim(),
-      timezone: profile.timezone,
-      calorie_target: Number(profile.calorie_target) || 2500,
-      protein_target: Number(profile.protein_target) || 185,
-      water_target_l: Number(profile.water_target_l) || 4,
-      onboarding_complete: true,
-      updated_at: new Date().toISOString(),
-    });
-
-    setSaving(false);
-    if (!error) setShiftStartTime(nightStart);
-    setStatus(error ? error.message : "Profile saved. Shift start time saved on this device.");
   }
 
   return (
@@ -92,8 +75,8 @@ export default function Profile() {
       <section className="v4-workout-hero">
         <div>
           <p className="eyebrow">Account</p>
-          <h1>Profile setup</h1>
-          <p>Set the targets TrackFit should use across coaching, food and recovery.</p>
+          <h1>Profile & goals</h1>
+          <p>Set your own targets. The AI Coach uses your saved goals and check-ins to measure your progress.</p>
         </div>
       </section>
 
@@ -105,7 +88,36 @@ export default function Profile() {
 
         <label>
           Display name
-          <input value={profile.display_name} onChange={(event) => updateField("display_name", event.target.value)} placeholder="Your name" />
+          <input required maxLength={80} value={profile.display_name} onChange={(event) => updateField("display_name", event.target.value)} placeholder="Your name" />
+        </label>
+
+        <label>
+          Main fitness goal
+          <select value={profile.fitness_goal} onChange={(event) => updateField("fitness_goal", event.target.value)}>
+            {FITNESS_GOALS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
+        </label>
+
+        <label>
+          Starting weight (kg) – optional
+          <input type="number" inputMode="decimal" min="20" max="400" step="0.1" value={profile.starting_weight_kg ?? ""} onChange={(event) => updateField("starting_weight_kg", event.target.value)} placeholder="e.g. 100" />
+        </label>
+        <label>
+          Goal weight (kg) – optional
+          <input type="number" inputMode="decimal" min="20" max="400" step="0.1" value={profile.goal_weight_kg ?? ""} onChange={(event) => updateField("goal_weight_kg", event.target.value)} placeholder="e.g. 95" />
+          <small>No weight goal? Leave both boxes blank. You can add or change these anytime.</small>
+        </label>
+
+        <label>
+          Training sessions per week
+          <input type="number" min="1" max="7" step="1" required value={profile.workouts_per_week} onChange={(event) => updateField("workouts_per_week", event.target.value)} />
+        </label>
+
+        <label>
+          Work and shift routine
+          <select value={profile.shift_pattern} onChange={(event) => updateField("shift_pattern", event.target.value)}>
+            {SHIFT_PATTERNS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
         </label>
 
         <label>
@@ -114,31 +126,34 @@ export default function Profile() {
             <option value="Pacific/Auckland">New Zealand</option>
             <option value="Australia/Adelaide">Adelaide</option>
             <option value="Australia/Perth">Perth</option>
+            <option value="Australia/Sydney">Sydney / Melbourne</option>
+            <option value="Australia/Brisbane">Brisbane</option>
           </select>
         </label>
 
         <label>
           Night shift starts at
           <input type="time" step="900" value={nightStart} onChange={(event) => setNightStart(event.target.value)} required />
-          <small>When Night mode is on, steps and meals use a 24-hour shift day beginning at this time (default 6:00pm). Day mode uses midnight. This preference is saved on this device.</small>
+          <small>When Night mode is enabled, steps and meals use a 24-hour shift day starting here. Saved on this device.</small>
         </label>
 
         <label>
           Daily calories
-          <input type="number" min="1000" value={profile.calorie_target} onChange={(event) => updateField("calorie_target", event.target.value)} />
+          <input type="number" min="1000" max="6000" value={profile.calorie_target} onChange={(event) => updateField("calorie_target", event.target.value)} required />
         </label>
 
         <label>
           Daily protein grams
-          <input type="number" min="0" value={profile.protein_target} onChange={(event) => updateField("protein_target", event.target.value)} />
+          <input type="number" min="0" max="400" value={profile.protein_target} onChange={(event) => updateField("protein_target", event.target.value)} required />
         </label>
 
         <label>
           Daily water litres
-          <input type="number" min="0" step="0.1" value={profile.water_target_l} onChange={(event) => updateField("water_target_l", event.target.value)} />
+          <input type="number" min="0.5" max="12" step="0.1" value={profile.water_target_l} onChange={(event) => updateField("water_target_l", event.target.value)} required />
         </label>
 
-        <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save profile"}</Button>
+        <p style={{ fontSize: 12, opacity: 0.75 }}>Targets are personal preferences, not medical advice. Your coach won't interpret missing weight logs as failure.</p>
+        <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save profile & goals"}</Button>
         {status && <p role="status">{status}</p>}
       </form>
     </motion.div>
