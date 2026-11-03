@@ -86,6 +86,7 @@ describe("TrackFit account password setup", () => {
       expect(supabase.auth.signUp).toHaveBeenCalledWith({
         email: "tester@example.com",
         password: "StrongPass1!",
+        options: { emailRedirectTo: window.location.origin },
       });
     });
   });
