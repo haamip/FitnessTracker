@@ -29,7 +29,7 @@ function FirstLoginSetup({ user, existing, onComplete }) {
     try {
       const payload = buildProfilePayload(user.id, form);
       const { error: saveError } = await supabase.from("profiles").upsert(payload, { onConflict: "id" });
-      if (saveError) throw saveError;
+      if (saveError) throw new Error(saveError.message || "Could not save your goals.");
       onComplete();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "We couldn't save your goals. Please try again.");
