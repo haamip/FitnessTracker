@@ -100,7 +100,7 @@ export default function CreateWorkout() {
   function changeSetCount(exerciseId, rawValue) {
     setSetCountDrafts((current) => ({ ...current, [exerciseId]: rawValue }));
     // Preserve empty or incomplete input while typing, then update real sets on a valid number.
-    if (!/^\\d+$/.test(rawValue)) return;
+    if (!/^[0-9]+$/.test(rawValue)) return;
     const count = Number(rawValue);
     if (count >= 1 && count <= 30) editExercise(exerciseId, "sets", count);
   }
