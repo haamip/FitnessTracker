@@ -3,6 +3,12 @@ import { ArrowRight, Check, Circle, Dumbbell, Eye, EyeOff, LockKeyhole, Mail } f
 import { supabase } from "../../services/supabase";
 import "./AuthScreen.css";
 
+// Keep beta confirmation links on the real app, not Supabase's localhost default.
+// Developers can override this when testing a separate auth callback.
+export const getSignupRedirectUrl = () =>
+  import.meta.env.VITE_AUTH_REDIRECT_URL ||
+  (import.meta.env.DEV ? window.location.origin : "https://fitness-tracker-rosy-nu.vercel.app");
+
 const passwordRequirements = [
   { label: "At least 8 characters", check: (value) => value.length >= 8 },
   { label: "One uppercase letter", check: (value) => /[A-Z]/.test(value) },
@@ -48,14 +54,14 @@ export default function AuthScreen() {
     setBusy(true);
     try {
       const result = isSignup
-        ? await supabase.auth.signUp({ email, password })
+        ? await supabase.auth.signUp({ email, password, options: { emailRedirectTo: getSignupRedirectUrl() } })
         : await supabase.auth.signInWithPassword({ email, password });
 
       setMessage(
         result.error
           ? result.error.message
           : isSignup
-            ? "Account created. Check your email if confirmation is enabled."
+            ? (result.data?.session ? "Your account is ready. Welcome to TrackFit!" : "Nearly there! Check your email for the TrackFit confirmation link. Check your spam folder too.")
             : "Signed in.",
       );
     } catch {
