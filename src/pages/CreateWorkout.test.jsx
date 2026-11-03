@@ -8,6 +8,9 @@ vi.mock("../services/repositories/trackfitDataLayer", () => ({
     save: vi.fn(),
     createSession: vi.fn(),
   },
+  HistoryRepository: {
+    getActiveUser: vi.fn(() => "tester-1"),
+  },
 }));
 
 vi.mock("../components/ExercisePicker", () => ({
@@ -21,15 +24,19 @@ vi.mock("../components/ExercisePicker", () => ({
   ) : null,
 }));
 
-import { SavedWorkoutRepository } from "../services/repositories/trackfitDataLayer";
+import { HistoryRepository, SavedWorkoutRepository } from "../services/repositories/trackfitDataLayer";
 import CreateWorkout from "./CreateWorkout";
 
-function renderBuilder() {
-  render(
-    <MemoryRouter initialEntries={["/workouts/create"]}>
+function mountBuilder(route = "/workouts/create") {
+  return render(
+    <MemoryRouter initialEntries={[route]}>
       <CreateWorkout />
     </MemoryRouter>,
   );
+}
+
+function renderBuilder() {
+  mountBuilder();
   fireEvent.change(screen.getByRole("textbox", { name: "Workout name" }), {
     target: { value: "My workout" },
   });
@@ -41,6 +48,8 @@ function renderBuilder() {
 describe("workout builder set count", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.localStorage.clear();
+    HistoryRepository.getActiveUser.mockReturnValue("tester-1");
   });
 
   it("lets mobile users delete the starting 3 and enter 4 sets before saving", () => {
@@ -91,5 +100,92 @@ describe("workout builder set count", () => {
     const saved = SavedWorkoutRepository.save.mock.calls[0][0];
     expect(saved.exercises[0].sets).toHaveLength(5);
     expect(saved.exercises[0].sets.every((set) => set.reps === "6-10")).toBe(true);
+  });
+});
+
+describe("workout builder draft recovery", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    window.localStorage.clear();
+    HistoryRepository.getActiveUser.mockReturnValue("tester-1");
+  });
+
+  it("restores name, selected exercises, sets and reps after the tab is recreated", () => {
+    const first = mountBuilder();
+    fireEvent.change(screen.getByRole("textbox", { name: "Workout name" }), {
+      target: { value: "Chest after work" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /add exercise from library/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Select test exercise" }));
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Sets for Barbell Bench Press" }), {
+      target: { value: "5" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "Reps for Barbell Bench Press" }), {
+      target: { value: "6-10" },
+    });
+    first.unmount();
+
+    mountBuilder();
+    expect(screen.getByRole("textbox", { name: "Workout name" })).toHaveValue("Chest after work");
+    expect(screen.getByRole("spinbutton", { name: "Sets for Barbell Bench Press" })).toHaveValue(5);
+    expect(screen.getByRole("textbox", { name: "Reps for Barbell Bench Press" })).toHaveValue("6-10");
+    expect(screen.getByRole("status")).toHaveTextContent("Recovered your unfinished workout");
+  });
+
+  it("clears a draft only after saving the complete workout", () => {
+    const first = mountBuilder();
+    fireEvent.change(screen.getByRole("textbox", { name: "Workout name" }), {
+      target: { value: "Ready to save" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /add exercise from library/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Select test exercise" }));
+    first.unmount();
+
+    const restored = mountBuilder();
+    expect(screen.getByRole("status")).toHaveTextContent("Recovered");
+    fireEvent.click(screen.getByRole("button", { name: /^save workout$/i }));
+    expect(SavedWorkoutRepository.save).toHaveBeenCalledOnce();
+    restored.unmount();
+
+    mountBuilder();
+    expect(screen.getByRole("textbox", { name: "Workout name" })).toHaveValue("");
+    expect(screen.queryByRole("spinbutton", { name: "Sets for Barbell Bench Press" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("keeps unfinished workouts private to each logged-in account on a device", () => {
+    const first = mountBuilder();
+    fireEvent.change(screen.getByRole("textbox", { name: "Workout name" }), {
+      target: { value: "Tester one's workout" },
+    });
+    first.unmount();
+
+    HistoryRepository.getActiveUser.mockReturnValue("tester-2");
+    const second = mountBuilder();
+    expect(screen.getByRole("textbox", { name: "Workout name" })).toHaveValue("");
+    second.unmount();
+
+    HistoryRepository.getActiveUser.mockReturnValue("tester-1");
+    mountBuilder();
+    expect(screen.getByRole("textbox", { name: "Workout name" })).toHaveValue("Tester one's workout");
+  });
+
+  it("lets users discard an interrupted workout without restoring it later", () => {
+    const first = mountBuilder();
+    fireEvent.change(screen.getByRole("textbox", { name: "Workout name" }), {
+      target: { value: "Discard me" },
+    });
+    first.unmount();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    const restored = mountBuilder();
+    fireEvent.click(screen.getByRole("button", { name: "Discard draft" }));
+    expect(screen.getByRole("textbox", { name: "Workout name" })).toHaveValue("");
+    restored.unmount();
+
+    mountBuilder();
+    expect(screen.getByRole("textbox", { name: "Workout name" })).toHaveValue("");
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    vi.restoreAllMocks();
   });
 });
