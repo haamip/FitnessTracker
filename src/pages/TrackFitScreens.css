@@ -6219,3 +6219,8 @@ body,
   color: var(--tf-ink);
   background: #fff;
 }
+
+/* Keep the six-digit elapsed timer readable on narrow phones. */
+.tf-workout-topbar { grid-template-columns: 44px minmax(0, 1fr) max-content; gap: 8px; }
+.tf-workout-topbar time { white-space: nowrap; font-variant-numeric: tabular-nums; font-size: clamp(14px, 3.8vw, 18px); }
+.tf-workout-topbar h1 { min-width: 0; overflow-wrap: anywhere; }
