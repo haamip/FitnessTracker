@@ -4,6 +4,7 @@ import { ArrowDown, ArrowLeft, ArrowUp, Plus, Save, Trash2 } from "lucide-react"
 import ExercisePicker from "../components/ExercisePicker";
 import { HistoryRepository, SavedWorkoutRepository } from "../services/repositories/trackfitDataLayer";
 import { WorkoutBuilderDraftRepository } from "../services/repositories/workoutBuilderDraftRepository";
+import { getOrStartWorkoutClock } from "../services/workoutClock";
 import "./TrackFitScreens.css";
 
 function newSet(reps) {
@@ -165,6 +166,8 @@ export default function CreateWorkout() {
     WorkoutBuilderDraftRepository.clear(accountId, editId);
     if (startNow) {
       SavedWorkoutRepository.createSession(id);
+      // "Save & start now" is an explicit user action: start the clock here.
+      getOrStartWorkoutClock(accountId, id);
       navigate(`/workouts/${id}`);
     } else {
       navigate("/workouts?refresh=created");
