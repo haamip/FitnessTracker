@@ -19,12 +19,29 @@ export function elapsedWorkoutSeconds(startedAt, now = Date.now()) {
   return Math.floor((now - start) / 1000);
 }
 
+/** Read an existing clock without starting one just by opening a workout. */
+export function readWorkoutClock(userId, workoutId, now = Date.now()) {
+  const recorded = Number(localStorage.getItem(workoutClockKey(userId, workoutId)));
+  return Number.isFinite(recorded) && recorded > 0 && recorded <= now ? recorded : null;
+}
+
+/**
+ * Recover old sessions, but don't count yesterday's accidental preview as a
+ * workout. Logged sets are never discarded and their clocks stay recoverable.
+ */
+export function getResumableWorkoutClock(userId, workoutId, hasLoggedSets = false, now = Date.now()) {
+  const recorded = readWorkoutClock(userId, workoutId, now);
+  if (recorded && !hasLoggedSets && now - recorded > 12 * 60 * 60 * 1000) {
+    clearWorkoutClock(userId, workoutId);
+    return null;
+  }
+  return recorded;
+}
+
 export function getOrStartWorkoutClock(userId, workoutId, now = Date.now()) {
-  const key = workoutClockKey(userId, workoutId);
-  const recorded = Number(localStorage.getItem(key));
-  // Respect a previously saved start, but reject invalid or future timestamps.
-  if (Number.isFinite(recorded) && recorded > 0 && recorded <= now) return recorded;
-  localStorage.setItem(key, String(now));
+  const recorded = readWorkoutClock(userId, workoutId, now);
+  if (recorded !== null) return recorded;
+  localStorage.setItem(workoutClockKey(userId, workoutId), String(now));
   return now;
 }
 
