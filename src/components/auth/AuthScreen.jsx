@@ -9,6 +9,16 @@ const getSignupRedirectUrl = () =>
   import.meta.env.VITE_AUTH_REDIRECT_URL ||
   (import.meta.env.DEV ? window.location.origin : "https://fitness-tracker-rosy-nu.vercel.app");
 
+function getAuthErrorMessage(error) {
+  // These errors come from the shared Supabase email quota, not a bad password.
+  // Retrying signup repeatedly won't fix it and may create more requests.
+  if (error?.code === "over_email_send_rate_limit" ||
+      (error?.status === 429 && /email rate limit/i.test(error?.message || ""))) {
+    return "TrackFit's confirmation-email service is temporarily at its sending limit. Please try again later. If you already received a confirmation email, check your inbox and use Sign in.";
+  }
+  return error?.message || "Something went wrong. Please try again.";
+}
+
 const passwordRequirements = [
   { label: "At least 8 characters", check: (value) => value.length >= 8 },
   { label: "One uppercase letter", check: (value) => /[A-Z]/.test(value) },
@@ -59,7 +69,7 @@ export default function AuthScreen() {
 
       setMessage(
         result.error
-          ? result.error.message
+          ? getAuthErrorMessage(result.error)
           : isSignup
             ? (result.data?.session ? "Your account is ready. Welcome to TrackFit!" : "Nearly there! Check your email for the TrackFit confirmation link. Check your spam folder too.")
             : "Signed in.",
