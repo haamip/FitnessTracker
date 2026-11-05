@@ -8,7 +8,7 @@ test("sign-in screen fits and is usable at this phone size", async ({ page }, te
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Welcome back." })).toBeVisible();
   await expect(page.getByLabel("Email address")).toBeVisible();
-  await expect(page.getByLabel("Password")).toBeVisible();
+  await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeVisible();
 
   const metrics = await page.evaluate(() => ({
@@ -31,9 +31,9 @@ test("sign-in and registration remain reachable via touch-size UI", async ({ pag
 test("mobile keyboard input remains usable and reloads safely", async ({ page }) => {
   await page.goto("/");
   await page.getByLabel("Email address").fill("test@example.invalid");
-  await page.getByLabel("Password").fill("example-password");
+  await page.getByLabel("Password", { exact: true }).fill("example-password");
   await expect(page.getByLabel("Email address")).toHaveValue("test@example.invalid");
-  await expect(page.getByLabel("Password")).toHaveValue("example-password");
+  await expect(page.getByLabel("Password", { exact: true })).toHaveValue("example-password");
   await page.reload();
   await expect(page.getByRole("heading", { name: "Welcome back." })).toBeVisible();
 });

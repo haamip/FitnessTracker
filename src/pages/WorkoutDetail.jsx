@@ -37,7 +37,18 @@ import {
   HistoryRepository,
   SavedWorkoutRepository,
 } from "../services/repositories/trackfitDataLayer";
-import { getOrStartWorkoutClock, elapsedWorkoutSeconds, clearWorkoutClock } from "../services/workoutClock";
+import {
+  MAX_WORKOUT_SECONDS,
+  getOrStartWorkoutClock,
+  getResumableWorkoutClock,
+  elapsedWorkoutSeconds,
+  clearWorkoutClock,
+  getWorkoutClockSeconds,
+  needsWorkoutTimeReview,
+  hasConfirmedLongWorkout,
+  confirmLongWorkout,
+  correctWorkoutClock,
+} from "../services/workoutClock";
 import "./TrackFitScreens.css";
 
 const DEFAULT_REST_SECONDS = 90;
@@ -148,8 +159,6 @@ export default function WorkoutDetail() {
   const workoutTitle = savedTemplate?.name || aiDay?.name || "Workout 1";
 
   const accountId = HistoryRepository.getActiveUser();
-  const [startedAt] = useState(() => getOrStartWorkoutClock(accountId, id));
-  const [seconds, setSeconds] = useState(() => elapsedWorkoutSeconds(startedAt));
   const [restSeconds, setRestSeconds] = useState(DEFAULT_REST_SECONDS);
   const [restRunning, setRestRunning] = useState(false);
   const [activeRestLabel, setActiveRestLabel] = useState("Rest ready");
@@ -167,6 +176,20 @@ export default function WorkoutDetail() {
     if (aiDay) return convertAiDayToWorkout(aiDay);
     return createStarterWorkoutExercises(id);
   });
+
+  // Opening a routine is a preview, not permission to start recording time.
+  const [startedAt, setStartedAt] = useState(() => getResumableWorkoutClock(
+    accountId,
+    id,
+    exercises.some((exercise) => exercise.sets?.some((set) => set.done)),
+  ));
+  const [seconds, setSeconds] = useState(() => getWorkoutClockSeconds(
+    startedAt,
+    hasConfirmedLongWorkout(accountId, id, startedAt),
+  ));
+  const [timerReviewNeeded, setTimerReviewNeeded] = useState(false);
+  const [editingDuration, setEditingDuration] = useState(false);
+  const [correctedMinutes, setCorrectedMinutes] = useState("60");
 
   const [openExerciseId, setOpenExerciseId] = useState(
     () => exercises[0]?.id || "",
@@ -203,11 +226,51 @@ export default function WorkoutDetail() {
   const isCurrentExerciseCelebrating =
     completedExerciseId === currentExercise?.id;
 
+  function beginWorkout() {
+    const started = getOrStartWorkoutClock(accountId, id);
+    setStartedAt(started);
+    setSeconds(getWorkoutClockSeconds(started));
+    return started;
+  }
+
+  function needsReview(start = startedAt) {
+    return needsWorkoutTimeReview(start, hasConfirmedLongWorkout(accountId, id, start));
+  }
+
+  function approveLongWorkout() {
+    confirmLongWorkout(accountId, id, startedAt);
+    setTimerReviewNeeded(false);
+    setEditingDuration(false);
+    setSeconds(elapsedWorkoutSeconds(startedAt));
+  }
+
+  function saveCorrectedDuration() {
+    const minutes = Number(correctedMinutes);
+    if (!Number.isInteger(minutes) || minutes < 1 || minutes >= MAX_WORKOUT_SECONDS / 60) return;
+    const correctedStart = correctWorkoutClock(accountId, id, minutes);
+    setStartedAt(correctedStart);
+    setSeconds(getWorkoutClockSeconds(correctedStart));
+    setEditingDuration(false);
+    setTimerReviewNeeded(false);
+  }
+
+  function discardAccidentalSession() {
+    if (exercises.some((exercise) => exercise.sets?.some((set) => set.done))) return;
+    clearWorkoutClock(accountId, id);
+    setStartedAt(null);
+    setSeconds(0);
+    setEditingDuration(false);
+    setTimerReviewNeeded(false);
+  }
+
   useEffect(() => {
-    // The display refreshes every second, but the source of truth is a saved
-    // timestamp. Background throttling or navigating away cannot lose time.
+    // Time is measured from the saved start timestamp but capped at 2 hours
+    // until the user confirms this is genuinely a long training session.
     const refresh = () => {
-      if (!workoutSavedRef.current) setSeconds(elapsedWorkoutSeconds(startedAt));
+      if (workoutSavedRef.current) return;
+      const confirmed = hasConfirmedLongWorkout(accountId, id, startedAt);
+      setSeconds(getWorkoutClockSeconds(startedAt, confirmed));
+      setTimerReviewNeeded(needsWorkoutTimeReview(startedAt, confirmed));
     };
     refresh();
     const timer = window.setInterval(refresh, 1000);
@@ -220,7 +283,7 @@ export default function WorkoutDetail() {
       window.removeEventListener("pageshow", refresh);
       document.removeEventListener("visibilitychange", refresh);
     };
-  }, [startedAt]);
+  }, [accountId, id, startedAt]);
 
   useEffect(() => {
     if (!completedExerciseId) return undefined;
@@ -327,6 +390,8 @@ export default function WorkoutDetail() {
     const targetExercise = exercises[targetExerciseIndex];
     const targetSet = targetExercise?.sets.find((set) => set.id === setId);
     const isMarkingDone = field === "done" && value && !targetSet?.done;
+    // Logging the first set starts a session even if Start was not tapped.
+    const loggedStart = isMarkingDone ? (startedAt || beginWorkout()) : startedAt;
 
     const updatedTargetSets =
       targetExercise?.sets.map((set) =>
@@ -371,8 +436,15 @@ export default function WorkoutDetail() {
     if (willCompleteWorkout) {
       window.setTimeout(() => {
         if (workoutSavedRef.current) return;
+        if (needsReview(loggedStart)) {
+          setTimerReviewNeeded(true);
+          setRestCompletedMessage("Check your workout time above, then save your session.");
+          return;
+        }
         workoutSavedRef.current = true;
-        const finalSeconds = elapsedWorkoutSeconds(startedAt);
+        const finalSeconds = getWorkoutClockSeconds(
+          loggedStart, hasConfirmedLongWorkout(accountId, id, loggedStart),
+        );
         setSeconds(finalSeconds);
         const nextTotals = calculateWorkoutTotals(nextExercises);
         const history = readWorkoutHistory();
@@ -382,7 +454,7 @@ export default function WorkoutDetail() {
           id,
           title: workoutTitle,
           seconds: finalSeconds,
-          startedAt: new Date(startedAt).toISOString(),
+          startedAt: new Date(loggedStart).toISOString(),
           notes,
           exercises: nextExercises,
           totals: nextTotals,
@@ -536,8 +608,15 @@ export default function WorkoutDetail() {
 
   function finishWorkout() {
     if (workoutSavedRef.current) return;
+    const sessionStart = startedAt || beginWorkout();
+    if (needsReview(sessionStart)) {
+      setTimerReviewNeeded(true);
+      return;
+    }
     workoutSavedRef.current = true;
-    const finalSeconds = elapsedWorkoutSeconds(startedAt);
+    const finalSeconds = getWorkoutClockSeconds(
+      sessionStart, hasConfirmedLongWorkout(accountId, id, sessionStart),
+    );
     setSeconds(finalSeconds);
     const history = readWorkoutHistory();
     const prs = detectWorkoutPRs(history, exercises);
@@ -545,7 +624,7 @@ export default function WorkoutDetail() {
       id,
       title: workoutTitle,
       seconds: finalSeconds,
-      startedAt: new Date(startedAt).toISOString(),
+      startedAt: new Date(sessionStart).toISOString(),
       notes,
       exercises,
       totals,
@@ -614,6 +693,44 @@ export default function WorkoutDetail() {
         <h1>{workoutTitle}</h1>
         <time>{formatClock(seconds)}</time>
       </header>
+
+      {!startedAt && !finishedWorkoutSummary && (
+        <section className="tf-timer-start">
+          <span>Timer is off. Building or checking a workout won't start a session.</span>
+          <button type="button" onClick={beginWorkout}>Start timer</button>
+        </section>
+      )}
+
+      {timerReviewNeeded && !finishedWorkoutSummary && (
+        <section className="tf-timer-review" role="alert" aria-live="polite">
+          <strong>Did you actually work out for 2 hours? 😂</strong>
+          <p>We've held the timer at 2 hours so an abandoned workout doesn't count overnight.</p>
+          <div className="tf-timer-review__actions">
+            <button type="button" onClick={approveLongWorkout}>Yep, keep timing</button>
+            <button type="button" onClick={() => setEditingDuration(true)}>Nah, fix my time</button>
+            {totals.doneSets === 0 && (
+              <button type="button" onClick={discardAccidentalSession}>I didn't train - reset</button>
+            )}
+          </div>
+          {editingDuration && (
+            <div className="tf-timer-review__correction">
+              <label htmlFor="tf-corrected-workout-minutes">Actual workout time (minutes)</label>
+              <input
+                id="tf-corrected-workout-minutes"
+                type="number"
+                min="1"
+                max="119"
+                inputMode="numeric"
+                value={correctedMinutes}
+                onChange={(event) => setCorrectedMinutes(event.target.value)}
+              />
+              <button type="button" onClick={saveCorrectedDuration} disabled={!Number.isInteger(Number(correctedMinutes)) || Number(correctedMinutes) < 1 || Number(correctedMinutes) >= 120}>
+                Use this time
+              </button>
+            </div>
+          )}
+        </section>
+      )}
 
       <section className="tf-progress-block">
         <div className="tf-progress-track">
@@ -932,7 +1049,7 @@ export default function WorkoutDetail() {
       )}
 
       <footer className="tf-workout-actions">
-        <Link to="/workouts">Cancel Workout</Link>
+        <Link to="/workouts">Back to workouts</Link>
         <button
           className={canFinish ? "ready" : ""}
           disabled={!canFinish}
