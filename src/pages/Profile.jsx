@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Button from "../components/ui/Button";
@@ -78,7 +79,7 @@ export default function Profile() {
     event.preventDefault();
     if (passwordBusy) return;
     setPasswordStatus("");
-    if (newPassword.length < 12 || !/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword) || !/[^A-Za-z0-9\\s]/.test(newPassword)) {
+    if (newPassword.length < 12 || !/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword) || !/[^A-Za-z0-9\s]/.test(newPassword)) {
       setPasswordStatus("Use 12 or more characters with upper and lowercase letters, a number and a symbol.");
       return;
     }
@@ -186,6 +187,12 @@ export default function Profile() {
         <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save profile & goals"}</Button>
         {status && <p role="status">{status}</p>}
       </form>
+
+      <section className="form-card form-grid">
+        <h2>Privacy & AI Coach monitoring</h2>
+        <p>Choose whether the TrackFit developer may privately review your AI Coach responses and the information used to generate them during beta testing. Participation is optional.</p>
+        <Link to="/settings/ai-monitoring">Manage AI monitoring consent</Link>
+      </section>
 
       <form className="form-card form-grid" onSubmit={changePassword} autoComplete="off">
         <h2>Account security</h2>
