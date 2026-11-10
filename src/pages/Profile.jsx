@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Button from "../components/ui/Button";
@@ -156,6 +157,11 @@ export default function Profile() {
         <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save profile & goals"}</Button>
         {status && <p role="status">{status}</p>}
       </form>
+      <section className="form-card form-grid">
+        <h2>Beta testing privacy</h2>
+        <p>Choose whether HAKT Industries may privately review your AI Coach replies, questions and the activity summary used to generate them. This is optional and does not affect your access to the Coach.</p>
+        <Link to="/settings/ai-monitoring">Read the agreement and manage AI monitoring</Link>
+      </section>
     </motion.div>
   );
 }
