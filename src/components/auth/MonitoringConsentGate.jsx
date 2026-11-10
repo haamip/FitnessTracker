@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "../../services/supabase";
 
 /**
@@ -56,6 +57,7 @@ export default function MonitoringConsentGate({ userId, children }) {
       <p style={{ lineHeight: 1.65, margin: 0 }}>TrackFit is operated by HAKT Industries Ltd. During beta testing, the developer can privately review your AI Coach questions, generated replies and the activity summary used to create them to spot mistakes, unsafe recommendations and bugs. These records may appear in private testing reports.</p>
       <p style={{ lineHeight: 1.65, margin: 0 }}>This is optional. Choosing <strong>No thanks</strong> will not restrict your workouts or AI Coach. You can change your decision in Profile at any time. Switching monitoring off stops new replies being logged, but does not automatically delete earlier records. Contact the developer to request deletion of earlier monitoring records.</p>
       <p style={{ lineHeight: 1.65, margin: 0 }}>Only new AI responses generated after you agree are eligible for monitoring; previous replies are not collected retroactively.</p>
+      <p style={{ lineHeight: 1.65, margin: 0 }}>Read our <Link to="/privacy">Privacy Policy</Link> and <Link to="/terms">Terms of Use</Link> before choosing.</p>
       <div style={{ display: "grid", gap: 10 }}>
         <button type="button" disabled={saving} onClick={() => void choose(true)} style={{ minHeight: 48, borderRadius: 12, padding: 12, background: "#202820", color: "#dffa7d", fontWeight: 800 }}>{saving ? "Saving..." : "Yes, I agree to AI monitoring"}</button>
         <button type="button" disabled={saving} onClick={() => void choose(false)} style={{ minHeight: 48, borderRadius: 12, padding: 12, border: "1px solid #cbd4c6", background: "#fff", color: "#202820", fontWeight: 700 }}>No thanks, continue to TrackFit</button>
