@@ -17,17 +17,20 @@ const passwordRequirements = [
   { label: "One special character", check: (value) => /[^A-Za-z0-9\s]/.test(value) },
 ];
 
-export default function AuthScreen() {
+export default function AuthScreen({ recovery = false, onRecoveryComplete }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [mode, setMode] = useState("signin");
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetConfirm, setResetConfirm] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
 
   const isSignup = mode === "signup";
+  const isForgot = mode === "forgot";
   const passwordChecks = passwordRequirements.map((requirement) => ({
     ...requirement,
     passed: requirement.check(password),
@@ -53,6 +56,14 @@ export default function AuthScreen() {
 
     setBusy(true);
     try {
+      if (isForgot) {
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo: window.location.origin + "/",
+        });
+        if (error) throw error;
+        setMessage("If this email has a TrackFit account, a password reset link will arrive shortly. Check your spam folder.");
+        return;
+      }
       const result = isSignup
         ? await supabase.auth.signUp({ email, password, options: { emailRedirectTo: getSignupRedirectUrl() } })
         : await supabase.auth.signInWithPassword({ email, password });
@@ -71,6 +82,33 @@ export default function AuthScreen() {
     }
   }
 
+  async function submitRecovery(event) {
+    event.preventDefault();
+    if (busy) return;
+    setMessage("");
+    if (resetPassword.length < 12 || !/[A-Z]/.test(resetPassword) || !/[a-z]/.test(resetPassword) || !/[0-9]/.test(resetPassword) || !/[^A-Za-z0-9\s]/.test(resetPassword)) {
+      setMessage("Use 12+ characters, uppercase and lowercase letters, a number and a symbol.");
+      return;
+    }
+    if (resetPassword !== resetConfirm) {
+      setMessage("Passwords do not match.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: resetPassword });
+      if (error) throw error;
+      setMessage("Password updated successfully.");
+      setResetPassword("");
+      setResetConfirm("");
+      onRecoveryComplete?.();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to reset password. Request a new link.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function toggleMode() {
     setMode(isSignup ? "signin" : "signup");
     setPassword("");
@@ -79,6 +117,26 @@ export default function AuthScreen() {
     setShowConfirmPassword(false);
     setMessage("");
   }
+
+  if (recovery) return (
+    <main className="auth-layout">
+      <section className="auth-panel" style={{ minHeight: "100vh" }}>
+        <div className="auth-panel-inner">
+          <h1>Set your new TrackFit password</h1>
+          <p>Choose a strong password to secure your account.</p>
+          <form className="auth-form" onSubmit={submitRecovery}>
+            <label htmlFor="reset-new">New password</label>
+            <input id="reset-new" type="password" autoComplete="new-password" required minLength={12} value={resetPassword} onChange={(e) => setResetPassword(e.target.value)} />
+            <label htmlFor="reset-confirm">Confirm password</label>
+            <input id="reset-confirm" type="password" autoComplete="new-password" required minLength={12} value={resetConfirm} onChange={(e) => setResetConfirm(e.target.value)} />
+            <p>At least 12 characters, with uppercase, lowercase, a number and a symbol.</p>
+            <button className="auth-submit" type="submit" disabled={busy}>{busy ? "Saving..." : "Save new password"}</button>
+          </form>
+          {message && <p role="status">{message}</p>}
+        </div>
+      </section>
+    </main>
+  );
 
   return (
     <main className="auth-layout">
@@ -98,11 +156,9 @@ export default function AuthScreen() {
       <section className="auth-panel" aria-labelledby="auth-title">
         <div className="auth-panel-inner">
           <span className="auth-panel-kicker">YOUR SPACE TO PROGRESS</span>
-          <h2 id="auth-title">{isSignup ? "Start your journey." : "Welcome back."}</h2>
+          <h2 id="auth-title">{isForgot ? "Reset your password." : isSignup ? "Start your journey." : "Welcome back."}</h2>
           <p className="auth-panel-description">
-            {isSignup
-              ? "Create an account to keep your training in one place."
-              : "Pick up where you left off. Your next session is waiting."}
+            {isForgot ? "Enter your email and we will send a recovery link." : isSignup ? "Create an account to keep your training in one place." : "Pick up where you left off. Your next session is waiting."}
           </p>
 
           <form className="auth-form" onSubmit={submit}>
@@ -120,7 +176,7 @@ export default function AuthScreen() {
               />
             </div>
 
-            <label htmlFor="trackfit-password">Password</label>
+            {!isForgot && <><label htmlFor="trackfit-password">Password</label>
             <div className="auth-field auth-password-field">
               <LockKeyhole size={19} aria-hidden="true" />
               <input
@@ -145,6 +201,7 @@ export default function AuthScreen() {
               </button>
             </div>
 
+            </>}
             {isSignup && (
               <>
                 <ul className="auth-password-rules" id="trackfit-password-rules" aria-label="Password requirements">
@@ -195,17 +252,18 @@ export default function AuthScreen() {
             )}
 
             <button className="auth-submit" type="submit" disabled={busy}>
-              <span>{busy ? "Please wait..." : isSignup ? "Create account" : "Sign in"}</span>
+              <span>{busy ? "Please wait..." : isForgot ? "Send reset link" : isSignup ? "Create account" : "Sign in"}</span>
               {!busy && <ArrowRight size={20} aria-hidden="true" />}
             </button>
           </form>
 
           {message && <p className="auth-status" role="status" aria-live="polite">{message}</p>}
 
+          {!isSignup && !isForgot && <div className="auth-switch"><button type="button" onClick={() => { setMode("forgot"); setMessage(""); }}>Forgot password?</button></div>}
           <div className="auth-switch">
-            <span>{isSignup ? "Already have an account?" : "New to TrackFit?"}</span>
-            <button type="button" onClick={toggleMode} disabled={busy}>
-              {isSignup ? "Sign in" : "Create an account"}
+            <span>{isForgot ? "Remember your password?" : isSignup ? "Already have an account?" : "New to TrackFit?"}</span>
+            <button type="button" onClick={isForgot ? () => { setMode("signin"); setMessage(""); } : toggleMode} disabled={busy}>
+              {isForgot || isSignup ? "Sign in" : "Create an account"}
             </button>
           </div>
           <p className="auth-footnote">Built to make every session count.</p>
