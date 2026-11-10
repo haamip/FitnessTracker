@@ -1,6 +1,6 @@
 import "./services/backgroundTimerPatch";
 import { Suspense, lazy } from "react";
-import { BrowserRouter, Navigate, Routes, Route, useParams } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route, useParams, useLocation } from "react-router-dom";
 import MobileShell from "./components/layout/MobileShell";
 import AuthGate from "./components/auth/AuthGate";
 import OnboardingGate from "./components/auth/OnboardingGate";
@@ -109,14 +109,17 @@ function AppRoutes() {
   );
 }
 
-export default function App() {
-  return (
-    <BrowserRouter>
-      <AuthGate>
+function AppContent() {
+  const location = useLocation();
+  if (location.pathname === "/privacy") return <Legal type="privacy" />;
+  if (location.pathname === "/terms") return <Legal type="terms" />;
+  return <AuthGate>
         <OnboardingGate>
           <AppRoutes />
         </OnboardingGate>
-      </AuthGate>
-    </BrowserRouter>
-  );
+      </AuthGate>;
+}
+
+export default function App() {
+  return <BrowserRouter><Suspense fallback={<RouteFallback />}><AppContent /></Suspense></BrowserRouter>;
 }
