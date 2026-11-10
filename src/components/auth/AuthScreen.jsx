@@ -266,7 +266,7 @@ export default function AuthScreen({ recovery = false, onRecoveryComplete }) {
               {isForgot || isSignup ? "Sign in" : "Create an account"}
             </button>
           </div>
-          <p className="auth-footnote">Built to make every session count.</p>
+          <p className="auth-footnote">Built to make every session count. <a href="/privacy">Privacy policy</a> · <a href="/terms">Terms of use</a></p>
         </div>
       </section>
     </main>
