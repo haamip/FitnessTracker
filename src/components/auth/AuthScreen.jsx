@@ -58,7 +58,7 @@ export default function AuthScreen({ recovery = false, onRecoveryComplete }) {
     try {
       if (isForgot) {
         const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-          redirectTo: "https://fitness-tracker-rosy-nu.vercel.app/",
+          redirectTo: window.location.origin + "/",
         });
         if (error) throw error;
         setMessage("If this email has a TrackFit account, a password reset link will arrive shortly. Check your spam folder.");
