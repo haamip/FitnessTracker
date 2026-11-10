@@ -22,7 +22,7 @@ const EXPORT_FIELDS = {
   nutrition_entries: ["entry_date","meal_type","calories","protein_g","carbs_g","fats_g"],
   cardio_sessions: ["session_date","activity_type","duration_min","distance_km","steps"],
   trackfit_ai_daily_usage: ["usage_date","requests"],
-  beta_feedback: ["created_at","status","category"],
+  beta_feedback: ["created_at","category"],
   trackfit_ai_response_logs: ["created_at","mode","model","headline","summary","actions","prompt_version"],
 };
 const QUERY_FIELDS = {
