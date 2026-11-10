@@ -86,7 +86,7 @@ export default function AuthScreen({ recovery = false, onRecoveryComplete }) {
     event.preventDefault();
     if (busy) return;
     setMessage("");
-    if (resetPassword.length < 12 || !/[A-Z]/.test(resetPassword) || !/[a-z]/.test(resetPassword) || !/[0-9]/.test(resetPassword) || !/[^A-Za-z0-9\\s]/.test(resetPassword)) {
+    if (resetPassword.length < 12 || !/[A-Z]/.test(resetPassword) || !/[a-z]/.test(resetPassword) || !/[0-9]/.test(resetPassword) || !/[^A-Za-z0-9\s]/.test(resetPassword)) {
       setMessage("Use 12+ characters, uppercase and lowercase letters, a number and a symbol.");
       return;
     }
