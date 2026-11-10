@@ -38,6 +38,8 @@ const CompletedWorkoutDetail = lazy(() => import("./pages/CompletedWorkoutDetail
 const DeveloperTools = lazy(() => import("./pages/DeveloperTools"));
 const TestingDashboard = lazy(() => import("./pages/TestingDashboard"));
 const AIMonitoringSettings = lazy(() => import("./pages/AIMonitoringSettings"));
+const Legal = lazy(() => import("./pages/Legal"));
+const DataPrivacy = lazy(() => import("./pages/DataPrivacy"));
 const ExerciseDetail = lazy(() => import("./pages/ExerciseDetail"));
 
 function WorkoutDetailRoute() {
@@ -85,6 +87,9 @@ function AppRoutes() {
             <Route path="/workouts/import" element={<WorkoutImport />} />
             <Route path="/workouts/create" element={<CreateWorkout />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/privacy" element={<Legal type="privacy" />} />
+            <Route path="/terms" element={<Legal type="terms" />} />
+            <Route path="/settings/data-privacy" element={<DataPrivacy />} />
             <Route path="/settings/ai-monitoring" element={<AIMonitoringSettings />} />
             {showDeveloperTools && <Route path="/dev-tools" element={<DeveloperTools />} />}
             <Route path="/dev-tools/testing" element={<TestingDashboard />} />
