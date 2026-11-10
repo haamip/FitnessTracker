@@ -26,9 +26,9 @@ export default function DailyCoachCard() {
       </button>
       {reply && (
         <div className="tf-daily-coach__reply" role="status">
-          <strong>{reply.headline}</strong><p>{reply.summary}</p>
-          {reply.actions.length > 0 && <ul>{reply.actions.map((action, i) => <li key={i}>{action}</li>)}</ul>}
-          <small>AI-generated · {reply.dataScope}. Check advice against how you feel today.</small>
+          <div className="tf-daily-coach__headline">{reply.headline}</div><p className="tf-daily-coach__summary">{reply.summary}</p>
+          {reply.actions.length > 0 && <div className="tf-daily-coach__actions"><h3>Your next steps</h3><ol>{reply.actions.map((action, i) => <li key={i}>{action}</li>)}</ol></div>}
+          <small className="tf-daily-coach__disclaimer">AI-generated · {reply.dataScope}. Check advice against how you feel today.</small>
         </div>
       )}
       {error && <p role="alert" className="tf-daily-coach__error">{error} <Link to="/coach/intelligence">View your regular Coach Brain</Link></p>}
