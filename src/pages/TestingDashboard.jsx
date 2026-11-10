@@ -15,6 +15,16 @@ const SOURCES = [
 ];
 const safe = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
 const shortId = (id) => id ? "TF-" + String(id).replaceAll("-", "").slice(0, 8).toUpperCase() : "Unknown";
+const EXPORT_FIELDS = {
+  profiles: ["timezone","calorie_target","protein_target","water_target_l","onboarding_complete","fitness_goal","workouts_per_week","shift_pattern"],
+  workout_sessions: ["title","started_at","completed_at","duration_seconds","completed_sets","total_sets","status"],
+  daily_checkins: ["created_at","sleep_hours","energy","soreness","training_done"],
+  nutrition_entries: ["created_at","calories","protein_g","carbs_g","fat_g"],
+  cardio_sessions: ["created_at","activity_type","duration_seconds","distance_km"],
+  trackfit_ai_daily_usage: ["usage_date","requests"],
+  beta_feedback: ["created_at","status","category"],
+  trackfit_ai_response_logs: ["created_at","mode","model","headline","summary","actions","prompt_version"],
+};
 const day = (value) => String(value || "").slice(0, 10);
 const within = (row, dateField, from, to) => {
   const date = day(row[dateField]);
@@ -67,12 +77,16 @@ export default function TestingDashboard() {
   const totals = SOURCES.map(([table, label]) => ({ table, label, count: filtered[table]?.length || 0 }));
   const aiRequests = (filtered.trackfit_ai_daily_usage || []).reduce((sum, row) => sum + Number(row.requests || 0), 0);
   const missing = Object.keys(errors);
+  const workoutRecords = filtered.workout_sessions || [];
+  const completedWorkouts = workoutRecords.filter((r) => r.status === "completed" && r.completed_at);
+  const activeWorkouts = workoutRecords.filter((r) => r.status === "active" || !r.completed_at);
+  const longWorkouts = completedWorkouts.filter((r) => Number(r.duration_seconds) > 7200);
 
   function exportReport() {
     const rows = SOURCES.map(([table, label]) => {
       const data = filtered[table] || [];
       return `<section><h2>${safe(label)} (${data.length})</h2>${data.length ? data.map((item) => {
-        const fields = Object.entries(item).filter(([key]) => table === "trackfit_ai_response_logs" ? !["user_id", "facts", "question"].includes(key) : !["display_name", "name", "notes", "training_note", "body_feel", "mood", "exercises", "prs"].includes(key));
+        const fields = Object.entries(item).filter(([key]) => EXPORT_FIELDS[table]?.includes(key));
         return `<div class="record"><strong>${safe(shortId(item.user_id || item.id))}</strong> ${fields.map(([k,v]) => `<p><b>${safe(k)}:</b> ${safe(typeof v === "object" ? JSON.stringify(v) : v)}</p>`).join("")}</div>`;
       }).join("") : "<p>No records for this period.</p>"}</section>`;
     }).join("");
@@ -93,7 +107,7 @@ export default function TestingDashboard() {
     {missing.length > 0 && <div className="tf-test-warning" role="alert">Some data could not be loaded: {missing.map((k) => `${k}: ${errors[k]}`).join("; ")}. Export is disabled until all sources load.</div>}
     <div className="tf-test-stats">{totals.map(({table,label,count}) => <article key={table}><span>{label}</span><strong>{table === "trackfit_ai_daily_usage" ? aiRequests : count}</strong></article>)}</div>
     <nav className="tf-test-tabs">{["Overview","Testers","Workouts","Check-ins","Nutrition","Cardio","AI requests","AI responses","Feedback"].map((t) => <button key={t} className={tab===t?"active":""} onClick={() => setTab(t)}>{t}</button>)}</nav>
-    {tab === "Overview" ? <section className="tf-test-panel"><h2>Testing snapshot</h2><p>These are real records from TrackFit's cloud database. AI Coach responses will appear here only for testers who explicitly opt into monitoring. Earlier responses were not stored.</p><p>For a PDF, download the report, open it in your browser, then choose Print → Save as PDF. Tester identifiers are pseudonymous; sensitive free-text fields are excluded.</p></section> : (() => {
+    {tab === "Overview" ? <section className="tf-test-panel"><h2>Testing snapshot</h2><p>These are real records from TrackFit's cloud database. AI Coach responses will appear here only for testers who explicitly opt into monitoring. Earlier responses were not stored.</p><p>Workouts: {completedWorkouts.length} completed, {activeWorkouts.length} active or unfinished; {longWorkouts.length} completed sessions longer than 2 hours need review. These are records, not unique people.</p><p>For a PDF, download the report, open it in your browser, then choose Print → Save as PDF. Exports use tester codes and an explicit field allowlist; account IDs and sensitive free-text are excluded.</p></section> : (() => {
       const source = SOURCES.find(([,label]) => label === tab);
       const rows = filtered[source?.[0]] || [];
       return <section className="tf-test-panel"><h2>{tab} ({rows.length})</h2><div className="tf-test-table"><table><thead><tr><th>Tester</th><th>Date</th><th>Record</th><th>Details</th></tr></thead><tbody>{rows.map((r, i) => <tr key={r.id || i}><td>{shortId(r.user_id || r.id)}</td><td>{day(r[source[2]])}</td><td>{safe(r.title || r.activity_type || r.meal_type || r.status || source[1])}</td><td>{source[0] === "trackfit_ai_response_logs" ? `${r.headline || ""}: ${r.summary || ""}` : source[0] === "trackfit_ai_daily_usage" ? `${r.requests || 0} requests` : source[0] === "workout_sessions" ? `${r.completed_sets || 0} sets, ${r.duration_seconds || 0} sec` : "Logged"}</td></tr>)}</tbody></table>{!rows.length && <p>No records found.</p>}</div></section>;
