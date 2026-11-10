@@ -36,6 +36,7 @@ const DailyLogs = lazy(() => import("./pages/DailyLogs"));
 const WatchSync = lazy(() => import("./pages/WatchSync"));
 const CompletedWorkoutDetail = lazy(() => import("./pages/CompletedWorkoutDetail"));
 const DeveloperTools = lazy(() => import("./pages/DeveloperTools"));
+const AIMonitoringSettings = lazy(() => import("./pages/AIMonitoringSettings"));
 const ExerciseDetail = lazy(() => import("./pages/ExerciseDetail"));
 
 function WorkoutDetailRoute() {
@@ -83,6 +84,7 @@ function AppRoutes() {
             <Route path="/workouts/import" element={<WorkoutImport />} />
             <Route path="/workouts/create" element={<CreateWorkout />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/settings/ai-monitoring" element={<AIMonitoringSettings />} />
             {showDeveloperTools && <Route path="/dev-tools" element={<DeveloperTools />} />}
             {showDeveloperTools && <Route path="/dev-tools/ai" element={<AIPlayground />} />}
             <Route path="/workouts/history/:historyId" element={<CompletedWorkoutDetail />} />
