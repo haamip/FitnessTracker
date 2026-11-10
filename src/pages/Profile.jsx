@@ -10,6 +10,7 @@ import "./TrackFitScreens.css";
 export default function Profile() {
   const [profile, setProfile] = useState(getDefaultProfile);
   const [email, setEmail] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
   const [status, setStatus] = useState("Loading profile...");
   const [saving, setSaving] = useState(false);
   const [nightStart, setNightStart] = useState(getShiftStartTime);
@@ -25,7 +26,10 @@ export default function Profile() {
         return;
       }
 
-      if (active) setEmail(userData.user.email || "");
+      if (active) {
+        setEmail(userData.user.email || "");
+        setIsAdmin(userData.user.app_metadata?.trackfit_admin === true);
+      }
       const { data, error } = await supabase
         .from("profiles")
         .select(PROFILE_FIELDS.join(","))
@@ -157,6 +161,11 @@ export default function Profile() {
         <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save profile & goals"}</Button>
         {status && <p role="status">{status}</p>}
       </form>
+      {isAdmin && <section className="form-card form-grid">
+        <h2>Developer dashboard</h2>
+        <p>Private beta testing reports, pseudonymous tester activity and consented AI Coach responses.</p>
+        <Link to="/dev-tools/testing" style={{ display: "inline-flex", alignItems: "center", minHeight: 44, fontWeight: 800 }}>Open testing dashboard</Link>
+      </section>}
       <section className="form-card form-grid">
         <h2>Beta testing privacy</h2>
         <p>Choose whether HAKT Industries may privately review your AI Coach replies, questions and the activity summary used to generate them. This is optional and does not affect your access to the Coach.</p>
