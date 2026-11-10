@@ -262,6 +262,24 @@ Deno.serve(async (request: Request) => {
     const summary = clean(parsed.summary, 750);
     const actions = Array.isArray(parsed.actions) ? parsed.actions.slice(0, 3).map((x: unknown) => clean(x, 190)).filter(Boolean) : [];
     if (!summary) return respond({ error: "AI Coach returned an empty response." }, 502);
+    // Only consented AI responses are recorded; consent is read from the database.
+    try {
+      const { data: pref } = await db.from("trackfit_ai_monitoring_preferences")
+        .select("consented").eq("user_id", user.id).maybeSingle();
+      if (pref?.consented === true) {
+        const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+        if (serviceKey) {
+          const writer = createClient(url, serviceKey, { auth: { persistSession: false } });
+          const { error: logError } = await writer.from("trackfit_ai_response_logs").insert({
+            user_id: user.id, mode: kind,
+            model: Deno.env.get("OPENAI_COACH_MODEL")?.trim() || "gpt-4.1-mini",
+            headline, summary, actions, question: kind === "chat" ? question : null,
+            facts, prompt_version: "coach-v7",
+          });
+          if (logError) console.warn("trackfit_coach_audit_write_failed");
+        }
+      }
+    } catch { console.warn("trackfit_coach_audit_unavailable"); }
     return respond({ mode: "live", headline, summary, actions, answer: [summary, ...actions].join("\n"), dataScope: "Synced logs from the last 14 days and saved profile goals" });
   } catch (error) {
     if (error instanceof Error && error.message === "COACH_DATA_UNAVAILABLE") {
