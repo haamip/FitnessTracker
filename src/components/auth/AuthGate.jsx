@@ -8,6 +8,7 @@ import { WeeklyReviewRepository } from "../../services/weeklyCoachReview";
 import { TrainingCloudRepository } from "../../services/repositories/trainingCloudRepository";
 import { CheckInRepository, HistoryRepository, CardioRepository, NutritionRepository } from "../../services/repositories/trackfitDataLayer";
 import AuthScreen from "./AuthScreen";
+import MonitoringConsentGate from "./MonitoringConsentGate";
 
 export default function AuthGate({ children }) {
   const [session, setSession] = useState(null);
@@ -143,5 +144,5 @@ export default function AuthGate({ children }) {
   }
 
   if (!session) return <AuthScreen />;
-  return children;
+  return <MonitoringConsentGate key={session.user.id} userId={session.user.id}>{children}</MonitoringConsentGate>;
 }
