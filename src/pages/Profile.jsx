@@ -167,6 +167,13 @@ export default function Profile() {
         <Link to="/dev-tools/testing" style={{ display: "inline-flex", alignItems: "center", minHeight: 44, fontWeight: 800 }}>Open testing dashboard</Link>
       </section>}
       <section className="form-card form-grid">
+        <h2>Privacy and account controls</h2>
+        <p>Read how TrackFit handles your information, review the terms, or request a copy or deletion of your data.</p>
+        <Link to="/privacy">Privacy policy</Link>
+        <Link to="/terms">Terms of use</Link>
+        <Link to="/settings/data-privacy">Account deletion and data requests</Link>
+      </section>
+      <section className="form-card form-grid">
         <h2>Beta testing privacy</h2>
         <p>Choose whether HAKT Industries may privately review your AI Coach replies, questions and the activity summary used to generate them. This is optional and does not affect your access to the Coach.</p>
         <Link to="/settings/ai-monitoring">Read the agreement and manage AI monitoring</Link>
