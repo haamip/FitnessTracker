@@ -14,6 +14,7 @@ export default function AuthGate({ children }) {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(isSupabaseConfigured);
   const [authError, setAuthError] = useState("");
+  const [recovering, setRecovering] = useState(() => window.location.hash.includes("type=recovery") || new URLSearchParams(window.location.search).get("type") === "recovery");
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) return undefined;
@@ -82,6 +83,7 @@ export default function AuthGate({ children }) {
     window.addEventListener("online", retryWhenOnline);
 
     const { data } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+      if (_event === "PASSWORD_RECOVERY") setRecovering(true);
       if (!mounted) return;
       setLoading(true);
       setSession(nextSession);
@@ -143,6 +145,7 @@ export default function AuthGate({ children }) {
     return <main className="screen" style={{ display: "grid", placeItems: "center", minHeight: "100vh", padding: 24 }}><section style={{ maxWidth: 460, textAlign: "center" }}><h1>Could not restore your login</h1><p>{authError}</p><p>Refresh the page or sign in again.</p></section></main>;
   }
 
+  if (recovering && session) return <AuthScreen recovery onRecoveryComplete={() => setRecovering(false)} />;
   if (!session) return <AuthScreen />;
   return <MonitoringConsentGate key={session.user.id} userId={session.user.id}>{children}</MonitoringConsentGate>;
 }
