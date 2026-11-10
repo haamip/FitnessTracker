@@ -13,3 +13,14 @@
 .tf-daily-coach__reply small,.tf-daily-coach > small {font-size:11px;line-height:1.5;color:#687568}
 .tf-daily-coach__error {padding:10px 12px!important;background:#fff3e6;color:#724923!important;border-radius:12px}
 .tf-daily-coach__error a {color:inherit;text-decoration:underline}
+/* Readable, mobile-first hierarchy for AI-generated coaching. */
+#root .tf-daily-coach__reply { display:flex; flex-direction:column; gap:0; min-width:0; padding:clamp(18px,4vw,26px); border-radius:18px; overflow-wrap:anywhere; }
+#root .tf-daily-coach__headline { font-size:clamp(19px,4.5vw,24px); font-weight:800; line-height:1.35; letter-spacing:-.025em; margin:0 0 16px; }
+#root .tf-daily-coach__summary { margin:0 0 20px; font-size:clamp(15px,3.8vw,17px); line-height:1.7; color:#536153; }
+#root .tf-daily-coach__actions { padding-top:18px; border-top:1px solid #dbe4d5; }
+#root .tf-daily-coach__actions h3 { margin:0 0 14px; font-size:15px; font-weight:800; color:#293b2d; }
+#root .tf-daily-coach__actions ol { list-style:none; counter-reset:coach-step; display:flex; flex-direction:column; gap:12px; padding:0; margin:0; }
+#root .tf-daily-coach__actions li { counter-increment:coach-step; position:relative; min-width:0; padding:14px 14px 14px 52px; background:#fff; border:1px solid #e0e9dc; border-radius:12px; font-size:15px; line-height:1.55; color:#344638; }
+#root .tf-daily-coach__actions li::before { content:counter(coach-step); position:absolute; top:13px; left:13px; width:26px; height:26px; display:grid; place-items:center; background:#e7f2d2; color:#304a28; border-radius:8px; font-size:13px; font-weight:800; }
+#root .tf-daily-coach__disclaimer { display:block; margin-top:20px; padding-top:14px; border-top:1px solid #dbe4d5; line-height:1.6; }
+@media(max-width:430px) { #root .tf-daily-coach__reply {padding:18px 16px;} #root .tf-daily-coach__actions li {padding:13px 12px 13px 47px;} #root .tf-daily-coach__actions li::before {left:11px;top:12px;} }
