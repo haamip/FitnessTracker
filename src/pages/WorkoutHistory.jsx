@@ -20,7 +20,7 @@ export default function WorkoutHistory() {
   const [pending,setPending] = useState(() => HistoryRepository.getPendingIds().length);
   const [busy,setBusy] = useState(false);
   const [notice,setNotice] = useState("");
-  const history = useMemo(() => { void revision; return HistoryRepository.getAll(); },[revision,notice]);
+  const history = useMemo(() => { void revision; void notice; return HistoryRepository.getAll(); },[revision,notice]);
   function restoreHistory() {
     if (!window.confirm("Only restore older workout records if they belong to your signed-in account. Continue?")) return;
     const count=HistoryRepository.importLegacyForCurrentUser();
