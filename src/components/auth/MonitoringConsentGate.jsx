@@ -14,7 +14,8 @@ export default function MonitoringConsentGate({ userId, children }) {
 
   useEffect(() => {
     let active = true;
-    setState({ status: "loading", choice: null, error: "" });
+    // Schedule the loading transition after the effect setup to avoid a synchronous render cascade.
+    Promise.resolve().then(() => { if (active) setState({ status: "loading", choice: null, error: "" }); });
     (async () => {
       const { data, error } = await supabase
         .from("trackfit_ai_monitoring_preferences")
