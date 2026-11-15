@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Brain, Sparkles } from "lucide-react";
 import { requestTrackFitCoach } from "../services/ai/secureCoachClient";
@@ -15,11 +15,8 @@ export default function DailyCoachCard() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [context, setContext] = useState("");
-  const started = useRef(false);
 
   useEffect(() => {
-    if (started.current) return;
-    started.current = true;
     let active = true;
     (async () => {
       if (!supabase) return;
