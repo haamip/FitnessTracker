@@ -36,16 +36,18 @@ export default function DailyCoachCard() {
       // Mark attempts before calling to prevent repeated paid requests on navigation.
       sessionStorage.setItem(dailyKey, "attempted");
       if (needsWorkoutReview) sessionStorage.setItem(workoutRequestKey, "attempted");
-      if (needsWorkoutReview) localStorage.removeItem(workoutKey);
+
       setLoading(true);
       setContext(needsWorkoutReview ? "Reviewing your latest workout..." : "Preparing today's coaching...");
       try {
-        const response = await requestTrackFitCoach("daily");
+        const response = await requestTrackFitCoach(needsWorkoutReview ? "post_workout" : "daily", needsWorkoutReview ? { workoutId } : {});
+        if (needsWorkoutReview) localStorage.removeItem(workoutKey);
         if (active) {
           setReply(response);
           setContext(needsWorkoutReview ? "Post-workout coaching" : "Today's coaching");
         }
       } catch (caught) {
+        if (needsWorkoutReview) sessionStorage.removeItem(workoutRequestKey);
         if (active) setError(caught instanceof Error ? caught.message : "AI Coach is unavailable.");
       } finally { if (active) setLoading(false); }
     })();
@@ -76,7 +78,7 @@ export default function DailyCoachCard() {
         </div>
       )}
       {error && <p role="alert" className="tf-daily-coach__error">{error} <Link to="/coach/intelligence">View your regular Coach Brain</Link></p>}
-      <small>Automatic coaching is limited to one daily request per session plus one request per completed workout. Server-side usage limits still apply. Progress photos are never sent to AI; unsynced records may affect advice.</small>
+      <small>Automatic coaching is deduplicated per session and workout, and server-side daily usage limits still apply. Server-side usage limits still apply. Progress photos are never sent to AI; unsynced records may affect advice.</small>
     </section>
   );
 }
