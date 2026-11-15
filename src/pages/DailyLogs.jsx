@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Activity, CheckCircle2, Dumbbell, Utensils } from "lucide-react";
 import { completeDay, completeSection, getCurrentDayStatus, getDailyLogs } from "../services/dailyLogs/dailyLogService";
 import { getShiftMode } from "../services/shift/shiftModeService";
@@ -14,8 +14,10 @@ const sections = [
 export default function DailyLogs() {
   const [revision, setRevision] = useState(0);
   const mode = getShiftMode();
-  const current = useMemo(() => getCurrentDayStatus(mode), [mode, revision]);
-  const logs = useMemo(() => getDailyLogs(), [revision]);
+  // Revision triggers a render after a local record is updated.
+  void revision;
+  const current = getCurrentDayStatus(mode);
+  const logs = getDailyLogs();
 
   function finishSection(section) {
     completeSection(section, { date: current.date, mode });

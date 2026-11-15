@@ -22,7 +22,7 @@ export default function DataPrivacy() {
     if (error) setMessage("Unable to load requests: " + error.message);
     else setRequests(data || []);
   }
-  useEffect(() => { void refresh(); }, []);
+  useEffect(() => { Promise.resolve().then(() => { void refresh(); }); }, []);
 
   async function submit(event) {
     event.preventDefault();

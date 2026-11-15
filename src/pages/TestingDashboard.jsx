@@ -77,7 +77,7 @@ export default function TestingDashboard() {
     setBusy(false);
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { Promise.resolve().then(() => { void load(); }); }, [load]);
 
   const filtered = useMemo(() => Object.fromEntries(SOURCES.map(([table, , dateField]) => [
     table, (records[table] || []).filter((row) => within(row, dateField, from, to) &&
@@ -100,7 +100,7 @@ export default function TestingDashboard() {
         return `<div class="record"><strong>${safe(shortId(item.user_id || item.id))}</strong> ${fields.map(([k,v]) => `<p><b>${safe(k)}:</b> ${safe(typeof v === "object" ? JSON.stringify(v) : v)}</p>`).join("")}</div>`;
       }).join("") : "<p>No records for this period.</p>"}</section>`;
     }).join("");
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>TrackFit Testing Report</title><style>body{font:12px Arial,sans-serif;color:#18212b;margin:28px}h1{color:#173b4a}h2{border-bottom:2px solid #ddd;padding-top:18px}.record{border-bottom:1px solid #ddd;padding:9px 0;break-inside:avoid}.record p{margin:3px 0;overflow-wrap:anywhere}@page{size:A4;margin:16mm}@media print{button{display:none}}</style></head><body><h1>TrackFit Testing Report</h1><p>Generated ${safe(new Date().toISOString())} | From: ${safe(from || "All")} | To: ${safe(to || "All")} | Tester: ${safe(tester === "all" ? "All" : shortId(tester))}</p><p>AI request count: ${aiRequests}. AI response records appear only when monitoring consent is enabled.</p>${missing.length ? `<p><b>Incomplete sources:</b> ${safe(missing.join(", "))}</p>` : ""}${rows}<script>window.addEventListener('load',()=>window.print())<\/script></body></html>`;
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>TrackFit Testing Report</title><style>body{font:12px Arial,sans-serif;color:#18212b;margin:28px}h1{color:#173b4a}h2{border-bottom:2px solid #ddd;padding-top:18px}.record{border-bottom:1px solid #ddd;padding:9px 0;break-inside:avoid}.record p{margin:3px 0;overflow-wrap:anywhere}@page{size:A4;margin:16mm}@media print{button{display:none}}</style></head><body><h1>TrackFit Testing Report</h1><p>Generated ${safe(new Date().toISOString())} | From: ${safe(from || "All")} | To: ${safe(to || "All")} | Tester: ${safe(tester === "all" ? "All" : shortId(tester))}</p><p>AI request count: ${aiRequests}. AI response records appear only when monitoring consent is enabled.</p>${missing.length ? `<p><b>Incomplete sources:</b> ${safe(missing.join(", "))}</p>` : ""}${rows}<script>window.addEventListener('load',()=>window.print())</script></body></html>`;
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
