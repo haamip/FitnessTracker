@@ -1,28 +1,74 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Brain, Sparkles } from "lucide-react";
 import { requestTrackFitCoach } from "../services/ai/secureCoachClient";
+import { getOperationalDate } from "../services/shift/shiftModeService";
+import { supabase } from "../services/supabase";
 import "./DailyCoachCard.css";
 
-/** AI requests require an explicit tap and send only signed-in cloud records. */
+/** Automated calls are deduplicated per signed-in account and operational day.
+ * The server remains the authority for AI usage limits and monitoring consent.
+ * Replies stay in React memory, not persistent browser storage.
+ */
 export default function DailyCoachCard() {
   const [reply, setReply] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [context, setContext] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      if (!supabase) return;
+      const { data } = await supabase.auth.getUser();
+      const account = data?.user?.id;
+      if (!account || !active) return;
+      const day = getOperationalDate();
+      const dailyKey = `trackfit:coach-daily:${account}:${day}`;
+      const workoutKey = `trackfit:coach-workout:${account}`;
+      const workoutId = localStorage.getItem(workoutKey);
+      const workoutRequestKey = workoutId ? `trackfit:coach-reviewed:${account}:${workoutId}` : "";
+      const needsWorkoutReview = Boolean(workoutId && !sessionStorage.getItem(workoutRequestKey));
+      if (!needsWorkoutReview && sessionStorage.getItem(dailyKey)) {
+        setContext("Your daily coaching was already requested this session. You can refresh manually.");
+        return;
+      }
+      // Mark attempts before calling to prevent repeated paid requests on navigation.
+      sessionStorage.setItem(dailyKey, "attempted");
+      if (needsWorkoutReview) sessionStorage.setItem(workoutRequestKey, "attempted");
+
+      setLoading(true);
+      setContext(needsWorkoutReview ? "Reviewing your latest workout..." : "Preparing today's coaching...");
+      try {
+        const response = await requestTrackFitCoach(needsWorkoutReview ? "post_workout" : "daily", needsWorkoutReview ? { workoutId } : {});
+        if (needsWorkoutReview) localStorage.removeItem(workoutKey);
+        if (active) {
+          setReply(response);
+          setContext(needsWorkoutReview ? "Post-workout coaching" : "Today's coaching");
+        }
+      } catch (caught) {
+        if (needsWorkoutReview) sessionStorage.removeItem(workoutRequestKey);
+        if (active) setError(caught instanceof Error ? caught.message : "AI Coach is unavailable.");
+      } finally { if (active) setLoading(false); }
+    })();
+    return () => { active = false; };
+  }, []);
+
   async function generate() {
     if (loading) return;
     setLoading(true);
     setError("");
-    try { setReply(await requestTrackFitCoach("daily")); }
+    try { setReply(await requestTrackFitCoach("daily")); setContext("Updated coaching"); }
     catch (caught) { setError(caught instanceof Error ? caught.message : "AI Coach is unavailable."); }
     finally { setLoading(false); }
   }
   return (
     <section className="tf-daily-coach form-card" aria-label="AI daily coaching">
       <div className="tf-daily-coach__heading"><Brain size={22} aria-hidden="true"/><div><p className="eyebrow">PERSONALISED COACHING</p><h2>Your AI Coach</h2></div></div>
-      <p>Get a daily recommendation using your signed-in account's last 14 days of synced workouts, steps, nutrition and recovery.</p>
+      <p>Daily advice based on your synced training, steps, nutrition and recovery. Workout feedback appears after you finish a session.</p>
+      {context && <p role="status">{context}</p>}
       <button type="button" onClick={generate} disabled={loading} className="tf-daily-coach__button">
-        <Sparkles size={18} aria-hidden="true"/>{loading ? "Checking your training..." : reply ? "Refresh daily coaching" : "Get today's AI advice"}
+        <Sparkles size={18} aria-hidden="true"/>{loading ? "Checking your training..." : "Refresh AI coaching"}
       </button>
       {reply && (
         <div className="tf-daily-coach__reply" role="status">
@@ -32,7 +78,7 @@ export default function DailyCoachCard() {
         </div>
       )}
       {error && <p role="alert" className="tf-daily-coach__error">{error} <Link to="/coach/intelligence">View your regular Coach Brain</Link></p>}
-      <small>Only runs when tapped. Your progress photos are not sent to AI. Missing or unsynced logs may affect advice.</small>
+      <small>Automatic coaching is deduplicated per session and workout, and server-side daily usage limits still apply. Server-side usage limits still apply. Progress photos are never sent to AI; unsynced records may affect advice.</small>
     </section>
   );
 }

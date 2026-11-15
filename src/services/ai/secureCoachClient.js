@@ -6,11 +6,15 @@ import { supabase } from "../supabase";
  * or raw fitness diary/photo is ever placed in the browser bundle.
  */
 export async function requestTrackFitCoach(kind, details = {}) {
-  if (!["daily", "weekly", "chat"].includes(kind)) throw new Error("Unsupported coaching request.");
+  if (!["daily", "weekly", "chat", "post_workout"].includes(kind)) throw new Error("Unsupported coaching request.");
   if (!supabase) throw new Error("TrackFit account connection is unavailable.");
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user || user.is_anonymous) throw new Error("Sign into TrackFit to use AI Coach.");
   const body = { kind };
+  if (kind === "post_workout") {
+    if (!/^[0-9a-f-]{36}$/i.test(String(details.workoutId || ""))) throw new Error("A saved workout is required.");
+    body.workoutId = details.workoutId;
+  }
   if (kind === "chat") {
     const question = String(details.question || "").trim().slice(0, 700);
     if (!question) throw new Error("Enter a question for your coach.");

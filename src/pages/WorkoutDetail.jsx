@@ -462,6 +462,7 @@ export default function WorkoutDetail() {
         });
 
         HistoryRepository.add(finishedWorkout);
+    if (accountId) localStorage.setItem(`trackfit:coach-workout:${accountId}`, String(finishedWorkout.id));
         WorkoutRepository.removeById(id);
         clearWorkoutClock(accountId, id);
         setFinishedWorkoutSummary(finishedWorkout);
@@ -632,6 +633,7 @@ export default function WorkoutDetail() {
     });
 
     HistoryRepository.add(finishedWorkout);
+    if (accountId) localStorage.setItem(`trackfit:coach-workout:${accountId}`, String(finishedWorkout.id));
     WorkoutRepository.removeById(id);
     clearWorkoutClock(accountId, id);
     setFinishedWorkoutSummary(finishedWorkout);
@@ -1042,6 +1044,7 @@ export default function WorkoutDetail() {
             </article>
           </div>
 
+          <button onClick={() => navigate("/")} type="button">View AI workout feedback</button>
           <button onClick={() => navigate("/workouts")} type="button">
             Back to workouts
           </button>
