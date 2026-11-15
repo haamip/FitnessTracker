@@ -16,14 +16,15 @@ export default function DailyCheckInPrompt() {
   }, []);
   useEffect(() => {
     const refresh = () => setDay(getOperationalDate());
+    const onSaved = () => setVisible(false);
     window.addEventListener(SHIFT_MODE_EVENT, refresh);
     window.addEventListener("focus", refresh);
-    window.addEventListener("trackfit:checkin-saved", refresh);
+    window.addEventListener("trackfit:checkin-saved", onSaved);
     const timer = window.setInterval(refresh, 60000);
     return () => {
       window.removeEventListener(SHIFT_MODE_EVENT, refresh);
       window.removeEventListener("focus", refresh);
-      window.removeEventListener("trackfit:checkin-saved", refresh);
+      window.removeEventListener("trackfit:checkin-saved", onSaved);
       window.clearInterval(timer);
     };
   }, []);
