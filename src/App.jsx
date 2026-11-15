@@ -5,6 +5,7 @@ import MobileShell from "./components/layout/MobileShell";
 import AuthGate from "./components/auth/AuthGate";
 import OnboardingGate from "./components/auth/OnboardingGate";
 import DailyCheckInGate from "./components/auth/DailyCheckInGate";
+import DailyCheckInPrompt from "./components/auth/DailyCheckInPrompt";
 import "./pages/WorkoutCompleteOverlay.css";
 import "./components/common/TrackFitCard.css";
 
@@ -63,6 +64,7 @@ function AppRoutes() {
 
   return (
     <DailyCheckInGate>
+      <DailyCheckInPrompt />
       <MobileShell>
         <Suspense fallback={<RouteFallback />}>
           <Routes>
