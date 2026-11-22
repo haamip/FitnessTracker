@@ -50,6 +50,7 @@ import {
   correctWorkoutClock,
 } from "../services/workoutClock";
 import "./TrackFitScreens.css";
+import { requestTrackFitCoach } from "../services/ai/secureCoachClient";
 
 const DEFAULT_REST_SECONDS = 90;
 const FALLBACK_EXERCISE_IMAGE = "/exercise-images/trackfit-fallback.svg";
@@ -167,6 +168,8 @@ export default function WorkoutDetail() {
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [completedExerciseId, setCompletedExerciseId] = useState("");
   const [finishedWorkoutSummary, setFinishedWorkoutSummary] = useState(null);
+  const [completionAdvice, setCompletionAdvice] = useState(null);
+  const [completionAdviceError, setCompletionAdviceError] = useState("");
   const swipeStartX = useRef(null);
   const workoutSavedRef = useRef(false);
 
@@ -465,6 +468,7 @@ export default function WorkoutDetail() {
         WorkoutRepository.removeById(id);
         clearWorkoutClock(accountId, id);
         setFinishedWorkoutSummary(finishedWorkout);
+        void fetchCompletionAdvice();
       }, 1100);
     }
   }
@@ -635,7 +639,20 @@ export default function WorkoutDetail() {
     WorkoutRepository.removeById(id);
     clearWorkoutClock(accountId, id);
     setFinishedWorkoutSummary(finishedWorkout);
+    void fetchCompletionAdvice();
     window.scrollTo({ top: window.scrollY, behavior: "instant" });
+  }
+
+  async function fetchCompletionAdvice() {
+    // One bounded post-workout request, reusing the backend's daily rate limit.
+    // The completed workout is already saved; AI failure never blocks saving.
+    setCompletionAdviceError("");
+    try {
+      const result = await requestTrackFitCoach("daily");
+      setCompletionAdvice(result);
+    } catch {
+      setCompletionAdviceError("AI feedback is unavailable right now. Your workout is safely saved.");
+    }
   }
 
   function goToExercise(direction) {
@@ -1042,6 +1059,8 @@ export default function WorkoutDetail() {
             </article>
           </div>
 
+          {completionAdvice && <section className="form-card" aria-label="AI workout feedback"><strong>{completionAdvice.headline}</strong><p>{completionAdvice.summary}</p><ul>{completionAdvice.actions.map((action,i)=><li key={i}>{action}</li>)}</ul><small>AI advice is based on synced account records and may not include this workout until cloud sync finishes.</small></section>}
+          {completionAdviceError && <p role="status">{completionAdviceError}</p>}
           <button onClick={() => navigate("/workouts")} type="button">
             Back to workouts
           </button>
