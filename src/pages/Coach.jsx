@@ -39,6 +39,7 @@ export default function Coach() {
         <Link to="/dashboard" className="tf-intro-link">Full dashboard <ArrowUpRight size={17} aria-hidden="true" /></Link>
       </section>
 
+      <section className="form-card" aria-label="Beta feedback" style={{marginBottom:16}}><strong>Help us improve TrackFit</strong><p>What's working, what's confusing, or what should we fix next?</p><Link to="/feedback">Send beta feedback <ArrowRight size={16} aria-hidden="true" /></Link></section>
       <NativeWatchSnapshot />
       <DailyCoachCard />
       <GoalProgressCard revision={revision} />
