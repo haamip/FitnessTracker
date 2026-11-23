@@ -91,6 +91,23 @@ describe("TrackFit account password setup", () => {
     });
   });
 
+
+  it("explains the shared confirmation email limit rather than blaming the password", async () => {
+    supabase.auth.signUp.mockResolvedValue({
+      data: { user: null },
+      error: { code: "over_email_send_rate_limit", status: 429, message: "email rate limit exceeded" },
+    });
+    render(<AuthScreen />);
+    openSignup();
+    fillSignup("StrongPass1!");
+    fireEvent.submit(screen.getByRole("button", { name: "Create account" }).closest("form"));
+
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent(/confirmation-email service is temporarily at its sending limit/i);
+    });
+    expect(screen.queryByText("email rate limit exceeded")).not.toBeInTheDocument();
+  });
+
   it("keeps existing-account login working without imposing new registration rules", async () => {
     render(<AuthScreen />);
     fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "existing@example.com" } });
