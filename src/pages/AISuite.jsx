@@ -30,7 +30,7 @@ export default function AISuite() {
     if(!text||loading)return;
     setLoading(true);setError("");
     try{
-      const answer=await askCoach(text);
+      const answer=await askCoach(text, { history: messages });
       setMessages(cur=>[...cur,{role:"user",text},{role:"coach",text:answer.answer||"Could not generate an answer."}]);
       setQuestion("");
     }catch(e){setError(e instanceof Error?e.message:"The coach is unavailable. Try again.");}
